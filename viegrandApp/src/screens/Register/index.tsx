@@ -12,9 +12,11 @@ import {
   Platform,
   ImageBackground,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { StackActions } from '@react-navigation/native';
+import { useAuth } from '../../contexts/AuthContext';
 
 const { width } = Dimensions.get('window');
 
@@ -24,15 +26,38 @@ const RegisterScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const { register, isLoading } = useAuth();
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!fullName || !phone || !email || !password) {
       Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin.');
       return;
     }
-    // Logic đăng ký ở đây
-    // Alert.alert('Thành công', 'Đăng ký tài khoản thành công!');
-    navigation.dispatch(StackActions.replace('SelectRole'));
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Lỗi', 'Email không hợp lệ.');
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự.');
+      return;
+    }
+
+    // Validate phone number
+    if (phone.length < 10) {
+      Alert.alert('Lỗi', 'Số điện thoại phải có ít nhất 10 số.');
+      return;
+    }
+
+    console.log('Attempting register with:', { fullName, phone, email, password: '***' });
+    const success = await register({ fullName, phone, email, password });
+    if (success) {
+      navigation.dispatch(StackActions.replace('SelectRole'));
+    }
   };
 
   return (
@@ -94,8 +119,16 @@ const RegisterScreen = ({ navigation }: any) => {
                 />
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.button} onPress={handleRegister}>
-              <Text style={styles.buttonText}>Đăng ký</Text>
+            <TouchableOpacity 
+              style={[styles.button, isLoading && styles.buttonDisabled]} 
+              onPress={handleRegister}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text style={styles.buttonText}>Đăng ký</Text>
+              )}
             </TouchableOpacity>
             <View style={styles.loginContainer}>
               <Text style={styles.loginText}>Đã có tài khoản? </Text>
@@ -200,6 +233,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  buttonDisabled: {
+    backgroundColor: '#B0B0B0',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   loginContainer: {
     flexDirection: 'row',
     marginTop: 40,
@@ -214,4 +252,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RegisterScreen; 
+export default RegisterScreen;

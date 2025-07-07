@@ -18,23 +18,29 @@ import AuthNavigator from './src/navigation/AuthNavigator';
 import ElderlyNavigator from './src/navigation/ElderlyNavigator';
 import RelativeNavigator from './src/navigation/RelativeNavigator';
 import { VoiceProvider } from './src/contexts/VoiceContext';
+import { AuthProvider } from './src/contexts/AuthContext';
+import { PremiumProvider } from './src/contexts/PremiumContext';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const App = () => {
   return (
-    <VoiceProvider>
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{headerShown: false}}>
-          <Stack.Screen name="Splash" component={SplashScreen} />
-          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-          <Stack.Screen name="SelectRole" component={SelectRoleScreen} />
-          <Stack.Screen name="Auth" component={AuthNavigator} />
-          <Stack.Screen name="Elderly" component={ElderlyNavigator} />
-          <Stack.Screen name="Relative" component={RelativeNavigator} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </VoiceProvider>
+    <AuthProvider>
+      <PremiumProvider>
+        <VoiceProvider>
+          <NavigationContainer>
+            <Stack.Navigator screenOptions={{headerShown: false}}>
+              <Stack.Screen name="Splash" component={SplashScreen} />
+              <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+              <Stack.Screen name="SelectRole" component={SelectRoleScreen} />
+              <Stack.Screen name="Auth" component={AuthNavigator} />
+              <Stack.Screen name="Elderly" component={ElderlyNavigator} />
+              <Stack.Screen name="Relative" component={RelativeNavigator} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </VoiceProvider>
+      </PremiumProvider>
+    </AuthProvider>
   );
 };
 

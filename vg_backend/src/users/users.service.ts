@@ -1,16 +1,24 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
+import { PremiumService } from '../premium/premium.service';
 
 @Injectable()
 export class UsersService {
+  constructor(
+    @Inject(forwardRef(() => PremiumService))
+    private premiumService: PremiumService,
+  ) {}
+
   private users: User[] = [
     {
       id: 1,
       name: 'Người dùng mẫu',
       email: 'example@viegrand.com',
+      password: 'hashedPassword',
       role: 'user',
+      active: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     },
@@ -20,6 +28,7 @@ export class UsersService {
     const newUser = {
       id: Date.now(),
       ...createUserDto,
+      active: createUserDto.active ?? false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -37,6 +46,61 @@ export class UsersService {
       throw new NotFoundException(`Không tìm thấy người dùng với ID ${id}`);
     }
     return user;
+  }
+
+  findByEmail(email: string): User | undefined {
+    return this.users.find(user => user.email === email);
+  }
+
+  getProfile(id: number): User {
+    const user = this.users.find(user => user.id === id);
+    if (!user) {
+      throw new NotFoundException(`Không tìm thấy người dùng với ID ${id}`);
+    }
+    // Return user without password
+    const { password, ...userProfile } = user;
+    return userProfile as User;
+  }
+
+  async getProfileWithPremium(id: number): Promise<User & { premiumStatus: any }> {
+    const user = this.users.find(user => user.id === id);
+    if (!user) {
+      throw new NotFoundException(`Không tìm thấy người dùng với ID ${id}`);
+    }
+
+    // Get premium status
+    const premiumStatus = await this.premiumService.getPremiumStatus(id);
+    
+    // Return user without password but with premium status
+    const { password, ...userProfile } = user;
+    return {
+      ...userProfile,
+      premiumStatus
+    } as User & { premiumStatus: any };
+  }
+
+  async isPremiumUser(id: number): Promise<boolean> {
+    return await this.premiumService.isPremiumUser(id);
+  }
+
+  async getUserSubscriptionHistory(id: number) {
+    return await this.premiumService.getUserSubscriptions(id);
+  }
+
+  async updatePremiumStatus(id: number, isPremium: boolean): Promise<User> {
+    const userIndex = this.users.findIndex(user => user.id === id);
+    if (userIndex === -1) {
+      throw new NotFoundException(`Không tìm thấy người dùng với ID ${id}`);
+    }
+    
+    // Update user's active status (can be used as premium indicator)
+    this.users[userIndex] = { 
+      ...this.users[userIndex], 
+      active: isPremium,
+      updatedAt: new Date()
+    };
+    
+    return this.users[userIndex];
   }
 
   update(id: number, updateUserDto: UpdateUserDto): User {
@@ -64,4 +128,4 @@ export class UsersService {
     
     return { message: `Người dùng với ID ${id} đã được xóa thành công` };
   }
-} 
+}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,60 @@ import {
   ImageBackground,
   SafeAreaView,
   Dimensions,
+  Alert,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
+import LinearGradient from 'react-native-linear-gradient';
+import { usersAPI, User } from '../../../services/api';
+import { usePremium, useIsPremium } from '../../../contexts/PremiumContext';
 
 const { width } = Dimensions.get('window');
 
 const RelativeHomeScreen = ({ navigation }: any) => {
+  const [userProfile, setUserProfile] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Premium Context - with error handling
+  let premiumStatus = null;
+  let isPremium = false;
+  let fetchPremiumStatus = () => {};
+  
+  try {
+    const premiumContext = usePremium();
+    premiumStatus = premiumContext.premiumStatus;
+    fetchPremiumStatus = premiumContext.fetchPremiumStatus;
+    isPremium = useIsPremium();
+  } catch (error) {
+    console.log('Premium context not available yet:', error);
+  }
+
+  useEffect(() => {
+    loadUserProfile();
+    fetchPremiumStatus();
+  }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      console.log('Loading user profile...');
+      // Thử API thật trước (cần authentication)
+      const profile = await usersAPI.getProfile();
+      console.log('User profile loaded:', profile);
+      setUserProfile(profile);
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      // Fallback to test API nếu không có token
+      try {
+        const testProfile = await usersAPI.getTest();
+        console.log('Test profile loaded (fallback):', testProfile);
+        setUserProfile(testProfile);
+      } catch (testError) {
+        console.error('Error loading test profile:', testError);
+        Alert.alert('Lỗi', 'Không thể tải thông tin người dùng');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
   const menuItems = [
     { id: 1, title: 'Theo dõi', icon: 'eye', color: '#FF6B6B' },
     { id: 2, title: 'Báo cáo', icon: 'bar-chart-2', color: '#4ECDC4' },
@@ -45,8 +93,19 @@ const RelativeHomeScreen = ({ navigation }: any) => {
       style={styles.backgroundImage}>
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.greeting}>Chăm sóc gia đình</Text>
-          <Text style={styles.subtitle}>Theo dõi sức khỏe người thân</Text>
+          <View style={styles.userInfo}>
+            <Text style={styles.greeting}>
+              Xin chào, {userProfile?.name || 'Người dùng'}!
+            </Text>
+            <Text style={styles.subtitle}>
+              {userProfile?.active ? '🌟 Tài khoản Premium' : 'Tài khoản Cơ bản'}
+            </Text>
+            {__DEV__ && (
+              <Text style={{ color: 'red', fontSize: 12 }}>
+                Debug: {userProfile ? JSON.stringify(userProfile) : 'No profile data'}
+              </Text>
+            )}
+          </View>
           <TouchableOpacity
             style={styles.profileButton}
             onPress={() => navigation.navigate('RelativeProfile')}>
@@ -55,6 +114,60 @@ const RelativeHomeScreen = ({ navigation }: any) => {
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Premium Status Card */}
+          {isPremium ? (
+            <View style={styles.premiumCard}>
+              <LinearGradient
+                colors={['#4CAF50', '#45A049']}
+                style={styles.premiumCardGradient}
+              >
+                <View style={styles.premiumCardHeader}>
+                  <Feather name="crown" size={24} color="#fff" />
+                  <Text style={styles.premiumCardTitle}>PREMIUM ACTIVE</Text>
+                </View>
+                {premiumStatus && (
+                  <>
+                    <Text style={styles.premiumCardSubtitle}>
+                      {premiumStatus.plan?.name || 'Premium Plan'}
+                    </Text>
+                    <Text style={styles.premiumCardDays}>
+                      {premiumStatus.daysRemaining > 0 
+                        ? `Còn ${premiumStatus.daysRemaining} ngày` 
+                        : 'Đã hết hạn'}
+                    </Text>
+                  </>
+                )}
+                <TouchableOpacity 
+                  style={styles.premiumCardButton}
+                  onPress={() => navigation.navigate('Premium')}
+                >
+                  <Text style={styles.premiumCardButtonText}>Quản lý</Text>
+                </TouchableOpacity>
+              </LinearGradient>
+            </View>
+          ) : (
+            <View style={styles.upgradeCard}>
+              <LinearGradient
+                colors={['#FF9800', '#F57C00']}
+                style={styles.upgradeCardGradient}
+              >
+                <View style={styles.upgradeCardHeader}>
+                  <Feather name="star" size={24} color="#fff" />
+                  <Text style={styles.upgradeCardTitle}>NÂNG CẤP PREMIUM</Text>
+                </View>
+                <Text style={styles.upgradeCardSubtitle}>
+                  Theo dõi người thân tốt hơn với Premium
+                </Text>
+                <TouchableOpacity 
+                  style={styles.upgradeCardButton}
+                  onPress={() => navigation.navigate('Premium')}
+                >
+                  <Text style={styles.upgradeCardButtonText}>Khám phá ngay</Text>
+                </TouchableOpacity>
+              </LinearGradient>
+            </View>
+          )}
+          
           <View style={styles.elderlyList}>
             <Text style={styles.sectionTitle}>Danh sách người cao tuổi</Text>
             {elderlyMembers.map((member) => (
@@ -127,6 +240,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
   },
+  userInfo: {
+    alignItems: 'center',
+    flex: 1,
+  },
   greeting: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -155,6 +272,99 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 20,
+  },
+  premiumCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  premiumCardGradient: {
+    padding: 20,
+  },
+  premiumCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  premiumCardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginLeft: 8,
+  },
+  premiumCardSubtitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 5,
+  },
+  premiumCardDays: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 15,
+  },
+  premiumCardButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+  },
+  premiumCardButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  upgradeCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  upgradeCardGradient: {
+    padding: 20,
+  },
+  upgradeCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  upgradeCardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginLeft: 8,
+  },
+  upgradeCardSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 15,
+    lineHeight: 20,
+  },
+  upgradeCardButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+  },
+  upgradeCardButtonText: {
+    color: '#333',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   elderlyList: {
     marginBottom: 30,

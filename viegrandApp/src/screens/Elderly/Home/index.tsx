@@ -11,10 +11,14 @@ import {
   Image,
   Animated,
   Easing,
+  Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Feather from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
 import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
+import { usersAPI, User } from '../../../services/api';
+import { usePremium, useIsPremium } from '../../../contexts/PremiumContext';
 
 // Import asset utilities
 import { BackgroundImages, getWeatherIcon } from '../../../utils/assetUtils';
@@ -28,6 +32,70 @@ const ElderlyHomeScreen = ({ navigation }: any) => {
   const [weatherData, setWeatherData] = useState<any>(null);
   const [forecastData, setForecastData] = useState<any[]>([]);
   const [showForecast, setShowForecast] = useState(false);
+  const [userProfile, setUserProfile] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Premium Context - with error handling
+  let premiumStatus = null;
+  let isPremium = false;
+  let fetchPremiumStatus = () => {};
+  
+  try {
+    const premiumContext = usePremium();
+    premiumStatus = premiumContext.premiumStatus;
+    fetchPremiumStatus = premiumContext.fetchPremiumStatus;
+    isPremium = useIsPremium();
+  } catch (error) {
+    console.log('Premium context not available yet:', error);
+  }
+
+  useEffect(() => {
+    loadUserProfile();
+    fetchPremiumStatus();
+  }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      console.log('Loading user profile...');
+      
+      // Kiểm tra token trước
+      const token = await AsyncStorage.getItem('access_token');
+      const savedUser = await AsyncStorage.getItem('user');
+      console.log('Token exists:', !!token);
+      console.log('Saved user:', savedUser);
+      
+      if (token) {
+        // Nếu có token, thử API /users/me
+        try {
+          const profile = await usersAPI.getProfile();
+          console.log('Authenticated user profile loaded:', profile);
+          setUserProfile(profile);
+          return;
+        } catch (authError) {
+          console.log('Auth failed, trying alternative...');
+        }
+      }
+      
+      // Fallback: lấy thông tin user mẫu từ database
+      const profile = await usersAPI.getProfileById(1);
+      console.log('Sample user profile loaded:', profile);
+      setUserProfile(profile);
+      
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      // Last fallback to test API
+      try {
+        const testProfile = await usersAPI.getTest();
+        console.log('Test profile loaded (final fallback):', testProfile);
+        setUserProfile(testProfile);
+      } catch (testError) {
+        console.error('Error loading test profile:', testError);
+        Alert.alert('Lỗi', 'Không thể tải thông tin người dùng');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const {
     isListening,
@@ -44,7 +112,7 @@ const ElderlyHomeScreen = ({ navigation }: any) => {
   // Thêm state cho dropdown thông báo
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationPosition, setNotificationPosition] = useState({ top: 0, right: 0 });
-  const notificationButtonRef = useRef<TouchableOpacity>(null);
+  const notificationButtonRef = useRef<View>(null);
 
   // Thêm state cho notifications và đánh dấu đã đọc
   const [notifications, setNotifications] = useState([
@@ -82,10 +150,11 @@ const ElderlyHomeScreen = ({ navigation }: any) => {
     }
   }, [results]);
 
-  // Mock data - sau này sẽ lấy từ context hoặc API
+  // Mock data - được thay thế bằng Premium Context
   const userInfo = {
-    fullName: 'Minh Khoa',
-    isActive: true,
+    fullName: userProfile?.name || 'Đang tải...',
+    isActive: isPremium,
+    premiumStatus: premiumStatus,
   };
 
   // Fetch weather data
@@ -172,7 +241,7 @@ const ElderlyHomeScreen = ({ navigation }: any) => {
   // Thêm các hàm xử lý thông báo
   const handleToggleNotifications = () => {
     if (notificationButtonRef.current) {
-      notificationButtonRef.current.measure((x, y, width, height, pageX, pageY) => {
+      notificationButtonRef.current.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
         setNotificationPosition({
           top: pageY + height,
           right: 20,
@@ -280,7 +349,10 @@ const ElderlyHomeScreen = ({ navigation }: any) => {
                     </Text>
                   </LinearGradient>
                 ) : (
-                  <View style={styles.upgradeBadge}>
+                  <TouchableOpacity 
+                    style={styles.upgradeBadge}
+                    onPress={() => navigation.navigate('Premium')}
+                  >
                     <Feather 
                       name="award" 
                       size={14} 
@@ -290,7 +362,7 @@ const ElderlyHomeScreen = ({ navigation }: any) => {
                     <Text style={styles.upgradeText}>
                       Nâng cấp Premium
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                 )}
               </View>
             </View>
@@ -399,6 +471,65 @@ const ElderlyHomeScreen = ({ navigation }: any) => {
             )}
           </TouchableOpacity>
 
+        {/* Premium Status Card */}
+        {isPremium ? (
+          <View style={styles.premiumCard}>
+            <LinearGradient
+              colors={['#1E3A8A', '#3B82F6']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.premiumCardGradient}
+            >
+              <View style={styles.premiumCardOverlay}>
+                <View style={styles.premiumCardHeader}>
+                  <Feather name="crown" size={18} color="#FFD700" />
+                  <Text style={styles.premiumCardTitle}>PREMIUM ACTIVE</Text>
+                  <TouchableOpacity 
+                    style={styles.premiumCardButton}
+                    onPress={() => navigation.navigate('Premium')}
+                  >
+                    <Text style={styles.premiumCardButtonText}>Quản lý</Text>
+                  </TouchableOpacity>
+                </View>
+                
+                {premiumStatus && (
+                  <Text style={styles.premiumCardDays}>
+                    {premiumStatus.daysRemaining > 0 
+                      ? `Còn ${premiumStatus.daysRemaining} ngày` 
+                      : 'Đã hết hạn'}
+                  </Text>
+                )}
+              </View>
+            </LinearGradient>
+          </View>
+        ) : (
+          <View style={styles.upgradeCard}>
+            <LinearGradient
+              colors={['#1E3A8A', '#3B82F6']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.upgradeCardGradient}
+            >
+              <View style={styles.upgradeCardOverlay}>
+                <View style={styles.upgradeCardHeader}>
+                  <Feather name="star" size={18} color="#FFD700" />
+                  <Text style={styles.upgradeCardTitle}>NÂNG CẤP PREMIUM</Text>
+                  <TouchableOpacity 
+                    style={styles.upgradeCardButton}
+                    onPress={() => navigation.navigate('Premium')}
+                  >
+                    <Text style={styles.upgradeCardButtonText}>Khám phá</Text>
+                  </TouchableOpacity>
+                </View>
+                
+                <Text style={styles.upgradeCardSubtitle}>
+                  Mở khóa tính năng cao cấp
+                </Text>
+              </View>
+            </LinearGradient>
+          </View>
+        )}
+
         {/* Divider Section */}
         <View style={styles.dividerSection}>
           <View style={styles.dividerLine} />
@@ -469,6 +600,9 @@ const ElderlyHomeScreen = ({ navigation }: any) => {
             <View style={styles.functionItemEmpty} />
           </View>
         </View>
+        
+        {/* Bottom spacing to prevent content being hidden by bottom bar */}
+        <View style={styles.bottomSpacing} />
       </ScrollView>
 
       {showTranscript && (
@@ -955,6 +1089,119 @@ const styles = StyleSheet.create({
   },
   processButton: {
     backgroundColor: '#007AFF', // iOS blue
+  },
+  // Premium Card Styles
+  premiumCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    marginTop: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  premiumCardGradient: {
+    position: 'relative',
+  },
+  premiumCardOverlay: {
+    padding: 16,
+    position: 'relative',
+  },
+  premiumCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  premiumCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    flex: 1,
+    marginLeft: 8,
+    letterSpacing: 0.3,
+  },
+  premiumCardDays: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
+  },
+  premiumCardButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  premiumCardButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  
+  // Upgrade Card Styles
+  upgradeCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    marginTop: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  upgradeCardGradient: {
+    position: 'relative',
+  },
+  upgradeCardOverlay: {
+    padding: 16,
+    position: 'relative',
+  },
+  upgradeCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  upgradeCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    flex: 1,
+    marginLeft: 8,
+    letterSpacing: 0.3,
+  },
+  upgradeCardSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
+  },
+  upgradeCardButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  upgradeCardButtonText: {
+    color: '#1E3A8A',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  
+  // Bottom spacing
+  bottomSpacing: {
+    height: 100,
   },
 });
 

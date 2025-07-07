@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Param, Delete, Put, UseGuards, Request } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -30,6 +31,49 @@ export class UsersController {
   })
   findAll() {
     return this.usersService.findAll();
+  }
+
+  @Get('me')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Lấy thông tin người dùng hiện tại' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Thông tin người dùng hiện tại',
+    type: User
+  })
+  @ApiBearerAuth()
+  getProfile(@Request() req) {
+    return this.usersService.getProfile(req.user.id);
+  }
+
+  @Get('test')
+  @ApiOperation({ summary: 'Test endpoint không cần auth' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Test data',
+    type: User
+  })
+  testProfile() {
+    return {
+      id: 1,
+      name: 'Nguyễn Văn Test',
+      email: 'test@example.com',
+      role: 'relative',
+      active: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  }
+
+  @Get('profile/:id')
+  @ApiOperation({ summary: 'Lấy thông tin người dùng theo ID (test)' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Thông tin người dùng theo ID',
+    type: User
+  })
+  getProfileById(@Param('id') id: string) {
+    return this.usersService.findOne(+id);
   }
 
   @Get(':id')

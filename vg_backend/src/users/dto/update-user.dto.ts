@@ -25,4 +25,10 @@ export class UpdateUserDto {
     enum: ['admin', 'user', 'elderly', 'relative'],
   })
   role?: string;
+
+  @ApiPropertyOptional({
+    description: 'Trạng thái premium của người dùng',
+    example: true,
+  })
+  active?: boolean;
 } 

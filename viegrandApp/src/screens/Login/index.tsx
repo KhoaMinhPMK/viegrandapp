@@ -12,9 +12,11 @@ import {
   Platform,
   ImageBackground,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { StackActions } from '@react-navigation/native';
+import { useAuth } from '../../contexts/AuthContext';
 
 const { width } = Dimensions.get('window');
 
@@ -22,15 +24,32 @@ const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const { login, isLoading } = useAuth();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Lỗi', 'Vui lòng nhập email và mật khẩu.');
       return;
     }
-    // Logic đăng nhập ở đây
-    // Giả lập đăng nhập thành công
-    navigation.dispatch(StackActions.replace('SelectRole'));
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Lỗi', 'Email không hợp lệ.');
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự.');
+      return;
+    }
+
+    console.log('Attempting login with:', { email, password: '***' });
+    const success = await login({ email, password });
+    if (success) {
+      navigation.dispatch(StackActions.replace('SelectRole'));
+    }
   };
 
   return (
@@ -87,8 +106,16 @@ const LoginScreen = ({ navigation }: any) => {
               <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.button} onPress={handleLogin}>
-              <Text style={styles.buttonText}>Đăng nhập</Text>
+            <TouchableOpacity 
+              style={[styles.button, isLoading && styles.buttonDisabled]} 
+              onPress={handleLogin}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text style={styles.buttonText}>Đăng nhập</Text>
+              )}
             </TouchableOpacity>
 
             <View style={styles.registerContainer}>
@@ -210,6 +237,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  buttonDisabled: {
+    backgroundColor: '#B0B0B0',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   registerContainer: {
     flexDirection: 'row',
     marginTop: 40,
@@ -224,4 +256,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginScreen; 
+export default LoginScreen;

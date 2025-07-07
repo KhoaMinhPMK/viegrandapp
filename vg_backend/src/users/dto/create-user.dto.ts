@@ -12,6 +12,13 @@ export class CreateUserDto {
     example: 'nguyenvana@example.com',
   })
   email: string;
+
+  @ApiProperty({
+    description: 'Số điện thoại của người dùng',
+    example: '0123456789',
+    required: false,
+  })
+  phone?: string;
   
   @ApiProperty({
     description: 'Mật khẩu của người dùng',
@@ -25,4 +32,11 @@ export class CreateUserDto {
     enum: ['admin', 'user', 'elderly', 'relative'],
   })
   role: string;
+
+  @ApiProperty({
+    description: 'Trạng thái premium của người dùng',
+    example: false,
+    required: false,
+  })
+  active?: boolean;
 } 
