@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+mỗi khi bạn code xong một task hoặc một feature thì phải kiểm tra lại và nếu như tôi duyệt thì trước khi code task mới thì phải cập nhật code lên github để sao lưu
