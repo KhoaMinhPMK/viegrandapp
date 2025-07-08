@@ -1,12 +1,17 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { PaymentMethod } from '../types/premium';
+import { Platform } from 'react-native';
 
-const API_BASE_URL = 'http://localhost:3000/api';
+// Xác định baseURL dựa trên nền tảng
+// Android emulator sẽ ánh xạ 10.0.2.2 đến localhost của máy host
+const baseURL = Platform.OS === 'android' 
+  ? 'http://10.0.2.2:3000/api' 
+  : 'http://localhost:3000/api';
 
 // Tạo axios instance
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL,
   timeout: 30000, // Tăng timeout lên 30 giây
   headers: {
     'Content-Type': 'application/json',
@@ -391,7 +396,7 @@ export const premiumAPI = {
         description: `Thanh toán gói ${plan.name}`,
         paymentMethod,
         customerInfo,
-        callbackUrl: `${API_BASE_URL}/premium/payment/callback`,
+        callbackUrl: `${baseURL}/premium/payment/callback`,
         returnUrl: 'viegrandapp://payment/result',
       });
 

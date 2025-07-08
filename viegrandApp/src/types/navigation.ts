@@ -31,7 +31,7 @@ export type RelativeStackParamList = {
 
 export type PremiumStackParamList = {
   PremiumHome: undefined;
-  PlanComparison: undefined;
+  PlanComparison: { initialPlanId?: number } | undefined;
   PaymentMethod: { planId: number; billingCycle: string };
   PaymentProcessing: { 
     planId: number; 

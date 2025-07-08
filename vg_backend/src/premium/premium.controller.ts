@@ -20,6 +20,7 @@ import { PaymentService, PaymentInitRequest } from './payment.service';
 import { CreatePremiumPlanDto, UpdatePremiumPlanDto } from './dto/premium-plan.dto';
 import { CreateUserSubscriptionDto, UpdateUserSubscriptionDto, CancelSubscriptionDto } from './dto/user-subscription.dto';
 import { CreatePaymentTransactionDto, PaymentCallbackDto } from './dto/payment-transaction.dto';
+import { PurchaseDto } from './dto/purchase.dto';
 import { PremiumPlan } from './entities/premium-plan.entity';
 import { UserSubscription } from './entities/user-subscription.entity';
 import { PaymentTransaction } from './entities/payment-transaction.entity';
@@ -432,6 +433,29 @@ export class PremiumController {
       success: true,
       data: await this.premiumService.checkExpiredSubscriptions(),
       message: 'Kiểm tra subscription hết hạn thành công'
+    };
+  }
+
+  @Post('purchase')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mua gói Premium (All-in-one)' })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'Xử lý mua gói Premium thành công'
+  })
+  async purchase(@Request() req, @Body() purchaseDto: PurchaseDto) {
+    const result = await this.premiumService.purchase(
+      req.user.id,
+      purchaseDto.planId,
+      purchaseDto.paymentMethod,
+    );
+    return {
+      success: result.success,
+      data: result,
+      message: result.success
+        ? 'Giao dịch thành công!'
+        : `Giao dịch thất bại: ${result.transaction.failureReason}`,
     };
   }
 }

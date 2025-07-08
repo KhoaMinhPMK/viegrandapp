@@ -170,6 +170,12 @@ export interface PremiumContextType {
   // Selected states for purchase flow
   selectedPlan: PremiumPlan | null;
   selectedPaymentMethod: PaymentMethod | null;
+  isPurchasing: boolean;
+  purchaseResult: {
+    success: boolean;
+    subscription: UserSubscription;
+    transaction: PaymentTransaction;
+  } | null;
   
   // Actions
   fetchPlans: () => Promise<void>;
@@ -180,11 +186,11 @@ export interface PremiumContextType {
   // Purchase flow
   selectPlan: (plan: PremiumPlan) => void;
   selectPaymentMethod: (method: PaymentMethod) => void;
-  purchasePremium: (customerInfo: any) => Promise<{
+  purchasePremium: (planId: number, paymentMethod: string) => Promise<{
+    success: boolean;
     subscription: UserSubscription;
     transaction: PaymentTransaction;
-    paymentUrl: string;
-  }>;
+  } | null>;
   
   // Subscription management
   cancelSubscription: (reason: string) => Promise<void>;

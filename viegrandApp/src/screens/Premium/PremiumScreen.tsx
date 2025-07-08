@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { PremiumStackParamList } from '../../types/navigation';
 
 const { width } = Dimensions.get('window');
 
@@ -53,10 +55,10 @@ const CheckIcon = ({ size = 16, color = '#34C759' }) => (
 );
 
 const PremiumScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigationProp<PremiumStackParamList>>();
 
-  const handleUpgrade = () => {
-    Alert.alert('Premium', 'Tính năng đang phát triển...');
+  const handleUpgrade = (planId?: number) => {
+    navigation.navigate('PlanComparison', { initialPlanId: planId });
   };
 
   const handleBack = () => {
@@ -113,7 +115,7 @@ const PremiumScreen: React.FC = () => {
           <Text style={styles.plansTitle}>Chọn gói phù hợp</Text>
           
           {/* Monthly Plan */}
-          <TouchableOpacity style={styles.planCard}>
+          <TouchableOpacity style={styles.planCard} onPress={() => handleUpgrade(1)}>
             <View style={styles.planHeader}>
               <Text style={styles.planName}>Premium Monthly</Text>
               <View style={styles.planPrice}>
@@ -141,7 +143,7 @@ const PremiumScreen: React.FC = () => {
           </TouchableOpacity>
 
           {/* Yearly Plan - Recommended */}
-          <TouchableOpacity style={[styles.planCard, styles.planCardRecommended]}>
+          <TouchableOpacity style={[styles.planCard, styles.planCardRecommended]} onPress={() => handleUpgrade(2)}>
             <View style={styles.recommendedBadge}>
               <Text style={styles.recommendedText}>Được khuyến nghị</Text>
             </View>
@@ -179,7 +181,7 @@ const PremiumScreen: React.FC = () => {
           </TouchableOpacity>
 
           {/* CTA Button */}
-          <TouchableOpacity style={styles.ctaButton} onPress={handleUpgrade}>
+          <TouchableOpacity style={styles.ctaButton} onPress={() => handleUpgrade()}>
             <Text style={styles.ctaButtonText}>Bắt đầu dùng thử</Text>
           </TouchableOpacity>
 

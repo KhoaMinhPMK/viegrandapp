@@ -9,9 +9,10 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { usePremium } from '../../contexts/PremiumContext';
 import { PremiumPlan, PlanComparison } from '../../types/premium';
+import { PremiumStackParamList } from '../../types/navigation';
 
 // Simple icon component
 const Icon: React.FC<{ name: string; size: number; color: string }> = ({ name, size, color }) => {
@@ -148,8 +149,11 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, isSelected, onSelect }) => (
   </TouchableOpacity>
 );
 
+type PlanComparisonScreenRouteProp = RouteProp<PremiumStackParamList, 'PlanComparison'>;
+
 const PlanComparisonScreen: React.FC = () => {
   const navigation = useNavigation();
+  const route = useRoute<PlanComparisonScreenRouteProp>();
   const { 
     plans, 
     loading, 
@@ -159,7 +163,7 @@ const PlanComparisonScreen: React.FC = () => {
     selectPlan 
   } = usePremium();
   
-  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(route.params?.initialPlanId || null);
 
   useEffect(() => {
     fetchPlans();
@@ -172,6 +176,15 @@ const PlanComparisonScreen: React.FC = () => {
       ]);
     }
   }, [error]);
+
+  useEffect(() => {
+    if (selectedPlanId) {
+      const planToSelect = plans.find(p => p.id === selectedPlanId);
+      if (planToSelect) {
+        selectPlan(planToSelect);
+      }
+    }
+  }, [selectedPlanId, plans, selectPlan]);
 
   const featureComparisons: PlanComparisonItemProps[] = [
     // Core Features
@@ -272,7 +285,10 @@ const PlanComparisonScreen: React.FC = () => {
     
     const selectedPlan = plans.find(p => p.id === selectedPlanId);
     if (selectedPlan) {
-      (navigation as any).navigate('PaymentMethod', { planId: selectedPlan.id });
+      (navigation as any).navigate('PaymentMethod', { 
+        planId: selectedPlan.id,
+        billingCycle: selectedPlan.type 
+      });
     }
   };
 

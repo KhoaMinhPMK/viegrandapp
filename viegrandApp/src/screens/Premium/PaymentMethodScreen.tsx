@@ -12,7 +12,7 @@ import {
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { usePremium } from '../../contexts/PremiumContext';
 import { PremiumStackParamList } from '../../types/navigation';
-import { PaymentMethod, PaymentMethodType } from '../../types/premium';
+import { PaymentMethod as PaymentMethodType } from '../../types/premium';
 
 interface PaymentMethodScreenProps {
   navigation: NavigationProp<PremiumStackParamList, 'PaymentMethod'>;
@@ -23,14 +23,21 @@ const PaymentMethodScreen: React.FC<PaymentMethodScreenProps> = ({
   navigation, 
   route 
 }) => {
-  const { planId, billingCycle } = route.params;
-  const { plans, loading } = usePremium();
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodType | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const { planId } = route.params;
+  const { 
+    plans, 
+    loading, 
+    purchasePremium, 
+    isPurchasing,
+    selectPaymentMethod,
+    selectedPlan
+  } = usePremium();
 
-  const selectedPlan = plans.find((plan) => plan.id === planId);
+  const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
 
-  const paymentMethods: PaymentMethod[] = [
+  const plan = selectedPlan || plans.find((p) => p.id === planId);
+  
+  const paymentMethods: PaymentMethodType[] = [
     {
       id: 'credit_card',
       type: 'credit_card',
@@ -84,31 +91,22 @@ const PaymentMethodScreen: React.FC<PaymentMethodScreenProps> = ({
   ];
 
   const handlePaymentMethodSelect = (method: PaymentMethodType) => {
-    setSelectedMethod(method);
+    setSelectedMethodId(method.id);
+    selectPaymentMethod(method);
   };
 
   const handleProceedToPayment = async () => {
-    if (!selectedMethod || !selectedPlan) {
+    if (!selectedMethodId || !plan) {
       Alert.alert('Lỗi', 'Vui lòng chọn phương thức thanh toán');
       return;
     }
 
-    setIsProcessing(true);
-    
-    try {
-      // Navigate to payment processing screen
-      navigation.navigate('PaymentProcessing', {
-        planId,
-        billingCycle,
-        paymentMethod: selectedMethod,
-        amount: selectedPlan.price,
-      });
-    } catch (error) {
-      console.error('Payment navigation error:', error);
-      Alert.alert('Lỗi', 'Có lỗi xảy ra khi chuyển đến trang thanh toán');
-    } finally {
-      setIsProcessing(false);
-    }
+    navigation.navigate('PaymentProcessing', {
+      planId: plan.id,
+      paymentMethod: selectedMethodId,
+      amount: plan.price,
+      billingCycle: plan.type,
+    });
   };
 
   const formatPrice = (price: number): string => {
@@ -118,20 +116,18 @@ const PaymentMethodScreen: React.FC<PaymentMethodScreenProps> = ({
     }).format(price);
   };
 
-  const getBillingCycleText = (cycle: string): string => {
-    switch (cycle) {
+  const getBillingCycleText = (type: string): string => {
+    switch (type) {
       case 'monthly':
         return 'hàng tháng';
-      case 'quarterly':
-        return 'hàng quý';
       case 'yearly':
         return 'hàng năm';
       default:
-        return cycle;
+        return 'một lần';
     }
   };
 
-  if (loading || !selectedPlan) {
+  if (loading || !plan) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -161,20 +157,20 @@ const PaymentMethodScreen: React.FC<PaymentMethodScreenProps> = ({
           <Text style={styles.summaryTitle}>Đơn hàng của bạn</Text>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Gói dịch vụ:</Text>
-            <Text style={styles.summaryValue}>{selectedPlan.name}</Text>
+            <Text style={styles.summaryValue}>{plan.name}</Text>
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Chu kỳ thanh toán:</Text>
-            <Text style={styles.summaryValue}>{getBillingCycleText(billingCycle)}</Text>
+            <Text style={styles.summaryValue}>{getBillingCycleText(plan.type)}</Text>
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Giá:</Text>
-            <Text style={styles.summaryValue}>{formatPrice(selectedPlan.price)}</Text>
+            <Text style={styles.summaryValue}>{formatPrice(plan.price)}</Text>
           </View>
           <View style={styles.summaryDivider} />
           <View style={styles.summaryItem}>
             <Text style={styles.summaryTotalLabel}>Tổng thanh toán:</Text>
-            <Text style={styles.summaryTotalValue}>{formatPrice(selectedPlan.price)}</Text>
+            <Text style={styles.summaryTotalValue}>{formatPrice(plan.price)}</Text>
           </View>
         </View>
 
@@ -186,10 +182,10 @@ const PaymentMethodScreen: React.FC<PaymentMethodScreenProps> = ({
               key={method.id}
               style={[
                 styles.paymentMethodItem,
-                selectedMethod === method.type && styles.selectedPaymentMethod,
+                selectedMethodId === method.id && styles.selectedPaymentMethod,
                 !method.isAvailable && styles.disabledPaymentMethod,
               ]}
-              onPress={() => method.isAvailable && handlePaymentMethodSelect(method.type)}
+              onPress={() => method.isAvailable && handlePaymentMethodSelect(method)}
               disabled={!method.isAvailable}
             >
               <View style={styles.paymentMethodContent}>
@@ -216,7 +212,7 @@ const PaymentMethodScreen: React.FC<PaymentMethodScreenProps> = ({
                   )}
                 </View>
                 <View style={styles.paymentMethodSelector}>
-                  {selectedMethod === method.type && (
+                  {selectedMethodId === method.id && (
                     <View style={styles.selectedIndicator}>
                       <Text style={styles.selectedIndicatorText}>✓</Text>
                     </View>
@@ -245,12 +241,12 @@ const PaymentMethodScreen: React.FC<PaymentMethodScreenProps> = ({
         <TouchableOpacity
           style={[
             styles.continueButton,
-            (!selectedMethod || isProcessing) && styles.disabledButton,
+            (!selectedMethodId || isPurchasing) && styles.disabledButton,
           ]}
           onPress={handleProceedToPayment}
-          disabled={!selectedMethod || isProcessing}
+          disabled={!selectedMethodId || isPurchasing}
         >
-          {isProcessing ? (
+          {isPurchasing ? (
             <ActivityIndicator color="#FFFFFF" size="small" />
           ) : (
             <Text style={styles.continueButtonText}>

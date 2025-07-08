@@ -1,11 +1,21 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, forwardRef, Inject } from '@nestjs/common';
 import { CreatePremiumPlanDto, UpdatePremiumPlanDto } from './dto/premium-plan.dto';
 import { CreateUserSubscriptionDto, UpdateUserSubscriptionDto, CancelSubscriptionDto } from './dto/user-subscription.dto';
 import { PremiumPlan } from './entities/premium-plan.entity';
 import { UserSubscription } from './entities/user-subscription.entity';
+import { PaymentService } from './payment.service';
+import { NotificationService } from './notification.service';
+import { PaymentTransaction } from './entities/payment-transaction.entity';
 
 @Injectable()
 export class PremiumService {
+  constructor(
+    @Inject(forwardRef(() => PaymentService))
+    private readonly paymentService: PaymentService,
+    @Inject(forwardRef(() => NotificationService))
+    private readonly notificationService: NotificationService,
+  ) {}
+
   private premiumPlans: PremiumPlan[] = [
     {
       id: 1,
@@ -344,5 +354,79 @@ export class PremiumService {
     };
 
     return stats;
+  }
+
+  async purchase(userId: number, planId: number, paymentMethod: string): Promise<any> {
+    const plan = await this.getPlanById(planId);
+    if (!plan) {
+      throw new NotFoundException(`Không tìm thấy gói Premium với ID ${planId}`);
+    }
+
+    // 1. Tạo subscription ở trạng thái 'pending'
+    const subscription = await this.createSubscription({
+      userId,
+      planId,
+      paymentMethod,
+      autoRenewal: true,
+    });
+    await this.notificationService.notifySubscriptionCreated(subscription);
+
+    // 2. Tạo transaction
+    const transaction = await this.paymentService.createTransaction({
+      userId,
+      subscriptionId: subscription.id,
+      planId,
+      amount: plan.price,
+      paymentMethod,
+      type: 'subscription',
+      description: `Thanh toán cho gói ${plan.name}`,
+    });
+
+    // 3. Khởi tạo và mô phỏng thanh toán
+    // Trong một ứng dụng thực tế, đây là lúc bạn sẽ trả về paymentUrl cho client
+    // Ở đây, chúng ta mô phỏng và chờ kết quả luôn
+    const paymentResult = await this.paymentService.initiatePayment(transaction.id, {
+      amount: plan.price,
+      currency: 'VND',
+      description: `Thanh toán cho gói ${plan.name}`,
+      paymentMethod,
+      customerInfo: { name: 'Test User', email: 'test@example.com' }, // Cần lấy thông tin user thật
+      callbackUrl: 'mock_callback_url',
+      returnUrl: 'mock_return_url',
+    });
+
+    // Chờ kết quả mô phỏng từ payment service
+    const finalTransaction = await new Promise<PaymentTransaction>((resolve) => {
+      const checkStatus = async () => {
+        const currentTransaction = await this.paymentService.getTransactionById(transaction.id);
+        if (currentTransaction.status === 'completed' || currentTransaction.status === 'failed') {
+          resolve(currentTransaction);
+        } else {
+          setTimeout(checkStatus, 500); // Kiểm tra lại sau mỗi 500ms
+        }
+      };
+      setTimeout(checkStatus, 1000); // Bắt đầu kiểm tra sau 1s
+    });
+    
+    // 4. Cập nhật trạng thái subscription dựa trên kết quả thanh toán
+    if (finalTransaction.status === 'completed') {
+      const updatedSubscription = await this.updateSubscription(subscription.id, {
+        status: 'active',
+        paidAmount: finalTransaction.amount,
+        transactionId: finalTransaction.transactionCode,
+      });
+      await this.notificationService.notifySubscriptionActivated(updatedSubscription);
+      await this.notificationService.notifyPaymentCompleted(finalTransaction);
+    } else {
+      await this.notificationService.notifyPaymentFailed(finalTransaction);
+    }
+
+    // 5. Trả về kết quả cuối cùng
+    return {
+      success: finalTransaction.status === 'completed',
+      subscription,
+      transaction: finalTransaction,
+      paymentUrl: paymentResult.paymentUrl, // Vẫn trả về URLเผื่อ client muốn dùng
+    };
   }
 }
