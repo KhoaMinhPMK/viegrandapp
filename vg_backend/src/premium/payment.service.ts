@@ -218,6 +218,42 @@ export class PaymentService {
     return await this.initiatePayment(transactionId, paymentRequest);
   }
 
+  async getTransactionStats(userId?: number): Promise<any> {
+    const transactions = userId 
+      ? this.paymentTransactions.filter(t => t.userId === userId)
+      : this.paymentTransactions;
+
+    const stats = {
+      total: transactions.length,
+      completed: transactions.filter(t => t.status === 'completed').length,
+      pending: transactions.filter(t => t.status === 'pending').length,
+      failed: transactions.filter(t => t.status === 'failed').length,
+      totalAmount: transactions
+        .filter(t => t.status === 'completed')
+        .reduce((sum, t) => sum + t.amount, 0)
+    };
+
+    return stats;
+  }
+
+  // Additional methods for scheduler
+  async getExpiredTransactions(): Promise<PaymentTransaction[]> {
+    const now = new Date();
+    return this.paymentTransactions.filter(t => 
+      t.status === 'pending' && t.expiresAt < now
+    );
+  }
+
+  async cleanupOldTransactions(): Promise<void> {
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+    // Remove old completed/failed transactions older than 1 year
+    this.paymentTransactions = this.paymentTransactions.filter(t => 
+      !(['completed', 'failed'].includes(t.status) && t.createdAt < oneYearAgo)
+    );
+  }
+
   // Mock payment simulation
   private async simulatePaymentResult(transactionId: number, successRate: number): Promise<void> {
     const transaction = this.paymentTransactions.find(t => t.id === transactionId);
@@ -292,23 +328,5 @@ export class PaymentService {
         isAvailable: config.enabled,
         processingFee: 0
       }));
-  }
-
-  async getTransactionStats(userId?: number): Promise<any> {
-    const transactions = userId 
-      ? this.paymentTransactions.filter(t => t.userId === userId)
-      : this.paymentTransactions;
-
-    const stats = {
-      total: transactions.length,
-      completed: transactions.filter(t => t.status === 'completed').length,
-      pending: transactions.filter(t => t.status === 'pending').length,
-      failed: transactions.filter(t => t.status === 'failed').length,
-      totalAmount: transactions
-        .filter(t => t.status === 'completed')
-        .reduce((sum, t) => sum + t.amount, 0)
-    };
-
-    return stats;
   }
 }

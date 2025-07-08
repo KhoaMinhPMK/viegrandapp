@@ -267,4 +267,82 @@ export class PremiumService {
 
     return expiredSubscriptions;
   }
+
+  // Additional methods for scheduler
+  async getExpiringSubscriptions(): Promise<UserSubscription[]> {
+    const now = new Date();
+    const sevenDaysFromNow = new Date(now);
+    sevenDaysFromNow.setDate(now.getDate() + 7);
+
+    return this.userSubscriptions.filter(sub => 
+      sub.status === 'active' && 
+      sub.endDate > now && 
+      sub.endDate <= sevenDaysFromNow
+    );
+  }
+
+  async getSubscriptionsForAutoRenewal(): Promise<UserSubscription[]> {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
+
+    return this.userSubscriptions.filter(sub => 
+      sub.status === 'active' && 
+      sub.autoRenewal && 
+      sub.endDate <= tomorrow
+    );
+  }
+
+  async incrementFailedPaymentAttempts(subscriptionId: number): Promise<void> {
+    const subscription = this.userSubscriptions.find(sub => sub.id === subscriptionId);
+    if (subscription) {
+      subscription.failedPaymentAttempts++;
+      subscription.updatedAt = new Date();
+      
+      // Disable auto-renewal if failed attempts exceed 3
+      if (subscription.failedPaymentAttempts >= 3) {
+        subscription.autoRenewal = false;
+      }
+    }
+  }
+
+  async cleanupOldSubscriptions(): Promise<void> {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    // Remove cancelled subscriptions older than 6 months
+    this.userSubscriptions = this.userSubscriptions.filter(sub => 
+      !(sub.status === 'cancelled' && sub.cancelledAt && new Date(sub.cancelledAt) < sixMonthsAgo)
+    );
+  }
+
+  async getSubscriptionStats(): Promise<{
+    total: number;
+    active: number;
+    expired: number;
+    cancelled: number;
+    totalRevenue: number;
+    monthlyRevenue: number;
+  }> {
+    const now = new Date();
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const stats = {
+      total: this.userSubscriptions.length,
+      active: this.userSubscriptions.filter(sub => sub.status === 'active').length,
+      expired: this.userSubscriptions.filter(sub => sub.status === 'expired').length,
+      cancelled: this.userSubscriptions.filter(sub => sub.status === 'cancelled').length,
+      totalRevenue: this.userSubscriptions
+        .filter(sub => sub.status === 'active' || sub.status === 'expired')
+        .reduce((sum, sub) => sum + sub.paidAmount, 0),
+      monthlyRevenue: this.userSubscriptions
+        .filter(sub => 
+          (sub.status === 'active' || sub.status === 'expired') && 
+          sub.createdAt >= thisMonth
+        )
+        .reduce((sum, sub) => sum + sub.paidAmount, 0)
+    };
+
+    return stats;
+  }
 }

@@ -16,7 +16,15 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "premium:dev": "yarn build; yarn start:dev",
+    "premium:test": "yarn test premium",
+    "premium:check": "yarn lint; yarn format; yarn test",
+    "dev": "yarn start:dev",
+    "prod": "yarn build; yarn start:prod",
+    "setup": "yarn install; cp .env.example .env",
+    "clean": "rm -rf dist node_modules",
+    "reset": "yarn clean; yarn setup"
   },
   "keywords": [
     "nestjs",
@@ -33,6 +41,7 @@
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.3",
+    "@nestjs/schedule": "^6.0.0",
     "@nestjs/swagger": "^11.2.0",
     "@types/bcrypt": "^5.0.2",
     "@types/passport-jwt": "^4.0.1",

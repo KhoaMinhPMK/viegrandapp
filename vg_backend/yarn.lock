@@ -617,6 +617,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nestjs/schedule@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "@nestjs/schedule@npm:6.0.0"
+  dependencies:
+    cron: 4.3.0
+  peerDependencies:
+    "@nestjs/common": ^10.0.0 || ^11.0.0
+    "@nestjs/core": ^10.0.0 || ^11.0.0
+  checksum: 0adadc62838af60ef8800d7dc18ec99378fb13b6b6bacbba1b0b7cd035d4c4674d7494202018456657b2f263577eb20a4cf4e0247be24412cabd253b2f8f6eb0
+  languageName: node
+  linkType: hard
+
 "@nestjs/schematics@npm:^11.0.1":
   version: 11.0.5
   resolution: "@nestjs/schematics@npm:11.0.5"
@@ -851,6 +863,13 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: 872b62e2a50ec399d695402ccddfeb5cd66a6c3d28511f27453b932b6b67eb82c2d0ecaa864939848b88b3a8276c2492647bf5707bc82a6ac7e420d3412b9047
+  languageName: node
+  linkType: hard
+
+"@types/luxon@npm:~3.6.0":
+  version: 3.6.2
+  resolution: "@types/luxon@npm:3.6.2"
+  checksum: fa7bf7d74544c77c2010739337d359c5d6f9b0424de0e0eb273f7bae203996168cc33c2ad6f3b35771eac8fea8b7e5bcce72b91d129924d0f84b91dc216de42e
   languageName: node
   linkType: hard
 
@@ -1775,6 +1794,16 @@ __metadata:
   version: 1.1.1
   resolution: "create-require@npm:1.1.1"
   checksum: a9a1503d4390d8b59ad86f4607de7870b39cad43d929813599a23714831e81c520bddf61bcdd1f8e30f05fd3a2b71ae8538e946eb2786dc65c2bbc520f692eff
+  languageName: node
+  linkType: hard
+
+"cron@npm:4.3.0":
+  version: 4.3.0
+  resolution: "cron@npm:4.3.0"
+  dependencies:
+    "@types/luxon": ~3.6.0
+    luxon: ~3.6.0
+  checksum: 3577c759190bae89708bef65237cae8b393f3bce46b3457f292318a989dc8a7ae3a5ef7c3bff676567175a33176d94391164598c71ac8477af7c413047badd39
   languageName: node
   linkType: hard
 
@@ -2851,6 +2880,13 @@ __metadata:
   version: 11.1.0
   resolution: "lru-cache@npm:11.1.0"
   checksum: 6274e90b5fdff87570fe26fe971467a5ae1f25f132bebe187e71c5627c7cd2abb94b47addd0ecdad034107667726ebde1abcef083d80f2126e83476b2c4e7c82
+  languageName: node
+  linkType: hard
+
+"luxon@npm:~3.6.0":
+  version: 3.6.1
+  resolution: "luxon@npm:3.6.1"
+  checksum: bc6c24dde90f4263f548cc5a4ea3328e9c9511bee0b2255bd319639712862f1eb14a39c1b2dcbff8a8bf6686996d28f45b8fc902994a72dd05a29cef1269a6a4
   languageName: node
   linkType: hard
 
@@ -4417,6 +4453,7 @@ __metadata:
     "@nestjs/jwt": ^11.0.0
     "@nestjs/passport": ^11.0.5
     "@nestjs/platform-express": ^11.1.3
+    "@nestjs/schedule": ^6.0.0
     "@nestjs/swagger": ^11.2.0
     "@types/bcrypt": ^5.0.2
     "@types/express": ^5.0.3

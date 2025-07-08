@@ -393,4 +393,45 @@ export class PremiumController {
       message: 'Kiểm tra subscription hết hạn thành công'
     };
   }
+
+  // Manual scheduler control endpoints (for development/testing)
+  @Post('admin/scheduler/run-check')
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Chạy kiểm tra scheduler thủ công (Admin only)' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Kết quả kiểm tra scheduler'
+  })
+  async runManualSchedulerCheck() {
+    // Import scheduler service dynamically to avoid circular dependency
+    const { SchedulerService } = await import('./scheduler.service');
+    const schedulerService = new SchedulerService(
+      this.premiumService,
+      this.paymentService,
+      new (await import('./notification.service')).NotificationService()
+    );
+    
+    return {
+      success: true,
+      data: await schedulerService.runManualCheck(),
+      message: 'Kiểm tra scheduler thủ công thành công'
+    };
+  }
+
+  @Post('admin/scheduler/check-expired')
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Kiểm tra subscription hết hạn (Admin only)' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Danh sách subscription hết hạn'
+  })
+  async checkExpiredSubscriptionsManually() {
+    return {
+      success: true,
+      data: await this.premiumService.checkExpiredSubscriptions(),
+      message: 'Kiểm tra subscription hết hạn thành công'
+    };
+  }
 }
