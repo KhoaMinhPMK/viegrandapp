@@ -107,17 +107,25 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 planId,
                 paymentMethod,
             });
-            
+
+            // Set result regardless of success or failure
             setPurchaseResult(response.data.data);
+
             if (response.data.success) {
-                // Cập nhật lại trạng thái premium và giao dịch sau khi mua thành công
+                // On success, clear any previous error and refresh data
+                setError(null);
                 await fetchPremiumStatus();
                 await fetchTransactions();
+            } else {
+                // On logical failure, set the error message from the server
+                setError(response.data.message || 'Giao dịch không thành công.');
             }
+            
             return response.data.data;
 
         } catch (err: any) {
-            const errorMessage = err.response?.data?.message || err.message || 'Đã có lỗi xảy ra khi thực hiện thanh toán.';
+            // Handle network or server errors
+            const errorMessage = err.response?.data?.message || err.message || 'Đã có lỗi mạng xảy ra.';
             setError(errorMessage);
             const result = err.response?.data?.data || { success: false, transaction: null };
             setPurchaseResult(result);
