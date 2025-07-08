@@ -73,7 +73,7 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const fetchTransactions = async () => {
         setLoading(true);
         try {
-            const response = await apiClient.get('/premium/my-transactions');
+            const response = await apiClient.get('/premium/payment/my-transactions');
             if (response.data.success) {
                 setTransactions(response.data.data);
             }
