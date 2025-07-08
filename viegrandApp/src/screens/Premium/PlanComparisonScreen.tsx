@@ -94,60 +94,72 @@ interface PlanCardProps {
   onSelect: () => void;
 }
 
-const PlanCard: React.FC<PlanCardProps> = ({ plan, isSelected, onSelect }) => (
-  <TouchableOpacity
-    style={[
-      styles.planCard,
-      isSelected && styles.planCardSelected,
-      plan.isRecommended && styles.planCardRecommended,
-    ]}
-    onPress={onSelect}
-  >
-    {plan.isRecommended && (
-      <View style={styles.recommendedBadge}>
-        <Icon name="star" size={12} color="#fff" />
-        <Text style={styles.recommendedText}>KHUYẾN NGHỊ</Text>
-      </View>
-    )}
-    
-    <View style={styles.planHeader}>
-      <Text style={styles.planName}>{plan.name}</Text>
-      <View style={styles.planPrice}>
-        <Text style={styles.planPriceAmount}>
-          {plan.price.toLocaleString('vi-VN')}đ
-        </Text>
-        <Text style={styles.planPricePeriod}>
-          /{plan.type === 'monthly' ? 'tháng' : 'năm'}
-        </Text>
-      </View>
-      
-      {plan.discountPercent && plan.discountPercent > 0 && (
+const PlanCard: React.FC<PlanCardProps> = ({ plan, isSelected, onSelect }) => {
+  // --- Logic and data preparation ---
+  const priceText = `${plan.price.toLocaleString('vi-VN')}đ`;
+  const periodText = `/${plan.type === 'monthly' ? 'tháng' : 'năm'}`;
+  
+  const recommendationNode = plan.isRecommended
+    ? (
+        <View style={styles.recommendedBadge}>
+          <Icon name="star" size={12} color="#fff" />
+          <Text style={styles.recommendedText}>KHUYẾN NGHỊ</Text>
+        </View>
+      )
+    : null;
+
+  const discountNode = (plan.discountPercent && plan.discountPercent > 0)
+    ? (
         <View style={styles.discountBadge}>
           <Text style={styles.discountText}>
-            Tiết kiệm {plan.discountPercent}%
+            {`Tiết kiệm ${plan.discountPercent}%`}
           </Text>
         </View>
-      )}
-    </View>
+      )
+    : null;
     
-    <Text style={styles.planDescription}>{plan.description}</Text>
-    
+  const buttonText = isSelected ? 'Đã chọn' : 'Chọn gói này';
+
+  // --- JSX return ---
+  return (
     <TouchableOpacity
       style={[
-        styles.selectButton,
-        isSelected && styles.selectButtonSelected,
+        styles.planCard,
+        isSelected && styles.planCardSelected,
+        plan.isRecommended && styles.planCardRecommended,
       ]}
       onPress={onSelect}
     >
-      <Text style={[
-        styles.selectButtonText,
-        isSelected && styles.selectButtonTextSelected,
-      ]}>
-        {isSelected ? 'Đã chọn' : 'Chọn gói này'}
-      </Text>
+      {recommendationNode}
+      
+      <View style={styles.planHeader}>
+        <Text style={styles.planName}>{plan.name}</Text>
+        <View style={styles.planPrice}>
+          <Text style={styles.planPriceAmount}>{priceText}</Text>
+          <Text style={styles.planPricePeriod}>{periodText}</Text>
+        </View>
+        {discountNode}
+      </View>
+      
+      <Text style={styles.planDescription}>{plan.description}</Text>
+      
+      <TouchableOpacity
+        style={[
+          styles.selectButton,
+          isSelected && styles.selectButtonSelected,
+        ]}
+        onPress={onSelect}
+      >
+        <Text style={[
+          styles.selectButtonText,
+          isSelected && styles.selectButtonTextSelected,
+        ]}>
+          {buttonText}
+        </Text>
+      </TouchableOpacity>
     </TouchableOpacity>
-  </TouchableOpacity>
-);
+  );
+};
 
 type PlanComparisonScreenRouteProp = RouteProp<PremiumStackParamList, 'PlanComparison'>;
 
