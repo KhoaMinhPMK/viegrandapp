@@ -25,8 +25,8 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const App = () => {
   return (
-    <AuthProvider>
-      <PremiumProvider>
+    <PremiumProvider>
+      <AuthProvider>
         <VoiceProvider>
           <NavigationContainer>
             <Stack.Navigator screenOptions={{headerShown: false}}>
@@ -39,8 +39,8 @@ const App = () => {
             </Stack.Navigator>
           </NavigationContainer>
         </VoiceProvider>
-      </PremiumProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </PremiumProvider>
   );
 };
 
