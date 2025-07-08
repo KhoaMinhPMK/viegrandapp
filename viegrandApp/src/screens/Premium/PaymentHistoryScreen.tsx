@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { NavigationProp } from '@react-navigation/native';
+import { NavigationProp, useFocusEffect } from '@react-navigation/native';
 import { usePremium } from '../../contexts/PremiumContext';
 import { PremiumStackParamList } from '../../types/navigation';
 import { PaymentTransaction } from '../../types/premium';
@@ -24,9 +24,11 @@ const PaymentHistoryScreen: React.FC<PaymentHistoryScreenProps> = ({ navigation 
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'all' | 'completed' | 'failed' | 'pending'>('all');
 
-  useEffect(() => {
-    fetchTransactions();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchTransactions();
+    }, [])
+  );
 
   const handleRefresh = async () => {
     setRefreshing(true);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,8 @@ import Feather from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
 import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { usersAPI, User } from '../../../services/api';
-import { usePremium, useIsPremium } from '../../../contexts/PremiumContext';
+import { usePremium } from '../../../contexts/PremiumContext';
+import { useFocusEffect } from '@react-navigation/native';
 
 // Import asset utilities
 import { BackgroundImages, getWeatherIcon } from '../../../utils/assetUtils';
@@ -35,24 +36,20 @@ const ElderlyHomeScreen = ({ navigation }: any) => {
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // Premium Context - with error handling
-  let premiumStatus = null;
-  let isPremium = false;
-  let fetchPremiumStatus = () => {};
-  
-  try {
-    const premiumContext = usePremium();
-    premiumStatus = premiumContext.premiumStatus;
-    fetchPremiumStatus = premiumContext.fetchPremiumStatus;
-    isPremium = useIsPremium();
-  } catch (error) {
-    console.log('Premium context not available yet:', error);
-  }
+  const { premiumStatus, fetchPremiumStatus } = usePremium();
+  const isPremium = premiumStatus?.isPremium || false;
 
-  useEffect(() => {
-    loadUserProfile();
-    fetchPremiumStatus();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const loadData = async () => {
+        setLoading(true);
+        await loadUserProfile();
+        await fetchPremiumStatus();
+        setLoading(false);
+      };
+      loadData();
+    }, [])
+  );
 
   const loadUserProfile = async () => {
     try {
@@ -315,26 +312,26 @@ const ElderlyHomeScreen = ({ navigation }: any) => {
           <View style={styles.userInfo}>
             <View style={[
               styles.avatarContainer,
-              userInfo.isActive ? styles.premiumAvatar : styles.normalAvatar
+              isPremium ? styles.premiumAvatar : styles.normalAvatar
             ]}>
-              {userInfo.isActive ? (
+              {isPremium ? (
                 <LinearGradient
                   colors={['#007AFF', '#5856D6']}
                   style={styles.avatarGradient}>
                   <Text style={styles.avatarText}>
-                    {getAvatarText(userInfo.fullName)}
+                    {getAvatarText(userProfile?.name || '')}
                   </Text>
                 </LinearGradient>
               ) : (
                 <Text style={styles.avatarTextNormal}>
-                  {getAvatarText(userInfo.fullName)}
+                  {getAvatarText(userProfile?.name || '')}
                 </Text>
               )}
             </View>
             <View style={styles.userDetails}>
-              <Text style={styles.userName}>{userInfo.fullName}</Text>
+              <Text style={styles.userName}>{userProfile?.name || 'Đang tải...'}</Text>
               <View style={styles.statusContainer}>
-                {userInfo.isActive ? (
+                {isPremium ? (
                   <LinearGradient
                     colors={['#007AFF', '#5856D6']}
                     style={styles.premiumBadge}>
@@ -397,8 +394,8 @@ const ElderlyHomeScreen = ({ navigation }: any) => {
                       <Svg width="100%" height="100%" viewBox="0 0 342 175" style={styles.trapezoidSvg}>
                         <Defs>
                           <SvgLinearGradient id="weatherGradient" x1="0" y1="0" x2="1" y2="0">
-                            <Stop offset="0" stopColor={userInfo.isActive ? '#007AFF' : '#6c757d'} />
-                            <Stop offset="1" stopColor={userInfo.isActive ? '#5856D6' : '#343a40'} />
+                            <Stop offset="0" stopColor={isPremium ? '#007AFF' : '#6c757d'} />
+                            <Stop offset="1" stopColor={isPremium ? '#5856D6' : '#343a40'} />
                           </SvgLinearGradient>
                         </Defs>
                         <Path
