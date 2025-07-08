@@ -25,33 +25,20 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
   navigation, 
   route 
 }) => {
-  const { planId, billingCycle, paymentMethod, amount } = route.params;
-  const { 
-    plans, 
-    purchasePremium, 
-    isPurchasing, 
-    purchaseResult, 
-    error 
-  } = usePremium();
+  const { planId, paymentMethod, amount } = route.params;
+  const { plans, purchasePremium } = usePremium();
   
-  const [statusMessage, setStatusMessage] = useState('Đang khởi tạo thanh toán...');
+  const [statusMessage, setStatusMessage] = useState('Đang khởi tạo giao dịch...');
   const [animatedValue] = useState(new Animated.Value(0));
 
   const selectedPlan = plans.find((plan) => plan.id === planId);
 
-  // Effect to start payment process
   useEffect(() => {
-    purchasePremium(planId, paymentMethod);
-  }, [planId, paymentMethod]);
+    const process = async () => {
+      setStatusMessage('Đang xử lý thanh toán...');
+      const result = await purchasePremium(planId, paymentMethod);
 
-  // Effect for UI updates and navigation
-  useEffect(() => {
-    if (isPurchasing) {
-      setStatusMessage('Đang xử lý giao dịch...');
-    }
-
-    if (!isPurchasing && purchaseResult) {
-      if (purchaseResult.success) {
+      if (result && result.success) {
         setStatusMessage('Thanh toán thành công!');
         setTimeout(() => {
           navigation.reset({
@@ -59,30 +46,32 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
             routes: [{
               name: 'PaymentSuccess',
               params: {
-                transactionId: purchaseResult.transaction.transactionCode,
+                transactionId: result.transaction.transactionCode,
                 planName: selectedPlan?.name || 'Premium',
               }
             }]
           });
-        }, 1500);
+        }, 800);
       } else {
-        setStatusMessage(error || 'Thanh toán thất bại');
+        setStatusMessage('Thanh toán thất bại. Vui lòng thử lại.');
         setTimeout(() => {
           navigation.reset({
             index: 0,
             routes: [{
               name: 'PaymentFailed',
               params: {
-                transactionId: purchaseResult.transaction?.transactionCode || 'N/A',
-                error: purchaseResult.transaction?.failureReason || error || 'Unknown error',
+                transactionId: result?.transaction?.transactionCode || 'N/A',
+                error: result?.transaction?.failureReason || 'Lỗi không xác định',
               }
             }]
           });
-        }, 1500);
+        }, 1200);
       }
-    }
-  }, [isPurchasing, purchaseResult, navigation, selectedPlan, error]);
-  
+    };
+
+    process();
+  }, [planId, paymentMethod]);
+
   // Animation effect
   useEffect(() => {
     Animated.loop(
@@ -93,6 +82,10 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
     ).start();
   }, []);
 
+  const pulseAnimation = animatedValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.9, 1.1],
+  });
 
   const handleCancel = () => {
     Alert.alert(
@@ -125,25 +118,6 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
     }
   };
   
-  const step = isPurchasing ? 'processing' : purchaseResult?.success ? 'completed' : 'failed';
-
-  const getStepColor = (currentStep: string) => {
-    if (currentStep === 'completed') return '#4CAF50';
-    if (currentStep === 'failed') return '#f44336';
-    return '#2196F3';
-  };
-
-  const getStepIcon = (currentStep: string) => {
-    if (currentStep === 'completed') return '✅';
-    if (currentStep === 'failed') return '❌';
-    return '⏳';
-  };
-
-  const pulseAnimation = animatedValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.8, 1.2],
-  });
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -156,61 +130,23 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
           <Animated.View
             style={[
               styles.processingCircle,
-              {
-                backgroundColor: getStepColor(step),
-                transform: [{ scale: pulseAnimation }],
-              },
+              { transform: [{ scale: pulseAnimation }] },
             ]}
           >
-            <Text style={styles.processingIcon}>{getStepIcon(step)}</Text>
+            <Text style={styles.processingIcon}>⏳</Text>
           </Animated.View>
         </View>
-
-        {isPurchasing && <ActivityIndicator size="large" color="#2196F3" />}
         
-        <Text style={[styles.statusMessage, { color: getStepColor(step) }]}>
-          {statusMessage}
-        </Text>
+        <Text style={styles.statusMessage}>{statusMessage}</Text>
+        <ActivityIndicator size="large" color="#2196F3" style={{ marginTop: 20 }} />
 
-        <View style={styles.transactionDetails}>
-          <Text style={styles.detailsTitle}>Chi tiết giao dịch</Text>
-          
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Gói dịch vụ:</Text>
-            <Text style={styles.detailValue}>{selectedPlan?.name || 'Premium'}</Text>
-          </View>
-          
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Số tiền:</Text>
-            <Text style={styles.detailValue}>{formatPrice(amount)}</Text>
-          </View>
-          
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Phương thức:</Text>
-            <Text style={styles.detailValue}>{getPaymentMethodName(paymentMethod)}</Text>
-          </View>
-          
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Chu kỳ:</Text>
-            <Text style={styles.detailValue}>{billingCycle}</Text>
-          </View>
-
-          {purchaseResult?.transaction && (
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Mã giao dịch:</Text>
-              <Text style={styles.detailValue}>{purchaseResult.transaction.transactionCode}</Text>
-            </View>
-          )}
-        </View>
       </View>
 
-      {isPurchasing && (
-        <View style={styles.cancelContainer}>
-          <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-            <Text style={styles.cancelButtonText}>Hủy giao dịch</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      <View style={styles.cancelContainer}>
+        <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+          <Text style={styles.cancelButtonText}>Hủy giao dịch</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -223,7 +159,8 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 20,
-    justifyContent: 'center'
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     alignItems: 'center',
@@ -242,7 +179,7 @@ const styles = StyleSheet.create({
   },
   animationContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginVertical: 40,
   },
   processingCircle: {
     width: 120,
@@ -250,6 +187,7 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#2196F3',
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -264,38 +202,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginVertical: 20,
-  },
-  transactionDetails: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    marginTop: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
-  },
-  detailsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  detailLabel: {
-    fontSize: 16,
-    color: '#666',
-  },
-  detailValue: {
-    fontSize: 16,
-    fontWeight: '500',
     color: '#333',
   },
   cancelContainer: {
