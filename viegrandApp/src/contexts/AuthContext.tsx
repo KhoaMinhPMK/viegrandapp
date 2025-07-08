@@ -11,6 +11,7 @@ interface AuthContextType {
   register: (userData: RegisterRequest) => Promise<boolean>;
   logout: () => Promise<void>;
   refreshUserProfile: () => Promise<void>;
+  updateCurrentUser: (updatedUser: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -134,6 +135,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateCurrentUser = (updatedUser: User) => {
+    setUser(updatedUser);
+    storageUtils.saveUser(updatedUser);
+  };
+
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
@@ -142,6 +148,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     refreshUserProfile,
+    updateCurrentUser,
   };
 
   return (

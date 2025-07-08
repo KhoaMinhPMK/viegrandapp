@@ -11,7 +11,7 @@ export class User {
     description: 'Tên đầy đủ của người dùng',
     example: 'Nguyễn Văn A',
   })
-  name: string;
+  fullName: string;
 
   @ApiProperty({
     description: 'Địa chỉ email của người dùng',
@@ -39,6 +39,25 @@ export class User {
   role: string;
 
   @ApiProperty({
+    description: 'Tuổi của người dùng',
+    required: false,
+  })
+  age?: number;
+
+  @ApiProperty({
+    description: 'Địa chỉ của người dùng',
+    example: '123 Đường ABC, Quận 1, TP.HCM',
+    required: false,
+  })
+  address?: string;
+
+  @ApiProperty({
+    description: 'Giới tính của người dùng',
+    required: false,
+  })
+  gender?: string;
+
+  @ApiProperty({
     description: 'Trạng thái hoạt động của người dùng',
     example: true,
   })
@@ -50,13 +69,6 @@ export class User {
     required: false,
   })
   dateOfBirth?: Date;
-
-  @ApiProperty({
-    description: 'Địa chỉ của người dùng',
-    example: '123 Đường ABC, Quận 1, TP.HCM',
-    required: false,
-  })
-  address?: string;
 
   @ApiProperty({
     description: 'Thông tin liên hệ khẩn cấp',

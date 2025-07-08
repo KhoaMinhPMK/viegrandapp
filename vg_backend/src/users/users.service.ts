@@ -3,18 +3,21 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { PremiumService } from '../premium/premium.service';
+import { SettingsService } from '../settings/settings.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @Inject(forwardRef(() => PremiumService))
     private premiumService: PremiumService,
+    @Inject(forwardRef(() => SettingsService))
+    private settingsService: SettingsService,
   ) {}
 
   private users: User[] = [
     {
       id: 1,
-      name: 'Người dùng mẫu',
+      fullName: 'Người dùng mẫu',
       email: 'example@viegrand.com',
       password: 'hashedPassword',
       role: 'user',
@@ -24,7 +27,7 @@ export class UsersService {
     },
   ];
 
-  create(createUserDto: CreateUserDto): User {
+  async create(createUserDto: CreateUserDto): Promise<User> {
     const newUser = {
       id: Date.now(),
       ...createUserDto,
@@ -33,6 +36,9 @@ export class UsersService {
       updatedAt: new Date(),
     };
     this.users.push(newUser);
+
+    await this.settingsService.createDefaultSettings(newUser.id);
+    
     return newUser;
   }
 

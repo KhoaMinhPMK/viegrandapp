@@ -36,25 +36,25 @@ export class PaymentService {
       name: 'MoMo',
       enabled: true,
       mockDelay: 2000, // 2 seconds delay
-      successRate: 0.9 // 90% success rate
+      successRate: 1 // 100% success rate
     },
     zalopay: {
       name: 'ZaloPay',
       enabled: true,
       mockDelay: 1500,
-      successRate: 0.85
+      successRate: 1 // 100% success rate
     },
     vnpay: {
       name: 'VNPay',
       enabled: true,
       mockDelay: 3000,
-      successRate: 0.95
+      successRate: 1 // 100% success rate
     },
     credit_card: {
       name: 'Credit Card',
       enabled: true,
       mockDelay: 2500,
-      successRate: 0.8
+      successRate: 1 // 100% success rate
     }
   };
 

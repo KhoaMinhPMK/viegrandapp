@@ -1,103 +1,90 @@
-import React from 'react';
+import React, { useLayoutEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ImageBackground,
   SafeAreaView,
+  TouchableOpacity,
   Image,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
+import { useAuth } from '../../../contexts/AuthContext';
+import { SettingsContainer } from '../../../components/settings/SettingsContainer';
+import { SettingsSection } from '../../../components/settings/SettingsSection';
+import { SettingsRow } from '../../../components/settings/SettingsRow';
+
+// A simple utility to format date
+const formatDate = (dateString: string | undefined) => {
+  if (!dateString) return 'Không rõ';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('vi-VN');
+};
+
+const ProfileInfoRow = ({ label, value }: { label: string; value: string | undefined }) => (
+  <View style={styles.infoRow}>
+    <Text style={styles.infoLabel}>{label}</Text>
+    <Text style={styles.infoValue}>{value || 'Chưa cập nhật'}</Text>
+  </View>
+);
+
 
 const ElderlyProfileScreen = ({ navigation }: any) => {
-  const profileItems = [
-    { id: 1, title: 'Thông tin cá nhân', icon: 'user', action: 'edit' },
-    { id: 2, title: 'Thông tin y tế', icon: 'heart', action: 'medical' },
-    { id: 3, title: 'Liên hệ khẩn cấp', icon: 'phone', action: 'emergency' },
-    { id: 4, title: 'Lịch sử khám bệnh', icon: 'file-text', action: 'history' },
-  ];
+  const { user } = useAuth();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: 'Hồ sơ cá nhân',
+      headerRight: () => (
+        <TouchableOpacity onPress={() => navigation.navigate('EditProfile')} style={{ marginRight: 16 }}>
+          <Text style={styles.headerButtonText}>Sửa</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
+
 
   return (
-    <ImageBackground
-      source={require('../../../assets/background.png')}
-      style={styles.backgroundImage}>
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}>
-            <Feather name="arrow-left" size={24} color="#0D4C92" />
-          </TouchableOpacity>
-          <Text style={styles.title}>Hồ sơ cá nhân</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <SettingsContainer style={styles.container}>
+        <View style={styles.profileHeader}>
+          <View style={styles.avatarContainer}>
+            {/* Later we can use an Image here */}
+            <Feather name="user" size={60} color="#0D4C92" />
+          </View>
+          <Text style={styles.name}>{user?.fullName}</Text>
+          <Text style={styles.email}>{user?.email}</Text>
         </View>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.profileHeader}>
-            <View style={styles.avatarContainer}>
-              <Feather name="user" size={60} color="#0D4C92" />
-            </View>
-            <Text style={styles.name}>Nguyễn Văn A</Text>
-            <Text style={styles.age}>70 tuổi</Text>
-          </View>
+        <SettingsSection title="Thông tin chi tiết">
+          <ProfileInfoRow label="Số điện thoại" value={user?.phone} />
+          <ProfileInfoRow label="Tuổi" value={user?.age?.toString()} />
+          <ProfileInfoRow label="Giới tính" value={user?.gender} />
+          <ProfileInfoRow label="Địa chỉ" value={user?.address} />
+          <ProfileInfoRow label="Vai trò" value={user?.role} />
+          <ProfileInfoRow label="Trạng thái" value={user?.active ? 'Đang hoạt động' : 'Bị khóa'} />
+        </SettingsSection>
+        
+        <SettingsSection title="Thông tin y tế (Sắp có)">
+          <ProfileInfoRow label="Nhóm máu" value="Chưa cập nhật" />
+          <ProfileInfoRow label="Dị ứng" value="Chưa cập nhật" />
+        </SettingsSection>
 
-          <View style={styles.profileSection}>
-            {profileItems.map((item) => (
-              <TouchableOpacity key={item.id} style={styles.profileItem}>
-                <Feather name={item.icon as any} size={24} color="#0D4C92" />
-                <Text style={styles.profileItemText}>{item.title}</Text>
-                <Feather name="chevron-right" size={20} color="#757575" />
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <TouchableOpacity style={styles.logoutButton}>
-            <Feather name="log-out" size={24} color="#FF6B6B" />
-            <Text style={styles.logoutText}>Đăng xuất</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </SafeAreaView>
-    </ImageBackground>
+      </SettingsContainer>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: {
+  safeArea: {
     flex: 1,
+    backgroundColor: '#F0F0F0',
   },
   container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 60,
-  },
-  backButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 25,
-    padding: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#0D4C92',
-    marginLeft: 20,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
+    backgroundColor: '#F0F0F0',
   },
   profileHeader: {
     alignItems: 'center',
-    marginBottom: 30,
+    paddingVertical: 30,
   },
   avatarContainer: {
     width: 120,
@@ -108,62 +95,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 15,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   name: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#0D4C92',
-    marginBottom: 5,
+    color: '#1A202C',
   },
-  age: {
+  email: {
     fontSize: 16,
-    color: '#757575',
+    color: '#A0AEC0',
+    marginTop: 4,
   },
-  profileSection: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    marginBottom: 30,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  profileItem: {
+  infoRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  profileItemText: {
-    fontSize: 16,
-    color: '#333333',
-    marginLeft: 15,
-    flex: 1,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#C7C7CC',
   },
-  logoutText: {
-    fontSize: 16,
-    color: '#FF6B6B',
-    marginLeft: 10,
+  infoLabel: {
+    fontSize: 17,
+    color: '#000000',
+  },
+  infoValue: {
+    fontSize: 17,
+    color: '#8E8E93',
+  },
+  headerButtonText: {
+    fontSize: 17,
     fontWeight: '600',
+    color: '#0D4C92',
   },
 });
 

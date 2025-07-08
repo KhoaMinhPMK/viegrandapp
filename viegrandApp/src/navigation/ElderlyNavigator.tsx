@@ -3,6 +3,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import ElderlyBottomTabNavigator from './ElderlyBottomTabNavigator';
 import NotificationsScreen from '../screens/Elderly/Notifications';
 import PremiumNavigator from './PremiumNavigator';
+import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 
 const Stack = createStackNavigator();
 
@@ -15,6 +16,14 @@ const ElderlyNavigator = () => {
       <Stack.Screen name="Main" component={ElderlyBottomTabNavigator} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="Premium" component={PremiumNavigator} />
+      <Stack.Screen 
+        name="EditProfile" 
+        component={EditProfileScreen}
+        options={{ 
+          headerShown: true,
+          presentation: 'modal',
+        }} 
+      />
     </Stack.Navigator>
   );
 };

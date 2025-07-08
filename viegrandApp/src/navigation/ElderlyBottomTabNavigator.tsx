@@ -9,6 +9,7 @@ import PhoneScreen from '../screens/Elderly/Phone';
 import MessageScreen from '../screens/Elderly/Message';
 import ElderlySettingsScreen from '../screens/Elderly/Settings';
 import Icon from 'react-native-vector-icons/Ionicons';
+import SettingsNavigator from './SettingsNavigator';
 
 // Import voice components
 import { useVoice } from '../contexts/VoiceContext';
@@ -170,17 +171,18 @@ const ElderlyBottomTabNavigator = () => {
         }}
       />
       <Tab.Screen 
-        name="Profile" 
-        component={ProfileScreen}
+        name="Settings"
         options={{
           tabBarIcon: ({ focused }) => (
             <TabBarItem 
               isFocused={focused}
-              icon="user"
+              icon="settings"
             />
           )
         }}
-      />
+      >
+        {() => <SettingsNavigator initialRouteName="ElderlySettings" />}
+      </Tab.Screen>
     </Tab.Navigator>
   );
 };

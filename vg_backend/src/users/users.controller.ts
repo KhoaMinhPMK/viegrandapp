@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, UseGuards, Request, Patch } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
@@ -44,6 +44,19 @@ export class UsersController {
   @ApiBearerAuth()
   getProfile(@Request() req) {
     return this.usersService.getProfile(req.user.id);
+  }
+
+  @Patch('me')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cập nhật thông tin người dùng hiện tại' })
+  @ApiResponse({
+    status: 200,
+    description: 'Thông tin đã được cập nhật',
+    type: User,
+  })
+  updateMyProfile(@Request() req, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(req.user.id, updateUserDto);
   }
 
   @Get('test')

@@ -46,8 +46,9 @@ export class AuthService {
     
     // Tạo user mới
     const createUserDto: CreateUserDto = {
-      name: registerDto.fullName,
+      fullName: registerDto.fullName,
       email: registerDto.email,
+      phone: registerDto.phone,
       password: hashedPassword,
       role: 'user',
     };

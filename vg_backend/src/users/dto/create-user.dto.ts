@@ -5,7 +5,7 @@ export class CreateUserDto {
     description: 'Tên đầy đủ của người dùng',
     example: 'Nguyễn Văn A',
   })
-  name: string;
+  fullName: string;
 
   @ApiProperty({
     description: 'Địa chỉ email của người dùng',

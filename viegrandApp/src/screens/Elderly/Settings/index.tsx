@@ -3,173 +3,176 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ImageBackground,
   SafeAreaView,
-  Switch,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
-import Feather from 'react-native-vector-icons/Feather';
+import { SettingsContainer } from '../../../components/settings/SettingsContainer';
+import { SettingsSection } from '../../../components/settings/SettingsSection';
+import { SettingsRow } from '../../../components/settings/SettingsRow';
+import { useAuth } from '../../../contexts/AuthContext';
+import { useSettings } from '../../../contexts/SettingsContext';
 
 const ElderlySettingsScreen = ({ navigation }: any) => {
-  const [notifications, setNotifications] = React.useState(true);
-  const [soundEnabled, setSoundEnabled] = React.useState(true);
-  const [vibrationEnabled, setVibrationEnabled] = React.useState(false);
+  const { user, logout } = useAuth();
+  const { settings, updateSettings, isLoading } = useSettings();
 
-  const settingsItems = [
-    { id: 1, title: 'Ngôn ngữ', icon: 'globe', value: 'Tiếng Việt', type: 'navigation' },
-    { id: 2, title: 'Chế độ tối', icon: 'moon', value: 'Tắt', type: 'navigation' },
-    { id: 3, title: 'Kích thước chữ', icon: 'type', value: 'Vừa', type: 'navigation' },
-    { id: 4, title: 'Bảo mật', icon: 'shield', value: '', type: 'navigation' },
-    { id: 5, title: 'Về ứng dụng', icon: 'info', value: '', type: 'navigation' },
-  ];
+  const handleLogout = () => {
+    Alert.alert(
+      'Đăng xuất',
+      'Bạn có chắc chắn muốn đăng xuất không?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        { text: 'Đăng xuất', style: 'destructive', onPress: () => logout() },
+      ],
+      { cancelable: true }
+    );
+  };
 
-  return (
-    <ImageBackground
-      source={require('../../../assets/background.png')}
-      style={styles.backgroundImage}>
+  if (!settings) {
+    return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}>
-            <Feather name="arrow-left" size={24} color="#0D4C92" />
-          </TouchableOpacity>
           <Text style={styles.title}>Cài đặt</Text>
         </View>
-
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Thông báo</Text>
-            <View style={styles.settingsCard}>
-              <View style={styles.settingItem}>
-                <Feather name="bell" size={24} color="#0D4C92" />
-                <Text style={styles.settingText}>Thông báo</Text>
-                <Switch
-                  value={notifications}
-                  onValueChange={setNotifications}
-                  trackColor={{ false: '#767577', true: '#0D4C92' }}
-                  thumbColor={notifications ? '#FFFFFF' : '#f4f3f4'}
-                />
-              </View>
-              <View style={styles.settingItem}>
-                <Feather name="volume-2" size={24} color="#0D4C92" />
-                <Text style={styles.settingText}>Âm thanh</Text>
-                <Switch
-                  value={soundEnabled}
-                  onValueChange={setSoundEnabled}
-                  trackColor={{ false: '#767577', true: '#0D4C92' }}
-                  thumbColor={soundEnabled ? '#FFFFFF' : '#f4f3f4'}
-                />
-              </View>
-              <View style={styles.settingItem}>
-                <Feather name="smartphone" size={24} color="#0D4C92" />
-                <Text style={styles.settingText}>Rung</Text>
-                <Switch
-                  value={vibrationEnabled}
-                  onValueChange={setVibrationEnabled}
-                  trackColor={{ false: '#767577', true: '#0D4C92' }}
-                  thumbColor={vibrationEnabled ? '#FFFFFF' : '#f4f3f4'}
-                />
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Chung</Text>
-            <View style={styles.settingsCard}>
-              {settingsItems.map((item) => (
-                <TouchableOpacity key={item.id} style={styles.settingItem}>
-                  <Feather name={item.icon as any} size={24} color="#0D4C92" />
-                  <Text style={styles.settingText}>{item.title}</Text>
-                  <View style={styles.settingValue}>
-                    {item.value && (
-                      <Text style={styles.valueText}>{item.value}</Text>
-                    )}
-                    <Feather name="chevron-right" size={20} color="#757575" />
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </ScrollView>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0D4C92" />
+        </View>
       </SafeAreaView>
-    </ImageBackground>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Cài đặt</Text>
+        {isLoading && <ActivityIndicator style={styles.headerLoader} color="#0D4C92" />}
+      </View>
+      <SettingsContainer>
+        {/* Profile Section */}
+        <SettingsSection>
+          <SettingsRow
+            type="navigation"
+            icon="user"
+            iconBackgroundColor="#1E90FF"
+            title={user?.name || 'Người dùng'}
+            value={user?.email}
+            onPress={() => navigation.navigate('ElderlyProfile')}
+            isLast
+          />
+        </SettingsSection>
+
+        {/* Notification Section */}
+        <SettingsSection title="Thông báo">
+          <SettingsRow
+            type="toggle"
+            icon="bell"
+            iconBackgroundColor="#FF4500"
+            title="Thông báo chung"
+            value={settings.elderly_notificationsEnabled}
+            onValueChange={(value) => updateSettings({ elderly_notificationsEnabled: value })}
+          />
+          <SettingsRow
+            type="toggle"
+            icon="volume-2"
+            iconBackgroundColor="#32CD32"
+            title="Âm thanh"
+            value={settings.elderly_soundEnabled}
+            onValueChange={(value) => updateSettings({ elderly_soundEnabled: value })}
+          />
+          <SettingsRow
+            type="toggle"
+            icon="smartphone"
+            iconBackgroundColor="#8A2BE2"
+            title="Rung"
+            value={settings.elderly_vibrationEnabled}
+            onValueChange={(value) => updateSettings({ elderly_vibrationEnabled: value })}
+            isLast
+          />
+        </SettingsSection>
+
+        {/* General Section */}
+        <SettingsSection title="Chung">
+          <SettingsRow
+            type="navigation"
+            icon="globe"
+            iconBackgroundColor="#4682B4"
+            title="Ngôn ngữ"
+            value={settings.language === 'vi' ? 'Tiếng Việt' : 'English'}
+            onPress={() => Alert.alert('Tính năng đang phát triển')}
+          />
+          <SettingsRow
+            type="navigation"
+            icon="shield"
+            iconBackgroundColor="#6A5ACD"
+            title="Bảo mật"
+            onPress={() => Alert.alert('Tính năng đang phát triển')}
+          />
+          <SettingsRow
+            type="navigation"
+            icon="info"
+            iconBackgroundColor="#708090"
+            title="Về ứng dụng"
+            onPress={() => Alert.alert('Tính năng đang phát triển')}
+            isLast
+          />
+        </SettingsSection>
+        
+        {/* Premium Section */}
+        <SettingsSection title="Premium">
+            <SettingsRow
+              type="navigation"
+              icon="star"
+              iconBackgroundColor="#FFD700"
+              title="Nâng cấp Premium"
+              value="Nhận thêm nhiều tính năng"
+              onPress={() => navigation.navigate('Premium')}
+              isLast
+            />
+        </SettingsSection>
+
+        {/* Logout Section */}
+        <SettingsSection>
+          <SettingsRow
+            type="button"
+            title="Đăng xuất"
+            titleColor="#FF3B30"
+            onPress={handleLogout}
+            isLast
+          />
+        </SettingsSection>
+      </SettingsContainer>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-  },
   container: {
     flex: 1,
+    backgroundColor: '#F0F0F0',
   },
   header: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#C7C7CC',
+    backgroundColor: '#F7F7F7',
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
-    paddingTop: 60,
-  },
-  backButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 25,
-    padding: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    justifyContent: 'space-between',
   },
   title: {
-    fontSize: 24,
+    fontSize: 34,
     fontWeight: 'bold',
-    color: '#0D4C92',
-    marginLeft: 20,
+    color: '#000000',
   },
-  content: {
+  headerLoader: {
+    marginLeft: 10,
+  },
+  loadingContainer: {
     flex: 1,
-    padding: 20,
-  },
-  section: {
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0D4C92',
-    marginBottom: 15,
-  },
-  settingsCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  settingItem: {
-    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  settingText: {
-    fontSize: 16,
-    color: '#333333',
-    marginLeft: 15,
-    flex: 1,
-  },
-  settingValue: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  valueText: {
-    fontSize: 14,
-    color: '#757575',
-    marginRight: 10,
   },
 });
 

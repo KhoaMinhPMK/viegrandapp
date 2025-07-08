@@ -73,20 +73,26 @@ export interface AuthResponse {
   access_token: string;
   user: {
     id: number;
-    name: string;
+    fullName: string;
     email: string;
     role: string;
     phone?: string;
+    age?: number;
+    address?: string;
+    gender?: string;
     active: boolean;
   };
 }
 
 export interface User {
   id: number;
-  name: string;
+  fullName: string;
   email: string;
   role: string;
   phone?: string;
+  age?: number;
+  address?: string;
+  gender?: string;
   active: boolean;
 }
 
@@ -280,6 +286,11 @@ export const usersAPI = {
     return response.data;
   },
 
+  updateMyProfile: async (userData: Partial<User>): Promise<User> => {
+    const response = await apiClient.patch('/users/me', userData);
+    return response.data;
+  },
+
   delete: async (id: number): Promise<void> => {
     await apiClient.delete(`/users/${id}`);
   },
@@ -409,6 +420,37 @@ export const premiumAPI = {
       console.error('Purchase premium error:', error);
       throw error;
     }
+  },
+};
+
+// Settings Types
+export interface UserSettings {
+  id: number;
+  userId: number;
+  language: string;
+  isDarkMode: boolean;
+  elderly_notificationsEnabled: boolean;
+  elderly_soundEnabled: boolean;
+  elderly_vibrationEnabled: boolean;
+  relative_appNotificationsEnabled: boolean;
+  relative_emailAlertsEnabled: boolean;
+  relative_smsAlertsEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type UpdateUserSettingsDto = Partial<Omit<UserSettings, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>;
+
+// Settings API
+export const settingsAPI = {
+  getSettings: async (): Promise<UserSettings> => {
+    const response = await apiClient.get('/settings');
+    return response.data;
+  },
+
+  updateSettings: async (data: UpdateUserSettingsDto): Promise<UserSettings> => {
+    const response = await apiClient.put('/settings', data);
+    return response.data;
   },
 };
 
