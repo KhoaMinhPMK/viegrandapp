@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { authAPI, storageUtils, User, LoginRequest, RegisterRequest, usersAPI } from '../services/api';
 import { Alert } from 'react-native';
+import { usePremium } from './PremiumContext';
 
 interface AuthContextType {
   user: User | null;
@@ -21,6 +22,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { fetchPremiumStatus, reset: resetPremiumContext } = usePremium();
 
   useEffect(() => {
     checkAuthStatus();
@@ -33,6 +35,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       if (token && savedUser) {
         setUser(savedUser);
+        await fetchPremiumStatus();
       }
     } catch (error) {
       console.error('Error checking auth status:', error);
@@ -46,17 +49,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(true);
       const response = await authAPI.login(credentials);
       
-      // Kiểm tra response có đúng format không
-      if (!response.access_token || !response.user) {
-        throw new Error('Invalid response format');
+      if (response.access_token && response.user) {
+        await storageUtils.saveToken(response.access_token);
+        await storageUtils.saveUser(response.user);
+        
+        setUser(response.user);
+        await fetchPremiumStatus();
+        return true;
       }
-      
-      // Lưu token và user info
-      await storageUtils.saveToken(response.access_token);
-      await storageUtils.saveUser(response.user);
-      
-      setUser(response.user);
-      return true;
+      return false;
     } catch (error: any) {
       console.error('Login error:', error);
       let errorMessage = 'Đăng nhập thất bại';
@@ -83,17 +84,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(true);
       const response = await authAPI.register(userData);
       
-      // Kiểm tra response có đúng format không
-      if (!response.access_token || !response.user) {
-        throw new Error('Invalid response format');
+      if (response.access_token && response.user) {
+        await storageUtils.saveToken(response.access_token);
+        await storageUtils.saveUser(response.user);
+        
+        setUser(response.user);
+        await fetchPremiumStatus();
+        return true;
       }
-      
-      // Lưu token và user info
-      await storageUtils.saveToken(response.access_token);
-      await storageUtils.saveUser(response.user);
-      
-      setUser(response.user);
-      return true;
+      return false;
     } catch (error: any) {
       console.error('Register error:', error);
       let errorMessage = 'Đăng ký thất bại';
@@ -119,6 +118,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await storageUtils.clearAuth();
       setUser(null);
+      resetPremiumContext();
     } catch (error) {
       console.error('Logout error:', error);
     }
