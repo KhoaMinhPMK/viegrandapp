@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, StyleSheet, TouchableOpacity, Dimensions, Platform, Text } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
@@ -10,6 +10,7 @@ import MessageScreen from '../screens/Elderly/Message';
 import ElderlySettingsScreen from '../screens/Elderly/Settings';
 import Icon from 'react-native-vector-icons/Ionicons';
 import SettingsNavigator from './SettingsNavigator';
+import HomeNavigator from './HomeNavigator';
 
 // Import voice components
 import { useVoice } from '../contexts/VoiceContext';
@@ -18,13 +19,19 @@ const Tab = createBottomTabNavigator();
 const { width } = Dimensions.get('window');
 const isIOS = Platform.OS === 'ios';
 
-const CenterButton = () => {
+// --- Tách các component con ra ngoài và sử dụng React.memo ---
+
+const CenterButton = memo(() => {
   const { isListening, startListening, stopListening } = useVoice();
   
+  const handlePress = useCallback(() => {
+    isListening ? stopListening() : startListening();
+  }, [isListening, startListening, stopListening]);
+
   return (
     <TouchableOpacity
       activeOpacity={0.85}
-      onPress={isListening ? stopListening : startListening}
+      onPress={handlePress}
       style={styles.centerButtonTouchable}
     >
       <LinearGradient
@@ -41,9 +48,9 @@ const CenterButton = () => {
       </LinearGradient>
     </TouchableOpacity>
   );
-};
+});
 
-const TabBarItem = ({ 
+const TabBarItem = memo(({ 
   isFocused, 
   icon 
 }: { 
@@ -66,60 +73,71 @@ const TabBarItem = ({
       )}
     </View>
   );
-};
+});
 
-const CustomTabBar = ({ state, descriptors, navigation }: any) => {
+const CustomTabBar = memo(({ state, descriptors, navigation }: any) => {
+  const renderTab = useCallback((route: any, index: number) => {
+    const { options } = descriptors[route.key];
+    const isFocused = state.index === index;
+
+    const onPress = () => {
+      const event = navigation.emit({
+        type: 'tabPress',
+        target: route.key,
+        canPreventDefault: true,
+      });
+
+      if (!isFocused && !event.defaultPrevented) {
+        navigation.navigate(route.name);
+      }
+    };
+
+    if (index === 2) { // Giả sử nút giữa luôn ở vị trí thứ 3
+      return <CenterButton key={route.key} />;
+    }
+
+    return (
+      <TouchableOpacity
+        key={route.key}
+        style={styles.tabButton}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        {options.tabBarIcon && options.tabBarIcon({ focused: isFocused })}
+      </TouchableOpacity>
+    );
+  }, [state, descriptors, navigation]);
+
   return (
     <View style={styles.tabBarContainer}>
-      {state.routes.map((route: any, index: number) => {
-        const { options } = descriptors[route.key];
-        const isFocused = state.index === index;
-
-        const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
-
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
-          }
-        };
-
-        if (index === 2) {
-          return (
-            <CenterButton
-              key={route.key}
-            />
-          );
-        }
-
-        return (
-          <TouchableOpacity
-            key={route.key}
-            style={styles.tabButton}
-            onPress={onPress}
-            activeOpacity={0.7}
-          >
-            {options.tabBarIcon && options.tabBarIcon({ focused: isFocused })}
-          </TouchableOpacity>
-        );
-      })}
+      {state.routes.map(renderTab)}
     </View>
   );
-};
+});
 
-const SOSButton = ({onPress}: {onPress: () => void}) => (
+const SOSButton = memo(({onPress}: {onPress: () => void}) => (
   <TouchableOpacity style={styles.sosButtonContainer} onPress={onPress}>
     <View style={styles.sosButton}>
       <Feather name="shield" size={32} color="#FFFFFF" />
       <Text style={styles.sosButtonText}>SOS</Text>
     </View>
   </TouchableOpacity>
-);
+));
+
+const PlaceholderComponent = () => null;
+
+const renderSettingsNavigator = () => <SettingsNavigator initialRouteName="ElderlySettings" />;
+
+// --- Component chính ---
 
 const ElderlyBottomTabNavigator = () => {
+
+  const renderTabBarIcon = useCallback((iconName: string) => 
+    ({ focused }: { focused: boolean }) => 
+      <TabBarItem isFocused={focused} icon={iconName} />,
+    []
+  );
+
   return (
     <Tab.Navigator
       tabBar={props => <CustomTabBar {...props} />}
@@ -128,32 +146,22 @@ const ElderlyBottomTabNavigator = () => {
       }}
     >
       <Tab.Screen 
-        name="Home" 
-        component={HomeScreen}
+        name="HomeStack" // Renamed from "Home" to reflect it's a stack
+        component={HomeNavigator}
         options={{
-          tabBarIcon: ({ focused }) => (
-            <TabBarItem 
-              isFocused={focused}
-              icon="home"
-            />
-          )
+          tabBarIcon: renderTabBarIcon('home')
         }}
       />
       <Tab.Screen 
         name="Message" 
         component={MessageScreen}
         options={{
-          tabBarIcon: ({ focused }) => (
-            <TabBarItem 
-              isFocused={focused}
-              icon="message-square"
-            />
-          )
+          tabBarIcon: renderTabBarIcon('message-square')
         }}
       />
       <Tab.Screen
         name="CenterAction"
-        component={() => null}
+        component={PlaceholderComponent} // Sử dụng component rỗng
         options={{
           tabBarIcon: () => null
         }}
@@ -162,32 +170,20 @@ const ElderlyBottomTabNavigator = () => {
         name="Phone" 
         component={PhoneScreen}
         options={{
-          tabBarIcon: ({ focused }) => (
-            <TabBarItem 
-              isFocused={focused}
-              icon="phone"
-            />
-          )
+          tabBarIcon: renderTabBarIcon('phone')
         }}
       />
       <Tab.Screen 
         name="Settings"
+        component={SettingsNavigator}
+        initialParams={{ initialRouteName: 'ElderlySettings' }}
         options={{
-          tabBarIcon: ({ focused }) => (
-            <TabBarItem 
-              isFocused={focused}
-              icon="settings"
-            />
-          )
+          tabBarIcon: renderTabBarIcon('settings')
         }}
-      >
-        {() => <SettingsNavigator initialRouteName="ElderlySettings" />}
-      </Tab.Screen>
+      />
     </Tab.Navigator>
   );
 };
-
-const PlaceholderScreen = () => <View />;
 
 const styles = StyleSheet.create({
   tabBarContainer: {

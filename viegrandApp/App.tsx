@@ -6,7 +6,7 @@
  */
 
 import 'react-native-gesture-handler';
-import React, { useEffect } from 'react';
+import React, { useEffect, memo } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from './src/types/navigation';
@@ -25,7 +25,7 @@ import { initializeAPI } from './src/services/api';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const AppContent = () => {
+const AppContent = memo(() => {
   // Khởi tạo API khi app start
   useEffect(() => {
     const initAPI = async () => {
@@ -51,7 +51,7 @@ const AppContent = () => {
       <Stack.Screen name="Relative" component={RelativeNavigator} />
     </Stack.Navigator>
   );
-};
+});
 
 const App = () => {
   return (

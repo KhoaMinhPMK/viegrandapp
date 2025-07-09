@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 // Network Configuration
 export const NETWORK_CONFIG = {
   // Địa chỉ IP thật của máy tính (thay đổi theo mạng của bạn)
-  HOST_IP: '172.28.184.31',
+  HOST_IP: '192.168.1.38',
   
   // Để test với localhost (emulator/simulator), đặt USE_LOCALHOST = true
   // Để test với thiết bị thật, đặt USE_LOCALHOST = false

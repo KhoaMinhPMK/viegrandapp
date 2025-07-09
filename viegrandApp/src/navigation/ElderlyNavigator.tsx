@@ -1,31 +1,25 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
+import { TouchableOpacity, StyleSheet } from 'react-native';
+import { BlurView } from '@react-native-community/blur';
+import Feather from 'react-native-vector-icons/Feather';
+
 import ElderlyBottomTabNavigator from './ElderlyBottomTabNavigator';
-import NotificationsScreen from '../screens/Elderly/Notifications';
-import PremiumNavigator from './PremiumNavigator';
-import EditProfileScreen from '../screens/Profile/EditProfileScreen';
-import SudokuScreen from '../screens/Games/Sudoku';
 
 const Stack = createStackNavigator();
 
 const ElderlyNavigator = () => {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-      }}>
-      <Stack.Screen name="Main" component={ElderlyBottomTabNavigator} />
-      <Stack.Screen name="Notifications" component={NotificationsScreen} />
-      <Stack.Screen name="Premium" component={PremiumNavigator} />
-      <Stack.Screen name="Sudoku" component={SudokuScreen} />
+    <Stack.Navigator>
       <Stack.Screen 
-        name="EditProfile" 
-        component={EditProfileScreen}
-        options={{ 
-          headerShown: true,
-          presentation: 'modal',
-        }} 
+        name="Main" 
+        component={ElderlyBottomTabNavigator} 
+        options={{ headerShown: false }}
       />
+      {/* 
+        Các màn hình Modal toàn màn hình hoặc các luồng khác không có bottom tab 
+        sẽ được thêm vào đây trong tương lai.
+      */}
     </Stack.Navigator>
   );
 };

@@ -8,7 +8,9 @@ import {
   Alert,
   ActivityIndicator,
   SafeAreaView,
-} from 'react-native'
+} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import Feather from 'react-native-vector-icons/Feather';
 import { usePremium } from '../../contexts/PremiumContext'
 
 // --- Icons (as simple, direct components) ---
@@ -68,15 +70,6 @@ function PlanComparisonScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-            <BackArrowIcon />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Chọn gói Premium</Text>
-          <View style={styles.headerRightPlaceholder} />
-        </View>
-
         {/* Scrollable Content */}
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
           {/* Hero Section */}
@@ -103,6 +96,11 @@ function PlanComparisonScreen({ navigation }: any) {
                       onPress={() => setSelectedPlan(plan)}
                       activeOpacity={0.8}
                     >
+                      {isSelected && (
+                        <View style={styles.checkIconContainer}>
+                          <Feather name="check" size={16} color="#FFFFFF" />
+                        </View>
+                      )}
                       {isYearly && (
                         <View style={styles.popularBadge}><Text style={styles.popularText}>Phổ biến nhất</Text></View>
                       )}
@@ -159,14 +157,21 @@ function PlanComparisonScreen({ navigation }: any) {
         {/* Bottom Action Bar */}
         <View style={styles.bottomAction}>
           <TouchableOpacity
-            style={[styles.continueButton, !selectedPlan && styles.continueButtonDisabled]}
             onPress={handleContinue}
             disabled={!selectedPlan}
             activeOpacity={0.8}
           >
-            <Text style={styles.continueButtonText}>
-              {selectedPlan ? `Tiếp tục với gói ${selectedPlan.name}` : 'Chọn một gói'}
-            </Text>
+            <LinearGradient
+              colors={!selectedPlan ? ['#BDBDBD', '#BDBDBD'] : ['#007AFF', '#5856D6']}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={styles.continueButton}
+            >
+              <Text style={styles.continueButtonText}>
+                {selectedPlan ? `Tiếp tục với gói ${selectedPlan.name}` : 'Chọn một gói'}
+              </Text>
+              <Feather name="arrow-right" size={22} color="#FFFFFF" />
+            </LinearGradient>
           </TouchableOpacity>
           <Text style={styles.secureText}>Thanh toán an toàn và bảo mật</Text>
         </View>
@@ -179,7 +184,7 @@ const styles = StyleSheet.create({
   // --- Layout & Structure ---
   safeArea: { flex: 1, backgroundColor: '#FFFFFF' },
   container: { flex: 1, backgroundColor: '#F2F2F7' },
-  scrollView: { flex: 1 },
+  scrollView: { flex: 1, paddingTop: 60 }, // Added paddingTop to account for transparent header
   scrollContent: { paddingHorizontal: 16, paddingBottom: 150 },
   section: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, marginTop: 20 },
   sectionTitle: { fontSize: 20, fontWeight: '700', color: '#1C1C1E', marginBottom: 16 },
@@ -203,11 +208,30 @@ const styles = StyleSheet.create({
   // --- Plans ---
   plansContainer: { gap: 12 },
   planCard: {
-    borderRadius: 12, padding: 16,
-    borderWidth: 2, borderColor: '#E5E5EA',
-    backgroundColor: '#FAFAFA', position: 'relative',
+    borderRadius: 16, // Softer corners
+    padding: 16,
+    borderWidth: 2,
+    borderColor: '#E5E5EA',
+    backgroundColor: '#FAFAFA',
+    position: 'relative',
+    overflow: 'hidden', // Ensures inner elements respect border radius
   },
-  planCardSelected: { borderColor: '#007AFF', backgroundColor: 'rgba(0, 122, 255, 0.05)' },
+  planCardSelected: {
+    borderColor: '#007AFF',
+    backgroundColor: 'rgba(0, 122, 255, 0.08)',
+  },
+  checkIconContainer: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
   popularBadge: {
     position: 'absolute', top: 0, right: 16,
     backgroundColor: '#FF6B35',
@@ -238,9 +262,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24,
     borderTopWidth: 1, borderTopColor: 'rgba(0, 0, 0, 0.1)',
   },
-  continueButton: { backgroundColor: '#007AFF', borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
-  continueButtonDisabled: { backgroundColor: '#BDBDBD' },
-  continueButtonText: { color: '#FFFFFF', fontSize: 17, fontWeight: '600' },
+  continueButton: {
+    borderRadius: 14,
+    paddingVertical: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: "#007AFF",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  continueButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600',
+    marginRight: 8,
+  },
   secureText: { fontSize: 13, color: '#8E8E93', textAlign: 'center', marginTop: 12 },
   
   // --- Loading/Empty ---

@@ -1,5 +1,8 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
+import { TouchableOpacity, View, StyleSheet } from 'react-native';
+import Feather from 'react-native-vector-icons/Feather';
+import { BlurView } from '@react-native-community/blur';
 import { PremiumStackParamList } from '../types/navigation';
 
 // Premium Screens
@@ -13,50 +16,56 @@ import PaymentHistoryScreen from '../screens/Premium/PaymentHistoryScreen';
 
 const Stack = createStackNavigator<PremiumStackParamList>();
 
+const CustomBackButton = ({ onPress }: { onPress: () => void }) => (
+  <TouchableOpacity onPress={onPress} style={styles.backButton}>
+    <BlurView
+      style={styles.blurView}
+      blurType="light"
+      blurAmount={10}
+      reducedTransparencyFallbackColor="white"
+    />
+    <Feather name="chevron-left" size={24} color="#000" />
+  </TouchableOpacity>
+);
+
 const PremiumNavigator: React.FC = () => {
   return (
     <Stack.Navigator
       initialRouteName="PremiumHome"
-      screenOptions={{
-        headerShown: false,
+      screenOptions={({ navigation }) => ({
+        headerShown: true,
+        headerTransparent: true,
+        headerTitle: '',
+        headerLeft: () => <CustomBackButton onPress={() => navigation.goBack()} />,
         cardStyle: { backgroundColor: '#f8f9fa' },
         gestureEnabled: true,
         gestureDirection: 'horizontal',
-      }}
+      })}
     >
       <Stack.Screen
         name="PremiumHome"
         component={PremiumScreen}
         options={{
-          title: 'Premium',
-          gestureEnabled: true,
+            headerShown: false, // Keep header hidden on the main premium screen
         }}
       />
       
       <Stack.Screen
         name="PlanComparison"
         component={PlanComparisonScreen}
-        options={{
-          title: 'So sánh gói',
-          gestureEnabled: true,
-        }}
       />
       
       <Stack.Screen
         name="PaymentMethod"
         component={PaymentMethodScreen}
-        options={{
-          title: 'Phương thức thanh toán',
-          gestureEnabled: true,
-        }}
       />
       
       <Stack.Screen
         name="PaymentProcessing"
         component={PaymentProcessingScreen}
         options={{
-          title: 'Đang xử lý',
-          gestureEnabled: false, // Disable gesture during processing
+          headerShown: false,
+          gestureEnabled: false,
         }}
       />
       
@@ -64,8 +73,8 @@ const PremiumNavigator: React.FC = () => {
         name="PaymentSuccess"
         component={PaymentSuccessScreen}
         options={{
-          title: 'Thành công',
-          gestureEnabled: false, // Disable gesture on success
+          headerShown: false,
+          gestureEnabled: false,
         }}
       />
       
@@ -73,30 +82,41 @@ const PremiumNavigator: React.FC = () => {
         name="PaymentFailed"
         component={PaymentFailedScreen}
         options={{
-          title: 'Thất bại',
-          gestureEnabled: false, // Disable gesture on failure
+            headerShown: false,
+            gestureEnabled: false,
         }}
       />
       
       <Stack.Screen
         name="PaymentHistory"
         component={PaymentHistoryScreen}
-        options={{
-          title: 'Lịch sử thanh toán',
-          gestureEnabled: true,
-        }}
       />
       
       <Stack.Screen
         name="SubscriptionManagement"
         component={PremiumScreen} // Reuse PremiumScreen for now
-        options={{
-          title: 'Quản lý đăng ký',
-          gestureEnabled: true,
-        }}
       />
     </Stack.Navigator>
   );
 };
+
+const styles = StyleSheet.create({
+    backButton: {
+        marginLeft: 16,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+    },
+    blurView: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        bottom: 0,
+        right: 0,
+    },
+});
 
 export default PremiumNavigator;

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import {
   PremiumContextType,
   PremiumPlan,
@@ -10,7 +10,7 @@ import apiClient from '../services/api';
 
 const PremiumContext = createContext<PremiumContextType | undefined>(undefined);
 
-export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     // State
     const [plans, setPlans] = useState<PremiumPlan[]>([]);
     const [currentSubscription, setCurrentSubscription] = useState<UserSubscription | null>(null);
@@ -27,7 +27,7 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [purchaseResult, setPurchaseResult] = useState<any>(null);
 
     // Actions
-    const fetchPlans = async () => {
+    const fetchPlans = useCallback(async () => {
         setLoading(true);
         try {
             const response = await apiClient.get('/premium/plans');
@@ -39,9 +39,9 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const fetchPremiumStatus = async () => {
+    const fetchPremiumStatus = useCallback(async () => {
         setLoading(true);
         try {
             const response = await apiClient.get('/premium/my-status');
@@ -54,9 +54,9 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
     
-    const fetchPaymentMethods = async () => {
+    const fetchPaymentMethods = useCallback(async () => {
         setLoading(true);
         try {
             const response = await apiClient.get('/premium/payment-methods');
@@ -68,9 +68,9 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const fetchTransactions = async () => {
+    const fetchTransactions = useCallback(async () => {
         setLoading(true);
         try {
             const response = await apiClient.get('/premium/payment/my-transactions');
@@ -82,17 +82,17 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
     
-    const selectPlan = (plan: PremiumPlan) => {
+    const selectPlan = useCallback((plan: PremiumPlan) => {
         setSelectedPlan(plan);
-    };
+    }, []);
 
-    const selectPaymentMethod = (method: PaymentMethod) => {
+    const selectPaymentMethod = useCallback((method: PaymentMethod) => {
         setSelectedPaymentMethod(method);
-    };
+    }, []);
 
-    const purchasePremium = async (planId: number, paymentMethod: string) => {
+    const purchasePremium = useCallback(async (planId: number, paymentMethod: string) => {
         if (!planId || !paymentMethod) {
             setError('Vui lòng chọn gói và phương thức thanh toán.');
             return null;
@@ -133,9 +133,9 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
         } finally {
             setIsPurchasing(false);
         }
-    };
+    }, [fetchPremiumStatus, fetchTransactions]);
 
-    const cancelSubscription = async (reason: string) => {
+    const cancelSubscription = useCallback(async (reason: string) => {
         if (!currentSubscription) {
             setError('Không có gói nào để hủy.');
             return;
@@ -149,26 +149,26 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
         } finally {
             setLoading(false);
         }
-    };
+    }, [currentSubscription, fetchPremiumStatus]);
     
-    const retryPayment = async (transactionId: number) => {
+    const retryPayment = useCallback(async (transactionId: number) => {
       // Logic for retrying payment can be implemented here
       // For now, it will return a mock response
       return Promise.resolve({ success: true, paymentUrl: 'mock_retry_url' } as any);
-    };
+    }, []);
 
-    const clearError = () => {
+    const clearError = useCallback(() => {
         setError(null);
-    };
+    }, []);
 
-    const reset = () => {
+    const reset = useCallback(() => {
         setSelectedPlan(null);
         setSelectedPaymentMethod(null);
         setError(null);
         setPurchaseResult(null);
-    };
+    }, []);
 
-    const value: PremiumContextType = {
+    const value: PremiumContextType = useMemo(() => ({
         plans,
         currentSubscription,
         premiumStatus,
@@ -191,7 +191,13 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
         retryPayment,
         clearError,
         reset,
-    };
+    }), [
+        plans, currentSubscription, premiumStatus, paymentMethods, transactions,
+        loading, error, selectedPlan, selectedPaymentMethod, isPurchasing, purchaseResult,
+        fetchPlans, fetchPremiumStatus, fetchPaymentMethods, fetchTransactions,
+        selectPlan, selectPaymentMethod, purchasePremium, cancelSubscription, retryPayment,
+        clearError, reset
+    ]);
 
     return <PremiumContext.Provider value={value}>{children}</PremiumContext.Provider>;
 };

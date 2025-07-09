@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
 import { authAPI, storageUtils, User, LoginRequest, RegisterRequest, usersAPI } from '../services/api';
 import { Alert } from 'react-native';
 import { usePremium } from './PremiumContext';
@@ -25,11 +25,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { fetchPremiumStatus, reset: resetPremiumContext } = usePremium();
 
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
-
-  const checkAuthStatus = async () => {
+  const checkAuthStatus = useCallback(async () => {
     try {
       const token = await storageUtils.getToken();
       const savedUser = await storageUtils.getUser();
@@ -43,9 +39,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fetchPremiumStatus]);
 
-  const login = async (credentials: LoginRequest): Promise<boolean> => {
+  useEffect(() => {
+    checkAuthStatus();
+  }, [checkAuthStatus]);
+
+
+  const login = useCallback(async (credentials: LoginRequest): Promise<boolean> => {
     try {
       setIsLoading(true);
       const response = await authAPI.login(credentials);
@@ -78,9 +79,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fetchPremiumStatus]);
 
-  const register = async (userData: RegisterRequest): Promise<boolean> => {
+  const register = useCallback(async (userData: RegisterRequest): Promise<boolean> => {
     try {
       setIsLoading(true);
       const response = await authAPI.register(userData);
@@ -113,9 +114,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fetchPremiumStatus]);
 
-  const logout = async (): Promise<void> => {
+  const logout = useCallback(async (): Promise<void> => {
     try {
       await storageUtils.clearAuth();
       setUser(null);
@@ -123,9 +124,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
     }
-  };
+  }, [resetPremiumContext]);
 
-  const refreshUserProfile = async (): Promise<void> => {
+  const refreshUserProfile = useCallback(async (): Promise<void> => {
     try {
       const profile = await usersAPI.getProfile();
       setUser(profile);
@@ -133,14 +134,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Error refreshing user profile:', error);
     }
-  };
+  }, []);
 
-  const updateCurrentUser = (updatedUser: User) => {
+  const updateCurrentUser = useCallback((updatedUser: User) => {
     setUser(updatedUser);
     storageUtils.saveUser(updatedUser);
-  };
+  }, []);
 
-  const value: AuthContextType = {
+  const value = useMemo(() => ({
     user,
     isAuthenticated: !!user,
     isLoading,
@@ -149,7 +150,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     refreshUserProfile,
     updateCurrentUser,
-  };
+  }), [user, isLoading, login, register, logout, refreshUserProfile, updateCurrentUser]);
 
   return (
     <AuthContext.Provider value={value}>
