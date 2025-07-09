@@ -22,4 +22,27 @@ export class AppController {
   getHello() {
     return this.appService.getHello();
   }
+
+  @Get('health')
+  @ApiOperation({ summary: 'Kiểm tra trạng thái sức khỏe của API' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'API đang hoạt động bình thường',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'string', example: 'OK' },
+        timestamp: { type: 'string', example: '2025-01-27T10:30:00.000Z' },
+        uptime: { type: 'number', example: 12345 }
+      }
+    } 
+  })
+  getHealth() {
+    return {
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      message: 'VieGrand API đang hoạt động bình thường'
+    };
+  }
 } 

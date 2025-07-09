@@ -6,7 +6,7 @@
  */
 
 import 'react-native-gesture-handler';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from './src/types/navigation';
@@ -21,10 +21,26 @@ import { VoiceProvider } from './src/contexts/VoiceContext';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { PremiumProvider } from './src/contexts/PremiumContext';
 import { SettingsProvider } from './src/contexts/SettingsContext';
+import { initializeAPI } from './src/services/api';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const AppContent = () => {
+  // Khởi tạo API khi app start
+  useEffect(() => {
+    const initAPI = async () => {
+      try {
+        console.log('🚀 Initializing API...');
+        await initializeAPI();
+        console.log('✅ API initialization completed');
+      } catch (error) {
+        console.error('❌ API initialization failed:', error);
+      }
+    };
+
+    initAPI();
+  }, []);
+
   return (
     <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="Splash" component={SplashScreen} />

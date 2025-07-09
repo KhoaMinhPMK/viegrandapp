@@ -1,3 +1,5 @@
+import { PremiumPlan } from './premium';
+
 export type RootStackParamList = {
   Splash: undefined;
   Onboarding: undefined;
@@ -20,6 +22,7 @@ export type ElderlyStackParamList = {
   Main: undefined;
   Notifications: undefined;
   Premium: undefined;
+  Sudoku: undefined;
 };
 
 export type RelativeStackParamList = {
@@ -32,7 +35,7 @@ export type RelativeStackParamList = {
 export type PremiumStackParamList = {
   PremiumHome: undefined;
   PlanComparison: { initialPlanId?: number } | undefined;
-  PaymentMethod: { planId: number; billingCycle: string };
+  PaymentMethod: { plan: PremiumPlan };
   PaymentProcessing: { 
     planId: number; 
     billingCycle: string;

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,522 +6,207 @@ import {
   SafeAreaView,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
   Animated,
-  Alert,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
-import { usePremium } from '../../contexts/PremiumContext';
 import { PremiumStackParamList } from '../../types/navigation';
 
-const { width } = Dimensions.get('window');
+// --- Icon Component ---
+const CloseIcon = () => (
+    <View style={styles.iconCloseContainer}>
+        <View style={styles.iconCloseLine1} />
+        <View style={styles.iconCloseLine2} />
+    </View>
+);
 
-interface PaymentFailedScreenProps {
+const PaymentFailedScreen: React.FC<{
   navigation: NavigationProp<PremiumStackParamList, 'PaymentFailed'>;
   route: RouteProp<PremiumStackParamList, 'PaymentFailed'>;
-}
-
-const PaymentFailedScreen: React.FC<PaymentFailedScreenProps> = ({ 
-  navigation, 
-  route 
-}) => {
+}> = ({ navigation, route }) => {
   const { transactionId, error } = route.params;
-  const { plans } = usePremium();
-  const [scaleAnim] = React.useState(new Animated.Value(0));
-  const [fadeAnim] = React.useState(new Animated.Value(0));
+  const scaleAnim = useRef(new Animated.Value(0.5)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Start error animation
     Animated.parallel([
       Animated.spring(scaleAnim, {
         toValue: 1,
-        tension: 50,
-        friction: 3,
+        friction: 4,
         useNativeDriver: true,
       }),
-      Animated.timing(fadeAnim, {
+      Animated.timing(opacityAnim, {
         toValue: 1,
-        duration: 800,
+        duration: 300,
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [scaleAnim, opacityAnim]);
 
-  const handleTryAgain = () => {
-    navigation.goBack();
-  };
-
-  const handleGoHome = () => {
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'PremiumHome' }],
-    });
-  };
-
-  const handleContactSupport = () => {
-    Alert.alert(
-      'Liên hệ hỗ trợ',
-      'Bạn có thể liên hệ với chúng tôi qua:\n\n📞 Hotline: 1900-xxxx\n📧 Email: support@viegrand.com\n💬 Chat: Trong ứng dụng',
-      [
-        { text: 'OK', style: 'default' },
-        { text: 'Mở chat', onPress: () => console.log('Open chat support') },
-      ]
-    );
-  };
-
-  const handleViewHistory = () => {
-    navigation.navigate('PaymentHistory');
-  };
-
-  const getErrorMessage = (errorCode: string): string => {
+  const getErrorMessage = (errorCode: string): { title: string, description: string } => {
     switch (errorCode) {
       case 'Insufficient funds':
-        return 'Số dư trong tài khoản không đủ để thực hiện giao dịch này.';
+        return { title: 'Số dư không đủ', description: 'Tài khoản của bạn không đủ để thực hiện giao dịch này. Vui lòng nạp thêm tiền hoặc sử dụng phương thức khác.' };
       case 'Card declined':
-        return 'Thẻ của bạn đã bị từ chối. Vui lòng kiểm tra thông tin thẻ hoặc liên hệ ngân hàng.';
-      case 'Network error':
-        return 'Kết nối mạng không ổn định. Vui lòng kiểm tra kết nối và thử lại.';
-      case 'Gateway timeout':
-        return 'Thời gian xử lý vượt quá giới hạn. Vui lòng thử lại sau.';
-      case 'Invalid card':
-        return 'Thông tin thẻ không hợp lệ. Vui lòng kiểm tra lại thông tin.';
+        return { title: 'Thẻ bị từ chối', description: 'Ngân hàng đã từ chối giao dịch. Vui lòng kiểm tra lại thông tin thẻ hoặc liên hệ ngân hàng của bạn.' };
       default:
-        return 'Đã xảy ra lỗi trong quá trình xử lý. Vui lòng thử lại sau.';
+        return { title: 'Giao dịch không thành công', description: 'Đã có lỗi xảy ra trong quá trình xử lý. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.' };
     }
   };
 
-  const getTroubleshootingSteps = (errorCode: string): string[] => {
-    switch (errorCode) {
-      case 'Insufficient funds':
-        return [
-          'Kiểm tra số dư trong tài khoản',
-          'Nạp thêm tiền vào tài khoản',
-          'Thử với thẻ khác',
-        ];
-      case 'Card declined':
-        return [
-          'Kiểm tra thông tin thẻ',
-          'Liên hệ ngân hàng để mở khóa thẻ',
-          'Thử với thẻ khác',
-        ];
-      case 'Network error':
-        return [
-          'Kiểm tra kết nối mạng',
-          'Thử kết nối Wi-Fi khác',
-          'Thử lại sau vài phút',
-        ];
-      default:
-        return [
-          'Kiểm tra thông tin thanh toán',
-          'Thử với phương thức khác',
-          'Liên hệ hỗ trợ nếu vẫn gặp lỗi',
-        ];
-    }
-  };
+  const errorMessage = getErrorMessage(error);
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
-          {/* Error Animation */}
-          <Animated.View
-            style={[
-              styles.errorContainer,
-              {
-                transform: [{ scale: scaleAnim }],
-                opacity: fadeAnim,
-              },
-            ]}
-          >
-            <View style={styles.errorCircle}>
-              <Text style={styles.errorIcon}>❌</Text>
-            </View>
-            <Text style={styles.errorTitle}>Thanh toán thất bại</Text>
-            <Text style={styles.errorSubtitle}>
-              Rất tiếc, giao dịch của bạn không thể hoàn tất
-            </Text>
-          </Animated.View>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <Animated.View style={[styles.content, { opacity: opacityAnim, transform: [{ scale: scaleAnim }] }]}>
+          {/* Icon */}
+          <View style={styles.iconContainer}>
+            <CloseIcon />
+          </View>
 
-          {/* Error Details */}
-          <Animated.View
-            style={[
-              styles.detailsContainer,
-              { opacity: fadeAnim },
-            ]}
-          >
-            <Text style={styles.detailsTitle}>Chi tiết lỗi</Text>
-            
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Mã giao dịch:</Text>
-              <Text style={styles.detailValue}>{transactionId}</Text>
-            </View>
-            
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Thời gian:</Text>
-              <Text style={styles.detailValue}>
-                {new Date().toLocaleString('vi-VN')}
-              </Text>
-            </View>
-            
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Trạng thái:</Text>
-              <Text style={[styles.detailValue, styles.statusError]}>
-                Thất bại
-              </Text>
-            </View>
-            
-            <View style={styles.errorMessageContainer}>
-              <Text style={styles.errorMessageTitle}>Lý do:</Text>
-              <Text style={styles.errorMessageText}>
-                {getErrorMessage(error)}
-              </Text>
-            </View>
-          </Animated.View>
+          {/* Message */}
+          <Text style={styles.title}>{errorMessage.title}</Text>
+          <Text style={styles.subtitle}>{errorMessage.description}</Text>
 
-          {/* Troubleshooting */}
-          <Animated.View
-            style={[
-              styles.troubleshootingContainer,
-              { opacity: fadeAnim },
-            ]}
-          >
-            <Text style={styles.troubleshootingTitle}>💡 Hướng dẫn khắc phục</Text>
-            
-            {getTroubleshootingSteps(error).map((step, index) => (
-              <View key={index} style={styles.troubleshootingStep}>
-                <Text style={styles.stepNumber}>{index + 1}.</Text>
-                <Text style={styles.stepText}>{step}</Text>
-              </View>
-            ))}
-          </Animated.View>
-
-          {/* Alternative Payment Methods */}
-          <Animated.View
-            style={[
-              styles.alternativeContainer,
-              { opacity: fadeAnim },
-            ]}
-          >
-            <Text style={styles.alternativeTitle}>💳 Phương thức thanh toán khác</Text>
-            <Text style={styles.alternativeText}>
-              Bạn có thể thử thanh toán bằng các phương thức khác:
-            </Text>
-            
-            <View style={styles.paymentMethodsList}>
-              <View style={styles.paymentMethodItem}>
-                <Text style={styles.paymentMethodIcon}>📱</Text>
-                <Text style={styles.paymentMethodName}>Ví điện tử</Text>
-              </View>
-              
-              <View style={styles.paymentMethodItem}>
-                <Text style={styles.paymentMethodIcon}>🏦</Text>
-                <Text style={styles.paymentMethodName}>Chuyển khoản</Text>
-              </View>
-              
-              <View style={styles.paymentMethodItem}>
-                <Text style={styles.paymentMethodIcon}>💳</Text>
-                <Text style={styles.paymentMethodName}>Thẻ khác</Text>
+          {/* Transaction Details */}
+          <View style={styles.card}>
+            <View style={styles.row}>
+              <Text style={styles.label}>Mã giao dịch</Text>
+              <Text style={styles.value}>{transactionId}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.row}>
+              <Text style={styles.label}>Trạng thái</Text>
+              <View style={styles.statusBadge}>
+                <Text style={styles.statusText}>Thất bại</Text>
               </View>
             </View>
-          </Animated.View>
+          </View>
+          
+          <Text style={styles.infoText}>
+            Bạn chưa bị trừ tiền cho giao dịch này.
+          </Text>
 
-          {/* Support Information */}
-          <Animated.View
-            style={[
-              styles.supportContainer,
-              { opacity: fadeAnim },
-            ]}
-          >
-            <Text style={styles.supportTitle}>🆘 Cần hỗ trợ?</Text>
-            <Text style={styles.supportText}>
-              Đội ngũ hỗ trợ của chúng tôi sẵn sàng giúp bạn 24/7
-            </Text>
-            
-            <TouchableOpacity
-              style={styles.supportButton}
-              onPress={handleContactSupport}
-            >
-              <Text style={styles.supportButtonText}>Liên hệ hỗ trợ</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
+        </Animated.View>
       </ScrollView>
-
-      {/* Action Buttons */}
-      <Animated.View
-        style={[
-          styles.actionContainer,
-          { opacity: fadeAnim },
-        ]}
-      >
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={handleTryAgain}
-        >
+      
+      {/* Footer Buttons */}
+      <View style={styles.footer}>
+        <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.goBack()}>
           <Text style={styles.primaryButtonText}>Thử lại</Text>
         </TouchableOpacity>
-        
-        <View style={styles.secondaryActions}>
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={handleViewHistory}
-          >
-            <Text style={styles.secondaryButtonText}>Xem lịch sử</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={handleGoHome}
-          >
-            <Text style={styles.secondaryButtonText}>Về trang chủ</Text>
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
+        <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate('PremiumHome')}>
+          <Text style={styles.secondaryButtonText}>Quay về trang chủ</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-  },
-  errorContainer: {
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  scrollContainer: { flexGrow: 1, justifyContent: 'center' },
+  content: { paddingHorizontal: 24, alignItems: 'center', paddingBottom: 160 }, // Padding bottom to avoid overlap with footer
+  
+  // Icon
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FF3B30', // Error color
     alignItems: 'center',
-    marginBottom: 40,
-    paddingTop: 40,
-  },
-  errorCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#f44336',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    marginBottom: 24,
   },
-  errorIcon: {
-    fontSize: 48,
-    color: '#fff',
-  },
-  errorTitle: {
-    fontSize: 28,
+  iconCloseContainer: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  iconCloseLine1: { position: 'absolute', width: '100%', height: 4, backgroundColor: '#FFFFFF', borderRadius: 2, transform: [{ rotate: '45deg' }] },
+  iconCloseLine2: { position: 'absolute', width: '100%', height: 4, backgroundColor: '#FFFFFF', borderRadius: 2, transform: [{ rotate: '-45deg' }] },
+
+  // Message
+  title: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#f44336',
+    color: '#1C1C1E',
+    textAlign: 'center',
     marginBottom: 8,
-    textAlign: 'center',
   },
-  errorSubtitle: {
+  subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: '#6A6A6E',
     textAlign: 'center',
+    marginBottom: 32,
     lineHeight: 24,
   },
-  detailsContainer: {
-    backgroundColor: '#fff',
+  infoText: {
+    fontSize: 14,
+    color: '#8A8A8E',
+    textAlign: 'center',
+    marginTop: 24,
+  },
+
+  // Card
+  card: {
+    width: '100%',
+    backgroundColor: '#F2F2F7',
     borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
+    paddingHorizontal: 16,
   },
-  detailsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
-  },
-  detailRow: {
+  row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    paddingVertical: 16,
   },
-  detailLabel: {
-    fontSize: 16,
-    color: '#666',
+  label: { fontSize: 16, color: '#6A6A6E' },
+  value: { fontSize: 16, color: '#1C1C1E', fontWeight: '500' },
+  divider: { height: 1, backgroundColor: '#E5E5EA' },
+
+  // Status Badge
+  statusBadge: {
+    backgroundColor: 'rgba(255, 59, 48, 0.1)', // Error color with opacity
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
   },
-  detailValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-  },
-  statusError: {
-    color: '#f44336',
-  },
-  errorMessageContainer: {
-    marginTop: 16,
-    padding: 16,
-    backgroundColor: '#ffebee',
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#f44336',
-  },
-  errorMessageTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#f44336',
-    marginBottom: 8,
-  },
-  errorMessageText: {
+  statusText: {
+    color: '#FF3B30',
     fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
+    fontWeight: '600',
   },
-  troubleshootingContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
-  },
-  troubleshootingTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
-  },
-  troubleshootingStep: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  stepNumber: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2196F3',
-    marginRight: 8,
-    minWidth: 20,
-  },
-  stepText: {
-    fontSize: 16,
-    color: '#333',
-    flex: 1,
-  },
-  alternativeContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
-  },
-  alternativeTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  alternativeText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 16,
-    lineHeight: 20,
-  },
-  paymentMethodsList: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  paymentMethodItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  paymentMethodIcon: {
-    fontSize: 24,
-    marginBottom: 8,
-  },
-  paymentMethodName: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-  },
-  supportContainer: {
-    backgroundColor: '#e8f5e8',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-    alignItems: 'center',
-    borderLeftWidth: 4,
-    borderLeftColor: '#4CAF50',
-  },
-  supportTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#4CAF50',
-    marginBottom: 8,
-  },
-  supportText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 20,
-  },
-  supportButton: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-  },
-  supportButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  actionContainer: {
-    padding: 20,
-    backgroundColor: '#fff',
+
+  // Footer
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 32, // Safe area padding
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: '#E5E5EA',
   },
   primaryButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: '#007AFF',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   primaryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  secondaryActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600',
   },
   secondaryButton: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: 'center',
   },
   secondaryButtonText: {
-    color: '#666',
-    fontSize: 14,
+    color: '#007AFF',
+    fontSize: 16,
     fontWeight: '500',
   },
 });

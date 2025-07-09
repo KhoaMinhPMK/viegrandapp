@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,95 +12,43 @@ import {
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { usePremium } from '../../contexts/PremiumContext';
 import { PremiumStackParamList } from '../../types/navigation';
-import { PaymentMethod as PaymentMethodType } from '../../types/premium';
+import { PaymentMethod as PaymentMethodType, PremiumPlan } from '../../types/premium';
 
-interface PaymentMethodScreenProps {
+
+// --- Icons ---
+const BackArrowIcon = () => <View style={styles.iconBackArrow} />;
+const CheckIcon = () => (
+    <View style={styles.iconCheckContainer}>
+        <View style={styles.iconCheckMark} />
+    </View>
+);
+
+const PaymentMethodScreen: React.FC<{
   navigation: NavigationProp<PremiumStackParamList, 'PaymentMethod'>;
   route: RouteProp<PremiumStackParamList, 'PaymentMethod'>;
-}
+}> = ({ navigation, route }) => {
+  const { plan } = route.params as { plan: PremiumPlan };
+  const { isPurchasing, selectPaymentMethod } = usePremium();
+  const [selectedMethodId, setSelectedMethodId] = useState<string | null>('credit_card');
 
-const PaymentMethodScreen: React.FC<PaymentMethodScreenProps> = ({ 
-  navigation, 
-  route 
-}) => {
-  const { planId } = route.params;
-  const { 
-    plans, 
-    loading, 
-    purchasePremium, 
-    isPurchasing,
-    selectPaymentMethod,
-    selectedPlan
-  } = usePremium();
+  const paymentMethods: PaymentMethodType[] = useMemo(() => [
+    { id: 'credit_card', type: 'credit_card', name: 'Thẻ Tín dụng / Ghi nợ', description: 'Visa, Mastercard', icon: '💳', enabled: true, isAvailable: true, processingFee: 0 },
+    { id: 'momo', type: 'e_wallet', name: 'Ví MoMo', description: 'Thanh toán qua MoMo', icon: '🐷', enabled: true, isAvailable: true, processingFee: 0 },
+    { id: 'zalopay', type: 'e_wallet', name: 'ZaloPay', description: 'Thanh toán qua ZaloPay', icon: '🔵', enabled: true, isAvailable: true, processingFee: 0 },
+    { id: 'bank_transfer', type: 'bank_transfer', name: 'Chuyển khoản Ngân hàng', description: 'Internet Banking, QR Code', icon: '🏦', enabled: true, isAvailable: true, processingFee: 0 },
+  ], []);
 
-  const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
-
-  const plan = selectedPlan || plans.find((p) => p.id === planId);
-  
-  const paymentMethods: PaymentMethodType[] = [
-    {
-      id: 'credit_card',
-      type: 'credit_card',
-      name: 'Thẻ tín dụng/Ghi nợ',
-      description: 'Visa, MasterCard, American Express',
-      icon: '💳',
-      enabled: true,
-      isAvailable: true,
-      processingFee: 0,
-    },
-    {
-      id: 'momo',
-      type: 'e_wallet',
-      name: 'Ví MoMo',
-      description: 'Thanh toán qua ví điện tử MoMo',
-      icon: '📱',
-      enabled: true,
-      isAvailable: true,
-      processingFee: 0,
-    },
-    {
-      id: 'zalopay',
-      type: 'e_wallet',
-      name: 'ZaloPay',
-      description: 'Thanh toán qua ví điện tử ZaloPay',
-      icon: '🔵',
-      enabled: true,
-      isAvailable: true,
-      processingFee: 0,
-    },
-    {
-      id: 'bank_transfer',
-      type: 'bank_transfer',
-      name: 'Chuyển khoản ngân hàng',
-      description: 'Chuyển khoản qua Internet Banking',
-      icon: '🏦',
-      enabled: true,
-      isAvailable: true,
-      processingFee: 0,
-    },
-    {
-      id: 'apple_pay',
-      type: 'digital_wallet',
-      name: 'Apple Pay',
-      description: 'Thanh toán qua Apple Pay',
-      icon: '🍎',
-      enabled: false,
-      isAvailable: false, // Mock as unavailable
-      processingFee: 0,
-    },
-  ];
-
-  const handlePaymentMethodSelect = (method: PaymentMethodType) => {
+  const handleSelectMethod = (method: PaymentMethodType) => {
+    if (!method.isAvailable) return;
     setSelectedMethodId(method.id);
     selectPaymentMethod(method);
   };
-
+  
   const handleProceedToPayment = async () => {
     if (!selectedMethodId || !plan) {
-      Alert.alert('Lỗi', 'Vui lòng chọn phương thức thanh toán');
+      Alert.alert('Lỗi', 'Vui lòng chọn phương thức thanh toán.');
       return;
     }
-
     navigation.navigate('PaymentProcessing', {
       planId: plan.id,
       paymentMethod: selectedMethodId,
@@ -109,149 +57,92 @@ const PaymentMethodScreen: React.FC<PaymentMethodScreenProps> = ({
     });
   };
 
-  const formatPrice = (price: number): string => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(price);
-  };
+  const formatPrice = (price: number) => price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+  const getBillingCycleText = (type: string) => (type === 'monthly' ? 'mỗi tháng' : 'mỗi năm');
 
-  const getBillingCycleText = (type: string): string => {
-    switch (type) {
-      case 'monthly':
-        return 'hàng tháng';
-      case 'yearly':
-        return 'hàng năm';
-      default:
-        return 'một lần';
-    }
-  };
-
-  if (loading || !plan) {
+  if (!plan) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Đang tải...</Text>
-        </View>
+        <View style={styles.loadingContainer}><ActivityIndicator /></View>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <BackArrowIcon />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Xác nhận và Thanh toán</Text>
+        <View style={styles.headerRightPlaceholder} />
+      </View>
+
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Text style={styles.backButtonText}>← Quay lại</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Chọn phương thức thanh toán</Text>
-        </View>
-
-        {/* Order Summary */}
-        <View style={styles.orderSummary}>
-          <Text style={styles.summaryTitle}>Đơn hàng của bạn</Text>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Gói dịch vụ:</Text>
-            <Text style={styles.summaryValue}>{plan.name}</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Chu kỳ thanh toán:</Text>
-            <Text style={styles.summaryValue}>{getBillingCycleText(plan.type)}</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Giá:</Text>
-            <Text style={styles.summaryValue}>{formatPrice(plan.price)}</Text>
-          </View>
-          <View style={styles.summaryDivider} />
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryTotalLabel}>Tổng thanh toán:</Text>
-            <Text style={styles.summaryTotalValue}>{formatPrice(plan.price)}</Text>
-          </View>
-        </View>
-
-        {/* Payment Methods */}
-        <View style={styles.paymentMethodsContainer}>
-          <Text style={styles.sectionTitle}>Phương thức thanh toán</Text>
-          {paymentMethods.map((method) => (
-            <TouchableOpacity
-              key={method.id}
-              style={[
-                styles.paymentMethodItem,
-                selectedMethodId === method.id && styles.selectedPaymentMethod,
-                !method.isAvailable && styles.disabledPaymentMethod,
-              ]}
-              onPress={() => method.isAvailable && handlePaymentMethodSelect(method)}
-              disabled={!method.isAvailable}
-            >
-              <View style={styles.paymentMethodContent}>
-                <View style={styles.paymentMethodIcon}>
-                  <Text style={styles.paymentMethodIconText}>{method.icon}</Text>
-                </View>
-                <View style={styles.paymentMethodInfo}>
-                  <Text style={[
-                    styles.paymentMethodName,
-                    !method.isAvailable && styles.disabledText,
-                  ]}>
-                    {method.name}
-                  </Text>
-                  <Text style={[
-                    styles.paymentMethodDescription,
-                    !method.isAvailable && styles.disabledText,
-                  ]}>
-                    {method.description}
-                  </Text>
-                  {method.processingFee > 0 && (
-                    <Text style={styles.processingFee}>
-                      Phí xử lý: {formatPrice(method.processingFee)}
-                    </Text>
-                  )}
-                </View>
-                <View style={styles.paymentMethodSelector}>
-                  {selectedMethodId === method.id && (
-                    <View style={styles.selectedIndicator}>
-                      <Text style={styles.selectedIndicatorText}>✓</Text>
-                    </View>
-                  )}
-                  {!method.isAvailable && (
-                    <Text style={styles.unavailableText}>Không khả dụng</Text>
-                  )}
-                </View>
+        <View style={styles.contentContainer}>
+          {/* Order Summary */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Tóm tắt đơn hàng</Text>
+            <View style={styles.card}>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Gói dịch vụ</Text>
+                <Text style={styles.summaryValue}>{plan.name}</Text>
               </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Thanh toán</Text>
+                <Text style={styles.summaryValue}>{getBillingCycleText(plan.type)}</Text>
+              </View>
+              <View style={styles.divider} />
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryTotalLabel}>Tổng cộng</Text>
+                <Text style={styles.summaryTotalValue}>{formatPrice(plan.price)}</Text>
+              </View>
+            </View>
+          </View>
 
-        {/* Security Notice */}
-        <View style={styles.securityNotice}>
-          <Text style={styles.securityTitle}>🔒 Bảo mật thanh toán</Text>
-          <Text style={styles.securityText}>
-            Tất cả thông tin thanh toán được mã hóa và bảo mật theo tiêu chuẩn quốc tế.
-            Chúng tôi không lưu trữ thông tin thẻ tín dụng của bạn.
-          </Text>
+          {/* Payment Methods */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Chọn phương thức</Text>
+            <View style={styles.card}>
+              {paymentMethods.map((method, index) => (
+                <React.Fragment key={method.id}>
+                  <TouchableOpacity
+                    style={styles.paymentMethodRow}
+                    onPress={() => handleSelectMethod(method)}
+                    disabled={!method.isAvailable}
+                  >
+                    <View style={styles.paymentMethodIcon}><Text style={styles.paymentMethodIconText}>{method.icon}</Text></View>
+                    <View style={styles.paymentMethodInfo}>
+                      <Text style={styles.paymentMethodName}>{method.name}</Text>
+                      <Text style={styles.paymentMethodDesc}>{method.description}</Text>
+                    </View>
+                    {selectedMethodId === method.id && <CheckIcon />}
+                  </TouchableOpacity>
+                  {index < paymentMethods.length - 1 && <View style={styles.divider} />}
+                </React.Fragment>
+              ))}
+            </View>
+          </View>
+          
+           {/* Security Notice */}
+          <View style={styles.securityNotice}>
+            <Text style={styles.securityText}>🔒 Thông tin của bạn được mã hoá và bảo vệ an toàn.</Text>
+          </View>
         </View>
       </ScrollView>
 
-      {/* Continue Button */}
-      <View style={styles.continueContainer}>
+      {/* Footer Button */}
+      <View style={styles.footer}>
         <TouchableOpacity
-          style={[
-            styles.continueButton,
-            (!selectedMethodId || isPurchasing) && styles.disabledButton,
-          ]}
+          style={[styles.continueButton, (!selectedMethodId || isPurchasing) && styles.disabledButton]}
           onPress={handleProceedToPayment}
           disabled={!selectedMethodId || isPurchasing}
         >
           {isPurchasing ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
+            <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.continueButtonText}>
-              Tiếp tục thanh toán
-            </Text>
+            <Text style={styles.continueButtonText}>{`Thanh toán ${formatPrice(plan.price)}`}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -260,203 +151,64 @@ const PaymentMethodScreen: React.FC<PaymentMethodScreenProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#666',
-  },
+  container: { flex: 1, backgroundColor: '#F2F2F7' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  
+  // Header
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 20,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#F2F2F7',
   },
   backButton: {
-    marginBottom: 16,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#007AFF',
-    fontWeight: '500',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  orderSummary: {
-    backgroundColor: '#ffffff',
-    margin: 20,
-    padding: 20,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  summaryTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
-  },
-  summaryItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'center',
+    backgroundColor: '#E5E5EA',
   },
-  summaryLabel: {
-    fontSize: 16,
-    color: '#666',
-  },
-  summaryValue: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
-  },
-  summaryDivider: {
-    height: 1,
-    backgroundColor: '#e0e0e0',
-    marginVertical: 16,
-  },
-  summaryTotalLabel: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  summaryTotalValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#007AFF',
-  },
-  paymentMethodsContainer: {
-    marginHorizontal: 20,
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
-  },
-  paymentMethodItem: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: '#e0e0e0',
-  },
-  selectedPaymentMethod: {
-    borderColor: '#007AFF',
-    backgroundColor: '#f0f8ff',
-  },
-  disabledPaymentMethod: {
-    backgroundColor: '#f5f5f5',
-    borderColor: '#ddd',
-  },
-  paymentMethodContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  headerTitle: { fontSize: 17, fontWeight: '600', color: '#000' },
+  headerRightPlaceholder: { width: 40, height: 40 },
+  
+  // Content
+  scrollView: { flex: 1 },
+  contentContainer: { paddingHorizontal: 16, paddingBottom: 24 },
+  section: { marginBottom: 24 },
+  sectionTitle: { fontSize: 20, fontWeight: '700', color: '#1C1C1E', marginBottom: 12, paddingHorizontal: 4 },
+  card: { backgroundColor: '#FFFFFF', borderRadius: 12, paddingHorizontal: 16 },
+
+  // Summary Card
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 16 },
+  summaryLabel: { fontSize: 16, color: '#666' },
+  summaryValue: { fontSize: 16, color: '#000', fontWeight: '500' },
+  summaryTotalLabel: { fontSize: 16, color: '#000', fontWeight: 'bold' },
+  summaryTotalValue: { fontSize: 20, color: '#000', fontWeight: 'bold' },
+  
+  // Payment Method Card
+  paymentMethodRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
+  paymentMethodIcon: { fontSize: 24, marginRight: 16 },
+  paymentMethodIconText: { fontSize: 24 },
+  paymentMethodInfo: { flex: 1 },
+  paymentMethodName: { fontSize: 16, fontWeight: '500', color: '#000' },
+  paymentMethodDesc: { fontSize: 14, color: '#8A8A8E', marginTop: 2 },
+  
+  // Common
+  divider: { height: 1, backgroundColor: '#E5E5EA', marginLeft: 52 },
+
+  // Security
+  securityNotice: { alignItems: 'center', paddingVertical: 16 },
+  securityText: { fontSize: 13, color: '#8A8A8E' },
+
+  // Footer
+  footer: {
     padding: 16,
-  },
-  paymentMethodIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  paymentMethodIconText: {
-    fontSize: 20,
-  },
-  paymentMethodInfo: {
-    flex: 1,
-  },
-  paymentMethodName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  paymentMethodDescription: {
-    fontSize: 14,
-    color: '#666',
-  },
-  processingFee: {
-    fontSize: 12,
-    color: '#orange',
-    marginTop: 4,
-  },
-  disabledText: {
-    color: '#999',
-  },
-  paymentMethodSelector: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  selectedIndicator: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  selectedIndicatorText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  unavailableText: {
-    fontSize: 10,
-    color: '#999',
-    textAlign: 'center',
-  },
-  securityNotice: {
-    backgroundColor: '#ffffff',
-    margin: 20,
-    padding: 16,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#28a745',
-  },
-  securityTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#28a745',
-    marginBottom: 8,
-  },
-  securityText: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-  },
-  continueContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F2F2F7',
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: '#E5E5EA',
   },
   continueButton: {
     backgroundColor: '#007AFF',
@@ -464,16 +216,14 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
   },
-  disabledButton: {
-    backgroundColor: '#cccccc',
-  },
-  continueButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  disabledButton: { backgroundColor: '#C7C7CC' },
+  continueButtonText: { color: '#FFFFFF', fontSize: 17, fontWeight: '600' },
+  
+  // Icons
+  iconBackArrow: { width: 10, height: 10, borderLeftWidth: 2, borderTopWidth: 2, borderColor: '#8A8A8E', transform: [{ rotate: '-45deg' }] },
+  iconCheckContainer: { width: 22, height: 22, borderRadius: 11, backgroundColor: '#34C759', alignItems: 'center', justifyContent: 'center' },
+  iconCheckMark: { width: 6, height: 11, borderBottomWidth: 2, borderRightWidth: 2, borderColor: '#FFF', transform: [{ rotate: '45deg' }], marginBottom: 2 },
 });
 
 export default PaymentMethodScreen;

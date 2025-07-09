@@ -15,36 +15,42 @@ import { PremiumStackParamList } from '../../types/navigation';
 
 const { width } = Dimensions.get('window');
 
-// Icon Components
-const StarIcon = ({ size = 24, color = '#000000' }) => (
+// Minimalist Black Icons - Apple Style
+const CrownIcon = ({ size = 24 }) => (
   <View style={[styles.iconContainer, { width: size, height: size }]}>
-    <View style={[styles.starIcon, { borderColor: color }]} />
+    <View style={styles.crownBase} />
+    <View style={styles.crownPeak1} />
+    <View style={styles.crownPeak2} />
+    <View style={styles.crownPeak3} />
   </View>
 );
 
-const VideoIcon = ({ size = 24, color = '#000000' }) => (
+const PlayCircleIcon = ({ size = 24 }) => (
   <View style={[styles.iconContainer, { width: size, height: size }]}>
-    <View style={[styles.videoIcon, { borderColor: color, backgroundColor: color }]} />
+    <View style={styles.playCircle} />
+    <View style={styles.playTriangle} />
   </View>
 );
 
-const LockIcon = ({ size = 24, color = '#000000' }) => (
+const ShieldIcon = ({ size = 24 }) => (
   <View style={[styles.iconContainer, { width: size, height: size }]}>
-    <View style={[styles.lockIcon, { borderColor: color }]} />
-    <View style={[styles.lockBody, { backgroundColor: color }]} />
+    <View style={styles.shieldBody} />
+    <View style={styles.shieldCheck} />
   </View>
 );
 
-const TargetIcon = ({ size = 24, color = '#000000' }) => (
+const BrainIcon = ({ size = 24 }) => (
   <View style={[styles.iconContainer, { width: size, height: size }]}>
-    <View style={[styles.targetOuter, { borderColor: color }]} />
-    <View style={[styles.targetInner, { backgroundColor: color }]} />
+    <View style={styles.brainLeft} />
+    <View style={styles.brainRight} />
+    <View style={styles.brainConnector} />
   </View>
 );
 
-const LightningIcon = ({ size = 24, color = '#000000' }) => (
+const InfinityIcon = ({ size = 24 }) => (
   <View style={[styles.iconContainer, { width: size, height: size }]}>
-    <View style={[styles.lightningIcon, { backgroundColor: color }]} />
+    <View style={styles.infinityLeft} />
+    <View style={styles.infinityRight} />
   </View>
 );
 
@@ -80,7 +86,7 @@ const PremiumScreen: React.FC = () => {
         {/* Hero Section */}
         <View style={styles.heroSection}>
           <View style={styles.heroIconContainer}>
-            <StarIcon size={36} color="rgba(0, 0, 0, 0.8)" />
+            <CrownIcon size={36} />
           </View>
           <Text style={styles.heroTitle}>Nâng cấp trải nghiệm</Text>
           <Text style={styles.heroSubtitle}>
@@ -92,19 +98,19 @@ const PremiumScreen: React.FC = () => {
         <View style={styles.featuresSection}>
           <View style={styles.featureRow}>
             <View style={styles.featureItem}>
-              <VideoIcon size={24} color="rgba(0, 0, 0, 0.7)" />
+              <PlayCircleIcon size={24} />
               <Text style={styles.featureText}>Video HD</Text>
             </View>
             <View style={styles.featureItem}>
-              <LockIcon size={24} color="rgba(0, 0, 0, 0.7)" />
+              <ShieldIcon size={24} />
               <Text style={styles.featureText}>Bảo mật</Text>
             </View>
             <View style={styles.featureItem}>
-              <TargetIcon size={24} color="rgba(0, 0, 0, 0.7)" />
+              <BrainIcon size={24} />
               <Text style={styles.featureText}>AI thông minh</Text>
             </View>
             <View style={styles.featureItem}>
-              <LightningIcon size={24} color="rgba(0, 0, 0, 0.7)" />
+              <InfinityIcon size={24} />
               <Text style={styles.featureText}>Không giới hạn</Text>
             </View>
           </View>
@@ -203,68 +209,166 @@ const PremiumScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  // Icon styles
+  // Minimalist Black Icon Styles - Apple Design
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    position: 'relative',
   },
-  starIcon: {
-    width: 20,
-    height: 20,
-    borderWidth: 2,
-    borderColor: '#000000',
-    transform: [{ rotate: '45deg' }],
-    backgroundColor: 'transparent',
-  },
-  videoIcon: {
+  
+  // Crown Icon - Premium/VIP (Black outline)
+  crownBase: {
     width: 18,
-    height: 12,
-    borderRadius: 2,
-    borderWidth: 2,
-  },
-  lockIcon: {
-    width: 12,
-    height: 8,
-    borderWidth: 2,
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
+    height: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.8)',
     backgroundColor: 'transparent',
+    position: 'absolute',
+    bottom: 8,
+  },
+  crownPeak1: {
+    width: 3,
+    height: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    position: 'absolute',
+    top: 6,
+    left: 8,
+  },
+  crownPeak2: {
+    width: 3,
+    height: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     position: 'absolute',
     top: 2,
+    left: 14.5,
   },
-  lockBody: {
-    width: 16,
-    height: 10,
-    borderRadius: 2,
+  crownPeak3: {
+    width: 3,
+    height: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     position: 'absolute',
-    bottom: 2,
+    top: 6,
+    right: 8,
   },
-  targetOuter: {
+  
+  // Play Circle Icon - Video/Media (Black outline)
+  playCircle: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
+    borderColor: 'rgba(0, 0, 0, 0.8)',
     backgroundColor: 'transparent',
     position: 'absolute',
   },
-  targetInner: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    position: 'absolute',
-    top: 7,
-    left: 7,
-  },
-  lightningIcon: {
+  playTriangle: {
     width: 0,
     height: 0,
-    borderLeftWidth: 8,
-    borderRightWidth: 8,
-    borderTopWidth: 12,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    transform: [{ rotate: '15deg' }],
+    borderLeftWidth: 6,
+    borderRightWidth: 0,
+    borderTopWidth: 4,
+    borderBottomWidth: 4,
+    borderLeftColor: 'rgba(0, 0, 0, 0.8)',
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    position: 'absolute',
+    left: 9,
+    top: 6,
+  },
+  
+  // Shield Icon - Security/Privacy (Black outline)
+  shieldBody: {
+    width: 16,
+    height: 18,
+    borderWidth: 2,
+    borderColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'transparent',
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    position: 'absolute',
+    top: 7,
+  },
+  shieldCheck: {
+    width: 6,
+    height: 3,
+    borderBottomWidth: 2,
+    borderLeftWidth: 2,
+    borderBottomColor: 'rgba(0, 0, 0, 0.8)',
+    borderLeftColor: 'rgba(0, 0, 0, 0.8)',
+    transform: [{ rotate: '-45deg' }],
+    backgroundColor: 'transparent',
+    position: 'absolute',
+    top: 14,
+    left: 13,
+  },
+  
+  // Brain Icon - AI Intelligence (Black outline)
+  brainLeft: {
+    width: 8,
+    height: 14,
+    borderWidth: 2,
+    borderColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'transparent',
+    borderTopLeftRadius: 6,
+    borderBottomLeftRadius: 6,
+    borderTopRightRadius: 2,
+    borderBottomRightRadius: 2,
+    position: 'absolute',
+    left: 6,
+    top: 9,
+  },
+  brainRight: {
+    width: 8,
+    height: 14,
+    borderWidth: 2,
+    borderColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'transparent',
+    borderTopRightRadius: 6,
+    borderBottomRightRadius: 6,
+    borderTopLeftRadius: 2,
+    borderBottomLeftRadius: 2,
+    position: 'absolute',
+    right: 6,
+    top: 9,
+  },
+  brainConnector: {
+    width: 2,
+    height: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    position: 'absolute',
+    top: 12,
+    left: 15,
+  },
+  
+  // Infinity Icon - Unlimited (Black outline)
+  infinityLeft: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'transparent',
+    position: 'absolute',
+    left: 5,
+    top: 12,
+  },
+  infinityRight: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'transparent',
+    position: 'absolute',
+    right: 5,
+    top: 12,
   },
   checkContainer: {
     justifyContent: 'center',
@@ -288,7 +392,7 @@ const styles = StyleSheet.create({
   // Main styles
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F2F2F7', // Apple's light gray background
   },
   scrollView: {
     flex: 1,
@@ -329,15 +433,33 @@ const styles = StyleSheet.create({
     paddingTop: 32,
     paddingBottom: 48,
     alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 20,
+    borderRadius: 24,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   heroIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+    // Apple-like subtle border
+    borderWidth: 0.5,
+    borderColor: 'rgba(0, 0, 0, 0.08)',
   },
   heroIcon: {
     fontSize: 36,
@@ -359,7 +481,16 @@ const styles = StyleSheet.create({
   },
   featuresSection: {
     paddingHorizontal: 24,
-    marginBottom: 48,
+    paddingVertical: 32,
+    marginBottom: 20,
+    marginHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   featureRow: {
     flexDirection: 'row',
@@ -381,7 +512,16 @@ const styles = StyleSheet.create({
   },
   plansSection: {
     paddingHorizontal: 24,
-    marginBottom: 32,
+    paddingVertical: 32,
+    marginBottom: 20,
+    marginHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   plansTitle: {
     fontSize: 28,
@@ -534,7 +674,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   bottomSpacing: {
-    height: 32,
+    height: 40,
   },
 });
 

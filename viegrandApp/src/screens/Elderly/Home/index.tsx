@@ -343,10 +343,13 @@ const ElderlyHomeScreen = ({ navigation }: any) => {
               <Text style={styles.functionText}>Sức khỏe</Text>
             </View>
             <View style={styles.functionItem}>
-              <TouchableOpacity style={styles.functionButton}>
-                <Feather name="phone" size={24} color="#007AFF" />
+              <TouchableOpacity 
+                style={styles.functionButton}
+                onPress={() => navigation.navigate('Sudoku')}
+              >
+                <Feather name="play-circle" size={24} color="#007AFF" />
               </TouchableOpacity>
-              <Text style={styles.functionText}>Gọi khẩn cấp</Text>
+              <Text style={styles.functionText}>Trò chơi</Text>
             </View>
             <View style={styles.functionItem}>
               <TouchableOpacity style={styles.functionButton}>
@@ -384,9 +387,9 @@ const ElderlyHomeScreen = ({ navigation }: any) => {
             </View>
             <View style={styles.functionItem}>
               <TouchableOpacity style={styles.functionButton}>
-                <Feather name="clock" size={24} color="#007AFF" />
+                <Feather name="phone" size={24} color="#007AFF" />
               </TouchableOpacity>
-              <Text style={styles.functionText}>Sắp có</Text>
+              <Text style={styles.functionText}>Gọi khẩn cấp</Text>
             </View>
             <View style={styles.functionItemEmpty} />
           </View>

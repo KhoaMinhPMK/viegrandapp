@@ -21,8 +21,13 @@ async function bootstrap() {
       'exp://192.168.1.100:19000', // For React Native development
       'exp://localhost:19000',
       /^http:\/\/192\.168\.\d+\.\d+:19000$/, // For React Native on different IPs
+      /^http:\/\/172\.28\.\d+\.\d+:3000$/, // For current network
+      /^http:\/\/172\.28\.\d+\.\d+$/, // For current network without port
+      '*', // Allow all for development - REMOVE in production
     ],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
   
   // Thiết lập tiền tố cho API

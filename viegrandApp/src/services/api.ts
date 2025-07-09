@@ -2,16 +2,74 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { PaymentMethod } from '../types/premium';
 import { Platform } from 'react-native';
+import DeviceInfo from 'react-native-device-info';
+import { getAPIURL, getNetworkInfo } from '../config/network';
 
-// Xác định baseURL dựa trên nền tảng
-// Android emulator sẽ ánh xạ 10.0.2.2 đến localhost của máy host
-const baseURL = Platform.OS === 'android' 
-  ? 'http://10.0.2.2:3000/api' 
-  : 'http://localhost:3000/api';
+// Hàm để detect thiết bị thật vs emulator/simulator và lấy URL phù hợp
+const getBaseURL = async (): Promise<string> => {
+  try {
+    // Sử dụng config để lấy URL
+    const baseURL = getAPIURL();
+    const networkInfo = getNetworkInfo();
+    
+    console.log('🔧 Network Configuration:');
+    console.log('  Platform:', networkInfo.platform);
+    console.log('  Use Localhost:', networkInfo.useLocalhost);
+    console.log('  Host:', networkInfo.host);
+    console.log('  Full URL:', networkInfo.fullURL);
+    
+    // Kiểm tra device type cho thông tin debug
+    const isEmulator = await DeviceInfo.isEmulator();
+    console.log('📱 Device Type:', isEmulator ? 'Emulator/Simulator' : 'Real Device');
+    
+    console.log('🌐 API Base URL:', baseURL);
+    return baseURL;
+    
+  } catch (error) {
+    console.error('❌ Error getting base URL:', error);
+    // Fallback - sử dụng network config
+    return getAPIURL();
+  }
+};
+
+// Khởi tạo baseURL (sẽ được cập nhật khi app khởi động)
+let currentBaseURL = getAPIURL();
+
+// Hàm để update baseURL
+export const initializeAPI = async (): Promise<void> => {
+  try {
+    // Import debug utilities
+    const { logNetworkDebugInfo, testNetworkConnection } = await import('../utils/networkDebug');
+    
+    // Log debug info
+    await logNetworkDebugInfo();
+    
+    // Get the correct baseURL
+    currentBaseURL = await getBaseURL();
+    
+    // Test connection
+    const isConnected = await testNetworkConnection(currentBaseURL);
+    
+    if (!isConnected) {
+      console.warn('⚠️ Initial connection test failed, but API URL has been set');
+      console.log('💡 Suggestions:');
+      console.log('   1. Make sure backend is running on your computer');
+      console.log('   2. Check if your phone and computer are on the same WiFi network');
+      console.log('   3. Check if firewall is blocking the connection');
+      console.log('   4. Verify the IP address in API_CONFIG.HOST_IP');
+    }
+    
+    // Cập nhật baseURL cho axios instance
+    apiClient.defaults.baseURL = currentBaseURL;
+    console.log('✅ API initialized with baseURL:', currentBaseURL);
+  } catch (error) {
+    console.error('❌ Failed to initialize API:', error);
+  }
+};
 
 // Tạo axios instance
 const apiClient = axios.create({
-  baseURL,
+  baseURL: currentBaseURL,
   timeout: 30000, // Tăng timeout lên 30 giây
   headers: {
     'Content-Type': 'application/json',
@@ -407,7 +465,7 @@ export const premiumAPI = {
         description: `Thanh toán gói ${plan.name}`,
         paymentMethod,
         customerInfo,
-        callbackUrl: `${baseURL}/premium/payment/callback`,
+        callbackUrl: `${currentBaseURL}/premium/payment/callback`,
         returnUrl: 'viegrandapp://payment/result',
       });
 
