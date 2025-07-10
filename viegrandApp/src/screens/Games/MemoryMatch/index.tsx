@@ -16,260 +16,87 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 import { MemoryMatchLogic, Card, Difficulty, DIFFICULTIES, DifficultySetting } from './MemoryMatchUtils';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 interface MemoryMatchScreenProps {
   navigation: any;
 }
 
-// Enhanced Card Component với animation tinh tế hơn
-const EnhancedCardComponent = React.memo<{
+// Optimized Card Component - Simplified animations
+const OptimizedCardComponent = React.memo<{
   card: Card;
   onPress: () => void;
   size: number;
   isDisabled: boolean;
-  index: number;
-}>(({ card, onPress, size, isDisabled, index }) => {
-  const flipAnimation = useRef(new Animated.Value(0)).current;
-  const scaleAnimation = useRef(new Animated.Value(1)).current;
-  const matchAnimation = useRef(new Animated.Value(0)).current;
-  const shimmerAnimation = useRef(new Animated.Value(0)).current;
+}>(({ card, onPress, size, isDisabled }) => {
+  const flipAnim = useRef(new Animated.Value(0)).current;
 
-  // Flip animation với spring cho cảm giác tự nhiên
+  // Simple flip animation only
   useEffect(() => {
-    Animated.spring(flipAnimation, {
+    Animated.timing(flipAnim, {
       toValue: card.isFlipped ? 1 : 0,
-      tension: 100,
-      friction: 8,
+      duration: 250,
       useNativeDriver: true,
     }).start();
   }, [card.isFlipped]);
 
-  // Match animation với scale và glow effect
-  useEffect(() => {
-    if (card.isMatched) {
-      Animated.sequence([
-        Animated.spring(matchAnimation, {
-          toValue: 1,
-          tension: 100,
-          friction: 6,
-          useNativeDriver: true,
-        }),
-        Animated.timing(shimmerAnimation, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [card.isMatched]);
-
-  // Press animation
-  const handlePressIn = () => {
-    if (!isDisabled && !card.isMatched) {
-      Animated.spring(scaleAnimation, {
-        toValue: 0.95,
-        tension: 150,
-        friction: 4,
-        useNativeDriver: true,
-      }).start();
-    }
-  };
-
-  const handlePressOut = () => {
-    Animated.spring(scaleAnimation, {
-      toValue: 1,
-      tension: 150,
-      friction: 4,
-      useNativeDriver: true,
-    }).start();
-    if (!isDisabled && !card.isMatched) {
-      onPress();
-    }
-  };
-
-  const frontRotateY = flipAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['180deg', '360deg'],
+  const frontOpacity = flipAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0, 0, 1],
   });
 
-  const backRotateY = flipAnimation.interpolate({
+  const backOpacity = flipAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [1, 0, 0],
+  });
+
+  const rotateY = flipAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '180deg'],
   });
 
-  const matchScale = matchAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.1],
-  });
-
-  const shimmerOpacity = shimmerAnimation.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0, 1, 0],
-  });
-
   return (
     <View style={[styles.cardContainer, { width: size, height: size }]}>
-      <Animated.View 
-        style={[
-          styles.cardWrapper, 
-          { 
-            transform: [
-              { scale: scaleAnimation },
-              { scale: card.isMatched ? matchScale : 1 }
-            ] 
-          }
-        ]}
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={isDisabled || card.isMatched}
+        activeOpacity={0.8}
+        style={styles.cardTouchable}
       >
-        <TouchableOpacity
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          disabled={isDisabled || card.isMatched}
-          activeOpacity={1}
-          style={styles.cardTouchable}
+        {/* Card Back */}
+        <Animated.View 
+          style={[
+            styles.cardFace,
+            styles.cardBack,
+            { 
+              opacity: backOpacity,
+              transform: [{ rotateY }]
+            }
+          ]}
         >
-          {/* Card Back - Premium gradient */}
-          <Animated.View 
-            style={[
-              styles.cardFace, 
-              styles.cardBack,
-              { transform: [{ rotateY: backRotateY }] }
-            ]}
-          >
-            <View style={styles.cardBackGradient}>
-              <View style={styles.cardBackPattern}>
-                <Feather name="layers" size={size * 0.3} color="rgba(255,255,255,0.3)" />
-              </View>
-            </View>
-          </Animated.View>
+          <Feather name="layers" size={size * 0.35} color="rgba(255,255,255,0.7)" />
+        </Animated.View>
 
-          {/* Card Front - Clean white design */}
-          <Animated.View 
-            style={[
-              styles.cardFace, 
-              styles.cardFront,
-              { transform: [{ rotateY: frontRotateY }] }
-            ]}
-          >
-            {card.isMatched ? (
-              <View style={styles.matchedContainer}>
-                <View style={styles.matchedBackground}>
-                  <Feather name={card.value} size={size * 0.4} color="#FFFFFF" />
-                </View>
-                <Animated.View 
-                  style={[
-                    styles.matchedShimmer,
-                    { opacity: shimmerOpacity }
-                  ]} 
-                />
-              </View>
-            ) : (
-              <View style={styles.cardIconContainer}>
-                <Feather name={card.value} size={size * 0.45} color="#1C1C1E" />
-              </View>
-            )}
-          </Animated.View>
-        </TouchableOpacity>
-      </Animated.View>
+        {/* Card Front */}
+        <Animated.View 
+          style={[
+            styles.cardFace,
+            styles.cardFront,
+            { opacity: frontOpacity }
+          ]}
+        >
+          {card.isMatched ? (
+            <View style={styles.matchedContainer}>
+              <Feather name={card.value} size={size * 0.4} color="#FFFFFF" />
+            </View>
+          ) : (
+            <Feather name={card.value} size={size * 0.4} color="#1C1C1E" />
+          )}
+        </Animated.View>
+      </TouchableOpacity>
     </View>
   );
 });
-
-// Component cho particle effects khi match
-const MatchParticles = React.memo<{ visible: boolean; onComplete: () => void }>(
-  ({ visible, onComplete }) => {
-    const particles = useRef(
-      Array.from({ length: 6 }, (_, i) => ({
-        scale: new Animated.Value(0),
-        translateX: new Animated.Value(0),
-        translateY: new Animated.Value(0),
-        opacity: new Animated.Value(1),
-        rotation: new Animated.Value(0),
-      }))
-    ).current;
-
-    useEffect(() => {
-      if (visible) {
-        const animations = particles.map((particle, index) => {
-          const angle = (index / particles.length) * 2 * Math.PI;
-          const distance = 50;
-          
-          return Animated.parallel([
-            Animated.timing(particle.scale, {
-              toValue: 1,
-              duration: 300,
-              useNativeDriver: true,
-            }),
-            Animated.timing(particle.translateX, {
-              toValue: Math.cos(angle) * distance,
-              duration: 600,
-              useNativeDriver: true,
-            }),
-            Animated.timing(particle.translateY, {
-              toValue: Math.sin(angle) * distance,
-              duration: 600,
-              useNativeDriver: true,
-            }),
-            Animated.timing(particle.opacity, {
-              toValue: 0,
-              duration: 600,
-              useNativeDriver: true,
-            }),
-            Animated.timing(particle.rotation, {
-              toValue: 360,
-              duration: 600,
-              useNativeDriver: true,
-            }),
-          ]);
-        });
-
-        Animated.sequence([
-          Animated.parallel(animations),
-          Animated.delay(100),
-        ]).start(() => {
-          // Reset particles
-          particles.forEach(particle => {
-            particle.scale.setValue(0);
-            particle.translateX.setValue(0);
-            particle.translateY.setValue(0);
-            particle.opacity.setValue(1);
-            particle.rotation.setValue(0);
-          });
-          onComplete();
-        });
-      }
-    }, [visible]);
-
-    if (!visible) return null;
-
-    return (
-      <View style={styles.particleContainer}>
-        {particles.map((particle, index) => (
-          <Animated.View
-            key={index}
-            style={[
-              styles.particle,
-              {
-                transform: [
-                  { scale: particle.scale },
-                  { translateX: particle.translateX },
-                  { translateY: particle.translateY },
-                  { rotate: particle.rotation.interpolate({
-                    inputRange: [0, 360],
-                    outputRange: ['0deg', '360deg'],
-                  }) },
-                ],
-                opacity: particle.opacity,
-              },
-            ]}
-          >
-            <Feather name="star" size={12} color="#FFD700" />
-          </Animated.View>
-        ))}
-      </View>
-    );
-  }
-);
 
 function MemoryMatchScreen({ navigation }: MemoryMatchScreenProps) {
   const [grid, setGrid] = useState<Card[][]>([]);
@@ -280,37 +107,12 @@ function MemoryMatchScreen({ navigation }: MemoryMatchScreenProps) {
   const [turns, setTurns] = useState(0);
   const [timer, setTimer] = useState(0);
   const [isGameWon, setIsGameWon] = useState(false);
-  const [showParticles, setShowParticles] = useState(false);
   const [streak, setStreak] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
 
   const insets = useSafeAreaInsets();
-  const headerAnimation = useRef(new Animated.Value(0)).current;
-  const gridAnimation = useRef(new Animated.Value(0)).current;
 
-  // Animate screen entry
-  useEffect(() => {
-    if (!showDifficultySelector) {
-      Animated.parallel([
-        Animated.spring(headerAnimation, {
-          toValue: 1,
-          tension: 80,
-          friction: 8,
-          useNativeDriver: true,
-        }),
-        Animated.stagger(50, [
-          Animated.spring(gridAnimation, {
-            toValue: 1,
-            tension: 80,
-            friction: 8,
-            useNativeDriver: true,
-          }),
-        ]),
-      ]).start();
-    }
-  }, [showDifficultySelector]);
-
-  // Enhanced timer with game state
+  // Simple timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (!showDifficultySelector && !isGameWon && gameStarted) {
@@ -333,28 +135,24 @@ function MemoryMatchScreen({ navigation }: MemoryMatchScreenProps) {
     setStreak(0);
     setGameStarted(false);
     setShowDifficultySelector(false);
-    
-    // Reset animations
-    headerAnimation.setValue(0);
-    gridAnimation.setValue(0);
   }, []);
 
-  // Enhanced card matching logic
+  // Optimized card matching logic - batch state updates
   useEffect(() => {
     if (flippedCards.length === 2) {
       if (!gameStarted) setGameStarted(true);
       
-      setTurns(turns + 1);
       const [firstCard, secondCard] = flippedCards;
-
-      if (firstCard.value === secondCard.value) {
-        // Match found - Enhanced feedback
-        setMatchedPairs(matchedPairs + 1);
-        setStreak(streak + 1);
-        setShowParticles(true);
-        
-        // Haptic feedback for success
-        Vibration.vibrate([50, 30, 50]);
+      const isMatch = firstCard.value === secondCard.value;
+      
+      // Batch state updates
+      setTurns(prev => prev + 1);
+      
+      if (isMatch) {
+        // Success case
+        setMatchedPairs(prev => prev + 1);
+        setStreak(prev => prev + 1);
+        Vibration.vibrate(50); // Light haptic
         
         const newGrid = grid.map(row =>
           row.map(card =>
@@ -366,13 +164,11 @@ function MemoryMatchScreen({ navigation }: MemoryMatchScreenProps) {
         setGrid(newGrid);
         setFlippedCards([]);
       } else {
-        // No match - Reset streak
+        // Fail case
         setStreak(0);
-        
-        // Haptic feedback for failure
         Vibration.vibrate(100);
         
-        // Delayed flip back với visual feedback
+        // Quick flip back
         const timer = setTimeout(() => {
           const newGrid = grid.map(row =>
             row.map(card =>
@@ -383,26 +179,23 @@ function MemoryMatchScreen({ navigation }: MemoryMatchScreenProps) {
           );
           setGrid(newGrid);
           setFlippedCards([]);
-        }, 1200);
+        }, 800); // Faster timing
         return () => clearTimeout(timer);
       }
     }
-  }, [flippedCards, grid, matchedPairs, turns, streak, gameStarted]);
+  }, [flippedCards, grid, gameStarted]);
   
-  // Enhanced win condition check
+  // Win condition check
   useEffect(() => {
     if (matchedPairs > 0 && matchedPairs === (DIFFICULTIES[difficulty].rows * DIFFICULTIES[difficulty].cols) / 2) {
       setIsGameWon(true);
-      
-      // Celebration haptic pattern
-      setTimeout(() => Vibration.vibrate([100, 50, 100, 50, 200]), 500);
+      Vibration.vibrate([100, 50, 100]);
     }
   }, [matchedPairs, difficulty]);
 
-  const handleCardPress = (pressedCard: Card) => {
+  const handleCardPress = useCallback((pressedCard: Card) => {
     if (flippedCards.length >= 2 || pressedCard.isFlipped || pressedCard.isMatched) return;
 
-    // Light haptic feedback
     Vibration.vibrate(30);
 
     const newGrid = grid.map(row =>
@@ -412,39 +205,50 @@ function MemoryMatchScreen({ navigation }: MemoryMatchScreenProps) {
     );
     setGrid(newGrid);
     setFlippedCards([...flippedCards, pressedCard]);
-  };
+  }, [flippedCards, grid]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+  // Memoized calculations
+  const formatTime = useMemo(() => {
+    const mins = Math.floor(timer / 60);
+    const secs = timer % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  }, [timer]);
 
-  const getPerformanceStars = () => {
+  const getPerformanceStars = useMemo(() => {
     const totalPairs = (DIFFICULTIES[difficulty].rows * DIFFICULTIES[difficulty].cols) / 2;
     const efficiency = totalPairs / Math.max(turns, 1);
     if (efficiency > 0.8) return '⭐⭐⭐';
     if (efficiency > 0.6) return '⭐⭐';
     return '⭐';
-  };
+  }, [difficulty, turns]);
 
-  const getDifficultyColor = (key: Difficulty) => {
+  const getDifficultyColor = useCallback((key: Difficulty) => {
     switch (key) {
       case 'easy': return '#34C759';
       case 'medium': return '#FF9500';
       case 'hard': return '#FF3B30';
       default: return '#007AFF';
     }
-  };
+  }, []);
 
-  const getDifficultyBgColor = (key: Difficulty) => {
+  const getDifficultyBgColor = useCallback((key: Difficulty) => {
     switch (key) {
       case 'easy': return 'rgba(52, 199, 89, 0.1)';
       case 'medium': return 'rgba(255, 149, 0, 0.1)';
       case 'hard': return 'rgba(255, 59, 48, 0.1)';
       default: return 'rgba(0, 122, 255, 0.1)';
     }
-  };
+  }, []);
+
+  // Memoized grid calculation
+  const { cardSize, rows, cols } = useMemo(() => {
+    const { rows, cols } = DIFFICULTIES[difficulty];
+    const padding = 20;
+    const cardSpacing = 8;
+    const availableWidth = width - (2 * padding);
+    const cardSize = (availableWidth - ((cols - 1) * cardSpacing)) / cols;
+    return { cardSize, rows, cols };
+  }, [difficulty]);
 
   // Difficulty Selection Screen
   if (showDifficultySelector) {
@@ -470,7 +274,7 @@ function MemoryMatchScreen({ navigation }: MemoryMatchScreenProps) {
               </View>
               <Text style={styles.difficultyTitle}>Lật Thẻ Bài</Text>
               <Text style={styles.difficultySubtext}>
-                Thử thách trí nhớ với game ghép cặp tinh tế
+                Thử thách trí nhớ với game ghép cặp
               </Text>
             </View>
 
@@ -486,8 +290,8 @@ function MemoryMatchScreen({ navigation }: MemoryMatchScreenProps) {
                   activeOpacity={0.8}
                 >
                   <View style={styles.difficultyCardContent}>
-                                         <View style={[styles.difficultyIconContainer, { backgroundColor: getDifficultyBgColor(key as Difficulty) }]}>
-                       <Feather name={diff.icon} size={24} color={getDifficultyColor(key as Difficulty)} />
+                    <View style={[styles.difficultyIconContainer, { backgroundColor: getDifficultyBgColor(key as Difficulty) }]}>
+                      <Feather name={diff.icon} size={24} color={getDifficultyColor(key as Difficulty)} />
                     </View>
                     <View style={styles.difficultyCardTextContainer}>
                       <Text style={styles.difficultyCardTitle}>{diff.name}</Text>
@@ -508,31 +312,12 @@ function MemoryMatchScreen({ navigation }: MemoryMatchScreenProps) {
     );
   }
 
-  // Main Game Screen
-  const { rows, cols } = DIFFICULTIES[difficulty];
-  const padding = 20;
-  const cardSpacing = 8;
-  const availableWidth = width - (2 * padding);
-  const cardSize = (availableWidth - ((cols - 1) * cardSpacing)) / cols;
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F2F2F7" />
       <SafeAreaView style={styles.safeArea}>
-        <Animated.View 
-          style={[
-            styles.header,
-            {
-              opacity: headerAnimation,
-              transform: [{
-                translateY: headerAnimation.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [-20, 0],
-                })
-              }]
-            }
-          ]}
-        >
+        {/* Header */}
+        <View style={styles.header}>
           <TouchableOpacity
             style={styles.headerButton}
             onPress={() => setShowDifficultySelector(true)}
@@ -551,25 +336,13 @@ function MemoryMatchScreen({ navigation }: MemoryMatchScreenProps) {
           >
             <Feather name="refresh-cw" size={24} color="#007AFF" />
           </TouchableOpacity>
-        </Animated.View>
+        </View>
         
-        <Animated.View 
-          style={[
-            styles.gameInfo,
-            {
-              opacity: headerAnimation,
-              transform: [{
-                translateY: headerAnimation.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [-10, 0],
-                })
-              }]
-            }
-          ]}
-        >
+        {/* Game Stats */}
+        <View style={styles.gameInfo}>
           <View style={styles.statCard}>
             <Feather name="clock" size={18} color="#007AFF" />
-            <Text style={styles.statValue}>{formatTime(timer)}</Text>
+            <Text style={styles.statValue}>{formatTime}</Text>
           </View>
           <View style={styles.statCard}>
             <Feather name="target" size={18} color="#FF9500" />
@@ -579,42 +352,24 @@ function MemoryMatchScreen({ navigation }: MemoryMatchScreenProps) {
             <Feather name="check-circle" size={18} color="#34C759" />
             <Text style={styles.statValue}>{matchedPairs}/{(rows * cols) / 2}</Text>
           </View>
-        </Animated.View>
+        </View>
 
-        <Animated.View 
-          style={[
-            styles.gridContainer,
-            {
-              opacity: gridAnimation,
-              transform: [{
-                scale: gridAnimation.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0.9, 1],
-                })
-              }]
-            }
-          ]}
-        >
+        {/* Game Grid */}
+        <View style={styles.gridContainer}>
           {grid.map((row, rowIndex) => (
-            <View key={rowIndex} style={[styles.row, { marginBottom: cardSpacing }]}>
+            <View key={rowIndex} style={styles.row}>
               {row.map((card, colIndex) => (
-                <EnhancedCardComponent
+                <OptimizedCardComponent
                   key={card.id}
                   card={card}
                   onPress={() => handleCardPress(card)}
                   size={cardSize}
                   isDisabled={flippedCards.length >= 2}
-                  index={rowIndex * cols + colIndex}
                 />
               ))}
             </View>
           ))}
-          
-          <MatchParticles 
-            visible={showParticles} 
-            onComplete={() => setShowParticles(false)} 
-          />
-        </Animated.View>
+        </View>
 
         {/* Victory Overlay */}
         {isGameWon && (
@@ -630,7 +385,7 @@ function MemoryMatchScreen({ navigation }: MemoryMatchScreenProps) {
               <View style={styles.statsContainer}>
                 <View style={styles.statRow}>
                   <Text style={styles.statLabel}>Thời gian:</Text>
-                  <Text style={styles.statText}>{formatTime(timer)}</Text>
+                  <Text style={styles.statText}>{formatTime}</Text>
                 </View>
                 <View style={styles.statRow}>
                   <Text style={styles.statLabel}>Số lượt:</Text>
@@ -638,7 +393,7 @@ function MemoryMatchScreen({ navigation }: MemoryMatchScreenProps) {
                 </View>
                 <View style={styles.statRow}>
                   <Text style={styles.statLabel}>Đánh giá:</Text>
-                  <Text style={styles.statText}>{getPerformanceStars()}</Text>
+                  <Text style={styles.statText}>{getPerformanceStars}</Text>
                 </View>
               </View>
               <TouchableOpacity
@@ -723,7 +478,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   difficultyCardMarginTop: {
-    marginTop: 0, // Using gap instead
+    marginTop: 0,
   },
   difficultyCardContent: {
     flexDirection: 'row',
@@ -829,14 +584,13 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: 8,
+    marginBottom: 8,
   },
 
-  // Enhanced Card Styles
+  // Optimized Card Styles
   cardContainer: {
-  },
-  cardWrapper: {
-    width: '100%',
-    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cardTouchable: {
     width: '100%',
@@ -847,90 +601,34 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 12,
-    backfaceVisibility: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
   },
   cardBack: {
     backgroundColor: '#007AFF',
     shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  cardBackGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 12,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  cardBackPattern: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   cardFront: {
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 4,
+    elevation: 2,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.05)',
   },
-  cardIconContainer: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   matchedContainer: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  matchedBackground: {
     width: '100%',
     height: '100%',
     backgroundColor: '#34C759',
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  matchedShimmer: {
-    position: 'absolute',
-    top: 0,
-    left: -100,
-    width: 50,
-    height: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    transform: [{ skewX: '-20deg' }],
-  },
-
-  // Particle Effects
-  particleContainer: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    width: 1,
-    height: 1,
-  },
-  particle: {
-    position: 'absolute',
-    top: -6,
-    left: -6,
   },
 
   // Victory Overlay
