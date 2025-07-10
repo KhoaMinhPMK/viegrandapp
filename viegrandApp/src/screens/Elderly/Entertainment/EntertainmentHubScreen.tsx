@@ -17,9 +17,9 @@ const cardWidth = (width - 24 * 2 - 16) / 2; // (screenWidth - padding*2 - gap) 
 const entertainmentItems = [
   {
     title: 'Trò chơi',
-    subtitle: 'Rèn luyện trí tuệ',
-    icon: 'play-circle',
-    screen: 'Sudoku',
+    subtitle: 'Sudoku, Dò mìn & khác',
+    icon: 'aperture',
+    screen: 'GameHub',
   },
   {
     title: 'Đọc báo',
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 34,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#0EA5E9',
   },
   grid: {
     flexDirection: 'row',

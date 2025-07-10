@@ -8,6 +8,7 @@
 import 'react-native-gesture-handler';
 import React, { useEffect, memo } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from './src/types/navigation';
 
@@ -55,17 +56,19 @@ const AppContent = memo(() => {
 
 const App = () => {
   return (
-    <PremiumProvider>
-      <AuthProvider>
-        <SettingsProvider>
-          <VoiceProvider>
-            <NavigationContainer>
-              <AppContent />
-            </NavigationContainer>
-          </VoiceProvider>
-        </SettingsProvider>
-      </AuthProvider>
-    </PremiumProvider>
+    <SafeAreaProvider>
+      <PremiumProvider>
+        <AuthProvider>
+          <SettingsProvider>
+            <VoiceProvider>
+              <NavigationContainer>
+                <AppContent />
+              </NavigationContainer>
+            </VoiceProvider>
+          </SettingsProvider>
+        </AuthProvider>
+      </PremiumProvider>
+    </SafeAreaProvider>
   );
 };
 

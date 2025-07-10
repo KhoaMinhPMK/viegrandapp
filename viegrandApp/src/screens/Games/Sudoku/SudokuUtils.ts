@@ -10,9 +10,9 @@ export interface Cell {
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
 export const DIFFICULTIES = {
-  easy: { name: 'Dễ', cellsToRemove: 40, description: 'Dành cho người mới bắt đầu' },
-  medium: { name: 'Trung bình', cellsToRemove: 50, description: 'Thử thách trung bình' },
-  hard: { name: 'Khó', cellsToRemove: 60, description: 'Dành cho chuyên gia' },
+  easy: { name: 'Dễ', cellsToRemove: 40, description: 'Dành cho người mới bắt đầu', icon: 'award' },
+  medium: { name: 'Trung bình', cellsToRemove: 50, description: 'Thử thách trung bình', icon: 'shield' },
+  hard: { name: 'Khó', cellsToRemove: 60, description: 'Dành cho chuyên gia', icon: 'zap' },
 };
 
 export class SudokuGenerator {

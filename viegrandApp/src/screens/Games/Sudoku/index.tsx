@@ -10,9 +10,12 @@ import {
   StatusBar,
   ScrollView,
   Vibration,
+  ImageBackground,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from '@react-native-community/blur';
 import Feather from 'react-native-vector-icons/Feather';
+import { BackgroundImages } from '../../../utils/assetUtils';
 import {
   SudokuGenerator,
   SudokuGameState,
@@ -36,44 +39,32 @@ const SudokuCell = React.memo<{
   size: number;
   disabled: boolean;
 }>(({ cell, isSelected, onPress, size, disabled }) => {
-  const getCellStyle = () => {
-    const baseStyle: any[] = [styles.cell, { width: size, height: size }];
-    
-    if (cell.isFixed) baseStyle.push(styles.fixedCell);
-    if (cell.isHighlighted) baseStyle.push(styles.highlightedCell);
-    if (cell.isError) baseStyle.push(styles.errorCell);
-    if (isSelected) baseStyle.push(styles.selectedCell);
-    
-    return baseStyle;
-  };
+  const cellStyle = useMemo(() => [
+    styles.cell,
+    { width: size, height: size },
+    cell.isFixed && styles.fixedCell,
+    !cell.isFixed && cell.isHighlighted && styles.highlightedCell,
+    cell.isError && styles.errorCell,
+    isSelected && !cell.isFixed && styles.selectedCell,
+  ], [cell, isSelected, size]);
 
-  const getTextStyle = () => {
-    const baseStyle: any[] = [styles.cellText];
-    
-    if (cell.isFixed) baseStyle.push(styles.fixedCellText);
-    if (cell.isError) baseStyle.push(styles.errorCellText);
-    if (isSelected) baseStyle.push(styles.selectedCellText);
-    
-    return baseStyle;
-  };
+  const textStyle = useMemo(() => [
+    styles.cellText,
+    cell.isFixed && styles.fixedCellText,
+    cell.isError && styles.errorCellText,
+    isSelected && !cell.isFixed && styles.selectedCellText,
+  ], [cell, isSelected]);
 
   return (
     <TouchableOpacity
-      style={getCellStyle()}
+      style={cellStyle}
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.7}
     >
-      <Text style={getTextStyle()}>
+      <Text style={textStyle}>
         {cell.value !== 0 ? cell.value : ''}
       </Text>
-      {cell.notes && cell.notes.length > 0 && cell.value === 0 && (
-        <View style={styles.notesContainer}>
-          <Text style={styles.notesText}>
-            {cell.notes.join('')}
-          </Text>
-        </View>
-      )}
     </TouchableOpacity>
   );
 });
@@ -83,22 +74,20 @@ const NumberButton = React.memo<{
   number: number;
   onPress: (number: number) => void;
   disabled: boolean;
-  remainingCount?: number;
-}>(({ number, onPress, disabled, remainingCount }) => (
+  isComplete: boolean;
+}>(({ number, onPress, disabled, isComplete }) => (
   <TouchableOpacity
-    style={[styles.numberButton, disabled && styles.disabledButton]}
+    style={[
+      styles.numberButton,
+      (disabled || isComplete) && styles.disabledButton,
+    ]}
     onPress={() => onPress(number)}
-    disabled={disabled}
+    disabled={disabled || isComplete}
     activeOpacity={0.7}
   >
-    <Text style={[styles.numberButtonText, disabled && styles.disabledButtonText]}>
+    <Text style={styles.numberButtonText}>
       {number}
     </Text>
-    {remainingCount !== undefined && remainingCount > 0 && (
-      <View style={styles.remainingBadge}>
-        <Text style={styles.remainingText}>{9 - remainingCount}</Text>
-      </View>
-    )}
   </TouchableOpacity>
 ));
 
@@ -115,6 +104,7 @@ function SudokuScreen({ navigation }: SudokuScreenProps) {
   const [hintsUsed, setHintsUsed] = useState(0);
   const [mistakeCount, setMistakeCount] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const insets = useSafeAreaInsets();
 
   // Timer effect
   useEffect(() => {
@@ -128,7 +118,7 @@ function SudokuScreen({ navigation }: SudokuScreenProps) {
   }, [gameStarted, isGameComplete, isPaused]);
 
   // Memoized calculations
-  const cellSize = useMemo(() => (width - 80) / 9, []);
+  const cellSize = useMemo(() => (width - 40) / 9, []);
   
   const numberCounts = useMemo(() => {
     const counts: { [key: number]: number } = {};
@@ -175,7 +165,7 @@ function SudokuScreen({ navigation }: SudokuScreenProps) {
     setGrid(newGrid);
     
     // Haptic feedback
-    Vibration.vibrate(50);
+    Vibration.vibrate(10); // Lighter vibration
   }, [grid, isGameComplete, isPaused]);
 
   // Handle number input
@@ -197,12 +187,7 @@ function SudokuScreen({ navigation }: SudokuScreenProps) {
       };
     } else {
       // Check if placement is valid
-      const isValid = SudokuGenerator.isValidPlacement(
-        newGrid.map(row => row.map(cell => cell.value)),
-        row,
-        col,
-        number
-      );
+      const isValid = solution[row][col] === number;
 
       newGrid[row][col] = {
         ...newGrid[row][col],
@@ -212,29 +197,18 @@ function SudokuScreen({ navigation }: SudokuScreenProps) {
 
       // Increment mistake count if invalid
       if (!isValid) {
-        setMistakeCount(prev => {
-          const newCount = prev + 1;
-          if (newCount >= 3) {
-            Alert.alert(
-              '⚠️ Quá nhiều lỗi!',
-              'Bạn đã mắc 3 lỗi. Hãy cẩn thận hơn!',
-              [{ text: 'OK' }]
-            );
-          }
-          return newCount;
-        });
+        setMistakeCount(prev => prev + 1);
         Vibration.vibrate([100, 50, 100]);
       } else {
         Vibration.vibrate(30);
       }
     }
 
-    // Validate entire grid
-    const validatedGrid = SudokuGameState.validateGrid(newGrid);
-    setGrid(validatedGrid);
+    // No need to validate the whole grid on every input if we check against the solution
+    setGrid(newGrid);
 
     // Check if game is complete
-    setTimeout(() => checkGameComplete(validatedGrid), 100);
+    setTimeout(() => checkGameComplete(newGrid), 100);
   }, [selectedCell, grid, isGameComplete, isPaused, solution]);
 
   // Clear cell
@@ -304,434 +278,417 @@ function SudokuScreen({ navigation }: SudokuScreenProps) {
   // Difficulty selection screen
   if (showDifficultySelector) {
     return (
-      <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        style={styles.container}
-      >
-        <StatusBar barStyle="light-content" />
-        <SafeAreaView style={styles.safeArea}>
-          {/* Header */}
-          <View style={styles.header}>
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" />
+        <SafeAreaView style={styles.difficultySafeArea}>
+          <View style={styles.difficultyHeader}>
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              <Feather name="arrow-left" size={24} color="#fff" />
+              <Feather name="x" size={26} color="#333" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Sudoku</Text>
-            <View style={styles.placeholder} />
           </View>
+          <ScrollView contentContainerStyle={styles.difficultyScrollContent}>
+            <View style={styles.difficultyTitleContainer}>
+              <Text style={styles.difficultyTitle}>Sudoku</Text>
+              <Text style={styles.difficultySubtext}>
+                Chọn một cấp độ để bắt đầu.
+              </Text>
+            </View>
 
-          {/* Difficulty Selection */}
-          <View style={styles.difficultyContainer}>
-            <Text style={styles.difficultyTitle}>Chọn độ khó</Text>
-            
-            {(Object.entries(DIFFICULTIES) as [Difficulty, typeof DIFFICULTIES[Difficulty]][]).map(([key, diff]) => (
-              <TouchableOpacity
-                key={key}
-                style={styles.difficultyButton}
-                onPress={() => {
-                  setDifficulty(key as Difficulty);
-                  initializeGame(key as Difficulty);
-                }}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.difficultyButtonText}>{diff.name}</Text>
-                <Text style={styles.difficultySubtext}>
-                  {diff.description}
-                </Text>
-                <Text style={styles.difficultyInfo}>
-                  {diff.cellsToRemove} ô trống
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+            <View>
+              {(Object.entries(DIFFICULTIES) as [Difficulty, typeof DIFFICULTIES[Difficulty]][]).map(([key, diff], index) => (
+                <TouchableOpacity
+                  key={key}
+                  style={[
+                    styles.difficultyCardTouchable,
+                    index > 0 && styles.difficultyCardMarginTop
+                  ]}
+                  onPress={() => {
+                    setDifficulty(key as Difficulty);
+                    initializeGame(key as Difficulty);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.difficultyCardContent}>
+                    <Feather name={diff.icon} size={24} color={styles[`difficultyColor__${key}`].color} />
+                    <View style={styles.difficultyCardTextContainer}>
+                      <Text style={styles.difficultyCardTitle}>{diff.name}</Text>
+                      <Text style={styles.difficultyCardSubtext}>{diff.description}</Text>
+                    </View>
+                    <Feather name="chevron-right" size={24} color="#C7C7CC" />
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
         </SafeAreaView>
-      </LinearGradient>
+      </View>
     );
   }
 
   return (
-    <LinearGradient
-      colors={['#667eea', '#764ba2']}
-      style={styles.container}
-    >
-      <StatusBar barStyle="light-content" />
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
       <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => setShowDifficultySelector(true)}
-          >
-            <Feather name="arrow-left" size={24} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>
-            Sudoku - {DIFFICULTIES[difficulty].name}
-          </Text>
-          <TouchableOpacity
-            style={styles.resetButton}
-            onPress={resetGame}
-          >
-            <Feather name="refresh-cw" size={20} color="#fff" />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={() => {
+                setSelectedCell(null);
+                setShowDifficultySelector(true);
+              }}
+            >
+              <Feather name="chevron-left" size={28} color="#333" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>{DIFFICULTIES[difficulty].name}</Text>
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={resetGame}
+            >
+              <Feather name="refresh-cw" size={24} color="#333" />
+            </TouchableOpacity>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Game Info */}
+        <View style={{ flex: 1 }}>
           <View style={styles.gameInfo}>
             <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Thời gian</Text>
               <Text style={styles.statValue}>{TimerUtils.formatTime(timer)}</Text>
+              <Text style={styles.statLabel}>Thời gian</Text>
             </View>
-            <TouchableOpacity style={styles.statItem} onPress={togglePause}>
-              <Feather 
-                name={isPaused ? "play" : "pause"} 
-                size={20} 
-                color="#007AFF" 
-              />
-              <Text style={styles.statValue}>{isPaused ? "Tiếp tục" : "Tạm dừng"}</Text>
-            </TouchableOpacity>
             <View style={styles.statItem}>
+              <Text style={styles.statValue}>{mistakeCount}</Text>
               <Text style={styles.statLabel}>Lỗi</Text>
-              <Text style={styles.statValue}>{mistakeCount}/3</Text>
+            </View>
+             <View style={styles.statItem}>
+              <Text style={styles.statValue}>{hintsUsed}<Text style={{ fontSize: 16, color: '#8A8A8E' }}>/3</Text></Text>
+              <Text style={styles.statLabel}>Gợi ý</Text>
             </View>
           </View>
 
-          {/* Sudoku Grid */}
-          {!isPaused && (
-            <View style={styles.gridContainer}>
-              <View style={styles.grid}>
-                {grid.map((row, rowIndex) => (
-                  <View key={rowIndex} style={styles.row}>
-                    {row.map((cell, colIndex) => (
-                      <SudokuCell
-                        key={`${rowIndex}-${colIndex}`}
-                        cell={cell}
-                        isSelected={selectedCell?.row === rowIndex && selectedCell?.col === colIndex}
-                        onPress={() => handleCellPress(rowIndex, colIndex)}
-                        size={cellSize}
-                        disabled={isGameComplete}
-                      />
-                    ))}
+          <View style={styles.gridContainer}>
+            {grid.map((row, rowIndex) => (
+              <View key={rowIndex} style={[
+                styles.row,
+                (rowIndex === 2 || rowIndex === 5) && styles.heavyBorderBottom
+              ]}>
+                {row.map((cell, colIndex) => (
+                  <View key={`${rowIndex}-${colIndex}`} style={[
+                    styles.cellContainer,
+                    (colIndex === 2 || colIndex === 5) && styles.heavyBorderRight,
+                    ((Math.floor(rowIndex / 3) + Math.floor(colIndex / 3)) % 2 === 1) && styles.altBlock
+                  ]}>
+                    <SudokuCell
+                      cell={cell}
+                      isSelected={selectedCell?.row === rowIndex && selectedCell?.col === colIndex}
+                      onPress={() => handleCellPress(rowIndex, colIndex)}
+                      size={cellSize}
+                      disabled={isGameComplete}
+                    />
                   </View>
                 ))}
               </View>
-            </View>
-          )}
+            ))}
+          </View>
 
-          {isPaused && (
-            <View style={styles.pausedContainer}>
-              <Feather name="pause" size={64} color="#fff" />
-              <Text style={styles.pausedText}>Game đã tạm dừng</Text>
+          <View style={[styles.controlsContainer, { paddingBottom: insets.bottom + 40 }]}>
+              <View style={styles.numberPad}>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => (
+                  <NumberButton
+                    key={number}
+                    number={number}
+                    onPress={handleNumberPress}
+                    disabled={!selectedCell || isGameComplete}
+                    isComplete={numberCounts[number] >= 9}
+                  />
+                ))}
+              </View>
+              <View style={styles.actionButtons}>
+                 <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={handleClearCell}
+                  disabled={!selectedCell || isGameComplete}
+                >
+                  <Feather name="delete" size={24} color="#8A8A8E" />
+                  <Text style={styles.actionButtonText}>Xóa</Text>
+                </TouchableOpacity>
+                 <TouchableOpacity
+                  style={[styles.actionButton, hintsUsed >= 3 && styles.disabledButton]}
+                  onPress={getHint}
+                  disabled={!selectedCell || isGameComplete || hintsUsed >= 3}
+                >
+                  <Feather name="lightbulb" size={24} color="#8A8A8E" />
+                  <Text style={styles.actionButtonText}>Gợi ý</Text>
+                </TouchableOpacity>
+                 <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={togglePause}
+                  disabled={isGameComplete}
+                >
+                  <Feather name={isPaused ? "play" : "pause"} size={24} color="#8A8A8E" />
+                  <Text style={styles.actionButtonText}>{isPaused ? "Chơi" : "Dừng"}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          )}
-
-          {/* Action Buttons */}
-          {!isPaused && (
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[styles.actionButton, hintsUsed >= 3 && styles.disabledActionButton]}
-                onPress={getHint}
-                disabled={!selectedCell || isGameComplete || hintsUsed >= 3}
-              >
-                <Feather name="lightbulb" size={18} color={hintsUsed >= 3 ? "#999" : "#007AFF"} />
-                <Text style={[styles.actionButtonText, hintsUsed >= 3 && styles.disabledActionButtonText]}>
-                  Gợi ý ({3 - hintsUsed})
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={handleClearCell}
-                disabled={!selectedCell || isGameComplete}
-              >
-                <Feather name="delete" size={18} color="#007AFF" />
-                <Text style={styles.actionButtonText}>Xóa</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* Number Pad */}
-          {!isPaused && (
-            <View style={styles.numberPad}>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => (
-                <NumberButton
-                  key={number}
-                  number={number}
-                  onPress={handleNumberPress}
-                  disabled={!selectedCell || isGameComplete || numberCounts[number] >= 9}
-                  remainingCount={numberCounts[number]}
-                />
-              ))}
-            </View>
-          )}
-        </ScrollView>
+        </View>
       </SafeAreaView>
-    </LinearGradient>
+
+      {isPaused && (
+        <View style={styles.pausedOverlay}>
+          <Feather name="pause-circle" size={60} color="rgba(0, 0, 0, 0.5)" />
+          <Text style={styles.pausedText}>Đã tạm dừng</Text>
+          <TouchableOpacity style={styles.resumeButton} onPress={togglePause}>
+            <Text style={styles.resumeButtonText}>Tiếp tục</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // --- Global ---
   container: {
     flex: 1,
+    backgroundColor: '#F2F2F7', // iOS system background color
   },
   safeArea: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+
+  // --- Difficulty Selection Screen ---
+  difficultySafeArea: {
+    flex: 1,
+  },
+  difficultyHeader: {
+    paddingTop: 20,
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    alignItems: 'flex-end',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 8,
   },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    flex: 1,
-  },
-  resetButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  placeholder: {
-    width: 40,
-  },
-  
-  // Difficulty Selection
-  difficultyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 40,
-  },
-  difficultyTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 40,
-  },
-  difficultyButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  difficultyButtonText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  difficultySubtext: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 4,
-  },
-  difficultyInfo: {
-    fontSize: 14,
-    color: '#999',
-  },
-
-  // Game Info
-  gameInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-  },
-  statItem: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 12,
-    padding: 12,
-    alignItems: 'center',
-    minWidth: 80,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
-  },
-  statValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginLeft: 4,
-  },
-
-  // Grid
-  gridContainer: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-  },
-  grid: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  row: {
-    flexDirection: 'row',
-  },
-  cell: {
-    borderWidth: 0.5,
-    borderColor: '#ddd',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    position: 'relative',
-  },
-  fixedCell: {
-    backgroundColor: '#f8f9fa',
-  },
-  highlightedCell: {
-    backgroundColor: '#e3f2fd',
-  },
-  selectedCell: {
-    backgroundColor: '#2196f3',
-  },
-  errorCell: {
-    backgroundColor: '#ffebee',
-  },
-  cellText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2196f3',
-  },
-  fixedCellText: {
-    color: '#333',
-  },
-  errorCellText: {
-    color: '#f44336',
-  },
-  selectedCellText: {
-    color: '#fff',
-  },
-  notesContainer: {
-    position: 'absolute',
-    top: 2,
-    left: 2,
-  },
-  notesText: {
-    fontSize: 8,
-    color: '#999',
-  },
-
-  // Paused state
-  pausedContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 80,
-  },
-  pausedText: {
-    fontSize: 24,
-    color: '#fff',
-    marginTop: 20,
-    fontWeight: 'bold',
-  },
-
-  // Action Buttons
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 40,
-    paddingVertical: 20,
-  },
-  actionButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    minWidth: 100,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  disabledActionButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-  },
-  actionButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginLeft: 6,
-  },
-  disabledActionButtonText: {
-    color: '#999',
-  },
-
-  // Number Pad
-  numberPad: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  difficultyScrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
-  numberButton: {
-    width: (width - 80) / 3,
-    height: 60,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  difficultyTitleContainer: {
+    marginBottom: 50,
+    alignItems: 'center',
+  },
+  difficultyTitle: {
+    fontSize: 40,
+    fontWeight: 'bold',
+    color: '#1C1C1E',
+  },
+  difficultySubtext: {
+    fontSize: 17,
+    color: '#8A8A8E',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  difficultyCardTouchable: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+  },
+  difficultyCardMarginTop: {
+    marginTop: 18,
+  },
+  difficultyCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  difficultyCardTextContainer: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  difficultyCardTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#1C1C1E',
+  },
+  difficultyCardSubtext: {
+    fontSize: 15,
+    color: '#8A8A8E',
+    marginTop: 2,
+  },
+  difficultyColor__easy: { color: '#34C759' },
+  difficultyColor__medium: { color: '#FF9500' },
+  difficultyColor__hard: { color: '#FF3B30' },
+
+  // --- Main Game Screen (Light Mode) ---
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingTop: 15,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  headerButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#1C1C1E',
+  },
+  gameInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 20,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    fontVariant: ['tabular-nums'],
+  },
+  statLabel: {
+    fontSize: 13,
+    color: '#8A8A8E',
+    marginTop: 4,
+    textTransform: 'uppercase',
+  },
+  gridContainer: {
+    marginHorizontal: 15,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D1D1D6',
+    overflow: 'hidden',
+  },
+  row: {
+    flexDirection: 'row',
+  },
+  heavyBorderBottom: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#C7C7CC',
+  },
+  heavyBorderRight: {
+    borderRightWidth: 2,
+    borderRightColor: '#C7C7CC',
+  },
+  cellContainer: {},
+  altBlock: {
+    backgroundColor: '#F2F2F7',
+  },
+  cell: {
+    borderWidth: 0.5,
+    borderColor: '#D1D1D6',
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 4,
-    position: 'relative',
+  },
+  fixedCell: {},
+  highlightedCell: {
+    backgroundColor: 'rgba(0, 122, 255, 0.15)',
+  },
+  selectedCell: {
+    backgroundColor: '#007AFF',
+  },
+  errorCell: {
+    backgroundColor: 'rgba(255, 59, 48, 0.2)',
+  },
+  cellText: {
+    fontSize: 28,
+    fontWeight: '400',
+    color: '#007AFF',
+  },
+  fixedCellText: {
+    color: '#1C1C1E',
+    fontSize: 28,
+    fontWeight: '500',
+  },
+  errorCellText: {
+    color: '#FF3B30',
+  },
+  selectedCellText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  controlsContainer: {
+    paddingHorizontal: 15,
+    marginTop: 'auto',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+    backgroundColor: '#E5E5EA',
+    borderRadius: 12,
+    padding: 4,
+  },
+  actionButton: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  actionButtonText: {
+    fontSize: 13,
+    color: '#3C3C43',
+    marginTop: 4,
+  },
+  numberPad: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  numberButton: {
+    width: (width - 40) / 9,
+    height: 50,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
   },
   disabledButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    opacity: 0.4,
   },
   numberButtonText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 28,
+    fontWeight: '400',
+    color: '#1C1C1E',
   },
-  disabledButtonText: {
-    color: '#999',
-  },
-  remainingBadge: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    width: 16,
-    height: 16,
+  pausedOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(242, 242, 247, 0.8)',
+    zIndex: 10,
   },
-  remainingText: {
-    fontSize: 10,
-    color: '#fff',
-    fontWeight: 'bold',
+  pausedText: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    marginTop: 16,
+  },
+  resumeButton: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 50,
+    marginTop: 30,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  resumeButtonText: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#007AFF',
   },
 });
 

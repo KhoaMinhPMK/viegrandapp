@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import {
   View,
   SafeAreaView,
@@ -15,6 +15,13 @@ import WeatherCard from '../../../components/elderly-home/WeatherCard';
 import FunctionGrid from '../../../components/elderly-home/FunctionGrid';
 import PremiumUpgradeCard from '../../../components/elderly-home/PremiumUpgradeCard';
 import VoiceTranscript from '../../../components/elderly-home/VoiceTranscript';
+
+// --- Memoized Components for Performance Optimization ---
+const MemoizedHeader = memo(Header);
+const MemoizedWeatherCard = memo(WeatherCard);
+const MemoizedFunctionGrid = memo(FunctionGrid);
+const MemoizedPremiumUpgradeCard = memo(PremiumUpgradeCard);
+const MemoizedVoiceTranscript = memo(VoiceTranscript);
 
 const ElderlyHomeScreen = () => {
   const { user } = useAuth();
@@ -34,25 +41,30 @@ const ElderlyHomeScreen = () => {
     { id: 3, title: 'Cập nhật sức khỏe', message: 'Hãy cập nhật chỉ số huyết áp hôm nay', time: '08:00', read: false },
   ]);
 
+  // Use useCallback to memoize the function, preventing re-renders of the Header
+  const handleNotificationsUpdate = useCallback((newNotifications: any) => {
+    setNotifications(newNotifications);
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <Image source={BackgroundImages.secondary} style={styles.backgroundImage} resizeMode="cover" />
       
-      <Header 
+      <MemoizedHeader 
         user={user}
         isPremium={isPremium}
         notifications={notifications}
-        onNotificationsUpdate={setNotifications}
+        onNotificationsUpdate={handleNotificationsUpdate}
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <WeatherCard isPremium={isPremium} />
-        <PremiumUpgradeCard isPremium={isPremium} daysRemaining={premiumStatus?.daysRemaining} />
-        <FunctionGrid />
+        <MemoizedWeatherCard isPremium={isPremium} />
+        <MemoizedPremiumUpgradeCard isPremium={isPremium} daysRemaining={premiumStatus?.daysRemaining} />
+        <MemoizedFunctionGrid />
         <View style={styles.bottomSpacing} />
       </ScrollView>
 
-      <VoiceTranscript />
+      <MemoizedVoiceTranscript />
     </SafeAreaView>
   );
 };

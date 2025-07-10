@@ -7,7 +7,10 @@ import Feather from 'react-native-vector-icons/Feather';
 // Screens
 import HomeScreen from '../screens/Elderly/Home';
 import EntertainmentHubScreen from '../screens/Elderly/Entertainment/EntertainmentHubScreen';
+import GameHubScreen from '../screens/Elderly/Entertainment/GameHubScreen';
 import SudokuScreen from '../screens/Games/Sudoku';
+import MinesweeperScreen from '../screens/Games/Minesweeper';
+import MemoryMatchScreen from '../screens/Games/MemoryMatch';
 import NotificationsScreen from '../screens/Elderly/Notifications';
 import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 
@@ -44,7 +47,18 @@ const HomeNavigator = () => {
         options={{ headerShown: false }}
       />
       <Stack.Screen name="EntertainmentHub" component={EntertainmentHubScreen} />
-      <Stack.Screen name="Sudoku" component={SudokuScreen} />
+      <Stack.Screen name="GameHub" component={GameHubScreen} options={{ headerShown: false }}/>
+      <Stack.Screen 
+        name="Sudoku" 
+        component={SudokuScreen}
+        options={{ headerShown: false }} // Ẩn header của stack, dùng header tùy chỉnh trong game
+      />
+      <Stack.Screen 
+        name="Minesweeper" 
+        component={MinesweeperScreen} 
+        options={{ headerTitle: 'Dò mìn' }}
+      />
+      <Stack.Screen name="MemoryMatch" component={MemoryMatchScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="Premium" component={PremiumNavigator} />
       <Stack.Screen 
