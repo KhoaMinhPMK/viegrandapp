@@ -11,6 +11,7 @@ import GameHubScreen from '../screens/Elderly/Entertainment/GameHubScreen';
 import SudokuScreen from '../screens/Games/Sudoku';
 import MinesweeperScreen from '../screens/Games/Minesweeper';
 import MemoryMatchScreen from '../screens/Games/MemoryMatch';
+import WordSearchScreen from '../screens/Games/WordSearch';
 import NotificationsScreen from '../screens/Elderly/Notifications';
 import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 
@@ -61,6 +62,11 @@ const HomeNavigator = () => {
       <Stack.Screen 
         name="MemoryMatch" 
         component={MemoryMatchScreen}
+        options={{ headerShown: false }} // Ẩn header để full-screen game experience
+      />
+      <Stack.Screen 
+        name="WordSearch" 
+        component={WordSearchScreen}
         options={{ headerShown: false }} // Ẩn header để full-screen game experience
       />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />

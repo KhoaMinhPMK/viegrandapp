@@ -31,6 +31,12 @@ const gameItems = [
     icon: 'copy',
     screen: 'MemoryMatch',
   },
+  {
+    title: 'Tìm từ',
+    subtitle: 'Rèn luyện từ vựng',
+    icon: 'search',
+    screen: 'WordSearch',
+  },
   // Thêm các game khác ở đây
 ];
 
