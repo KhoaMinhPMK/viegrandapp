@@ -56,9 +56,13 @@ const HomeNavigator = () => {
       <Stack.Screen 
         name="Minesweeper" 
         component={MinesweeperScreen} 
-        options={{ headerTitle: 'Dò mìn' }}
+        options={{ headerShown: false }} // Ẩn header để full-screen game experience
       />
-      <Stack.Screen name="MemoryMatch" component={MemoryMatchScreen} />
+      <Stack.Screen 
+        name="MemoryMatch" 
+        component={MemoryMatchScreen}
+        options={{ headerShown: false }} // Ẩn header để full-screen game experience
+      />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="Premium" component={PremiumNavigator} />
       <Stack.Screen 
