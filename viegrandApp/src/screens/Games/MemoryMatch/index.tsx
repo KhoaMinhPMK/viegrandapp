@@ -332,6 +332,7 @@ function MemoryMatchScreen({ navigation }: MemoryMatchScreenProps) {
     setIsGameWon(false);
     setStreak(0);
     setGameStarted(false);
+    setShowDifficultySelector(false);
     
     // Reset animations
     headerAnimation.setValue(0);
