@@ -26,6 +26,7 @@ async function bootstrap() {
       /^exp:\/\/192\.168\.\d+\.\d+:\d+$/, // Allow any expo client on local network
       /^http:\/\/172\.28\.\d+\.\d+:3000$/, // For current network
       /^http:\/\/172\.28\.\d+\.\d+$/, // For current network without port
+      /^exp:\/\/172\.28\.\d+\.\d+:\d+$/, // Allow any expo client on current network
       '*', // Allow all for development - REMOVE in production
     ],
     credentials: true,

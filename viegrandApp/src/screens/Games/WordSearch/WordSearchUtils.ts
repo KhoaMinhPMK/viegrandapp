@@ -319,27 +319,28 @@ export class WordSearchLogic {
   
   // Get cells that form a straight line (for word selection)
   static getLineCells(
-    startCell: { row: number; col: number },
-    endCell: { row: number; col: number }
+    start: { row: number; col: number },
+    end: { row: number; col: number }
   ): { row: number; col: number }[] {
     const cells: { row: number; col: number }[] = [];
-    const rowDiff = endCell.row - startCell.row;
-    const colDiff = endCell.col - startCell.col;
+    
+    const deltaRow = end.row - start.row;
+    const deltaCol = end.col - start.col;
     
     // Check if it's a valid line (horizontal, vertical, or diagonal)
-    if (rowDiff !== 0 && colDiff !== 0 && Math.abs(rowDiff) !== Math.abs(colDiff)) {
-      return []; // Not a straight line
-    }
-    
-    const steps = Math.max(Math.abs(rowDiff), Math.abs(colDiff));
-    const rowStep = steps > 0 ? rowDiff / steps : 0;
-    const colStep = steps > 0 ? colDiff / steps : 0;
-    
-    for (let i = 0; i <= steps; i++) {
-      cells.push({
-        row: startCell.row + Math.round(rowStep * i),
-        col: startCell.col + Math.round(colStep * i),
-      });
+    if (deltaRow === 0 || deltaCol === 0 || Math.abs(deltaRow) === Math.abs(deltaCol)) {
+      const steps = Math.max(Math.abs(deltaRow), Math.abs(deltaCol));
+      const stepRow = steps === 0 ? 0 : deltaRow / steps;
+      const stepCol = steps === 0 ? 0 : deltaCol / steps;
+      
+      for (let i = 0; i <= steps; i++) {
+        const row = Math.round(start.row + i * stepRow);
+        const col = Math.round(start.col + i * stepCol);
+        cells.push({ row, col });
+      }
+    } else {
+      // Not a valid line, return just the start cell
+      cells.push(start);
     }
     
     return cells;
