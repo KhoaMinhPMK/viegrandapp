@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { usePremium } from '../../contexts/PremiumContext';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { PremiumStackParamList } from '../../types/navigation';
 import { PaymentMethod as PaymentMethodType, PremiumPlan } from '../../types/premium';
 
@@ -30,6 +31,7 @@ const PaymentMethodScreen: React.FC<{
   const { plan } = route.params as { plan: PremiumPlan };
   const { isPurchasing, selectPaymentMethod } = usePremium();
   const [selectedMethodId, setSelectedMethodId] = useState<string | null>('credit_card');
+  const tabBarHeight = useBottomTabBarHeight();
 
   const paymentMethods: PaymentMethodType[] = useMemo(() => [
     { id: 'credit_card', type: 'credit_card', name: 'Thẻ Tín dụng / Ghi nợ', description: 'Visa, Mastercard', icon: '💳', enabled: true, isAvailable: true, processingFee: 0 },
@@ -79,7 +81,11 @@ const PaymentMethodScreen: React.FC<{
         <View style={styles.headerRightPlaceholder} />
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.scrollView} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: tabBarHeight }}
+      >
         <View style={styles.contentContainer}>
           {/* Order Summary */}
           <View style={styles.section}>
@@ -209,6 +215,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F2F7',
     borderTopWidth: 1,
     borderTopColor: '#E5E5EA',
+    paddingBottom: 32, // Keep a base padding
   },
   continueButton: {
     backgroundColor: '#007AFF',

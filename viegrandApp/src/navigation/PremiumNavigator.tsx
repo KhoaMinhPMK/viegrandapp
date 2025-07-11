@@ -46,18 +46,24 @@ const PremiumNavigator: React.FC = () => {
         name="PremiumHome"
         component={PremiumScreen}
         options={{
-            headerShown: false, // Keep header hidden on the main premium screen
+            headerShown: false, 
         }}
       />
       
       <Stack.Screen
         name="PlanComparison"
         component={PlanComparisonScreen}
+        options={{
+            headerShown: false, // This screen has its own title logic
+        }}
       />
       
       <Stack.Screen
         name="PaymentMethod"
         component={PaymentMethodScreen}
+        options={{
+            headerShown: false, // Has its own header
+        }}
       />
       
       <Stack.Screen
@@ -90,11 +96,17 @@ const PremiumNavigator: React.FC = () => {
       <Stack.Screen
         name="PaymentHistory"
         component={PaymentHistoryScreen}
+        options={{
+            headerShown: false, // Has its own header
+        }}
       />
       
       <Stack.Screen
         name="SubscriptionManagement"
         component={PremiumScreen} // Reuse PremiumScreen for now
+        options={{
+            headerShown: false,
+        }}
       />
     </Stack.Navigator>
   );

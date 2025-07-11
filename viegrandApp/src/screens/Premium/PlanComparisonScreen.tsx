@@ -12,6 +12,7 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import Feather from 'react-native-vector-icons/Feather';
 import { usePremium } from '../../contexts/PremiumContext'
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 // --- Icons (as simple, direct components) ---
 const BackArrowIcon = () => (
@@ -39,6 +40,7 @@ const StarIcon = () => (
 function PlanComparisonScreen({ navigation }: any) {
   const { plans, fetchPlans, loading } = usePremium()
   const [selectedPlan, setSelectedPlan] = useState<any>(null)
+  const tabBarHeight = useBottomTabBarHeight();
 
   useEffect(() => {
     // Initial fetch of plans
@@ -71,7 +73,7 @@ function PlanComparisonScreen({ navigation }: any) {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         {/* Scrollable Content */}
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={[styles.scrollContent, { paddingBottom: 150 + tabBarHeight }]}>
           {/* Hero Section */}
           <View style={styles.heroSection}>
             <View style={styles.heroIconContainer}><StarIcon /></View>
@@ -155,7 +157,7 @@ function PlanComparisonScreen({ navigation }: any) {
         </ScrollView>
         
         {/* Bottom Action Bar */}
-        <View style={styles.bottomAction}>
+        <View style={[styles.bottomAction, { paddingBottom: tabBarHeight > 0 ? tabBarHeight : 24 }]}>
           <TouchableOpacity
             onPress={handleContinue}
             disabled={!selectedPlan}
@@ -185,7 +187,7 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#FFFFFF' },
   container: { flex: 1, backgroundColor: '#F2F2F7' },
   scrollView: { flex: 1, paddingTop: 60 }, // Added paddingTop to account for transparent header
-  scrollContent: { paddingHorizontal: 16, paddingBottom: 150 },
+  scrollContent: { paddingHorizontal: 16 },
   section: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, marginTop: 20 },
   sectionTitle: { fontSize: 20, fontWeight: '700', color: '#1C1C1E', marginBottom: 16 },
 
@@ -259,7 +261,7 @@ const styles = StyleSheet.create({
   // --- Bottom Action ---
   bottomAction: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24,
+    backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingTop: 16,
     borderTopWidth: 1, borderTopColor: 'rgba(0, 0, 0, 0.1)',
   },
   continueButton: {

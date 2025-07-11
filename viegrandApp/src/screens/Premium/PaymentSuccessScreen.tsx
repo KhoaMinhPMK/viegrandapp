@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { usePremium } from '../../contexts/PremiumContext';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { PremiumStackParamList } from '../../types/navigation';
 
 // --- Icon Component ---
@@ -25,6 +26,7 @@ const PaymentSuccessScreen: React.FC<{
   const { fetchPremiumStatus } = usePremium();
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+  const tabBarHeight = useBottomTabBarHeight();
 
   useEffect(() => {
     fetchPremiumStatus();
@@ -93,7 +95,7 @@ const PaymentSuccessScreen: React.FC<{
       </ScrollView>
       
       {/* Footer Buttons */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: tabBarHeight > 0 ? tabBarHeight + 10 : 32 }]}>
         <TouchableOpacity style={styles.primaryButton} onPress={handleDone}>
           <Text style={styles.primaryButtonText}>Hoàn tất</Text>
         </TouchableOpacity>
@@ -189,7 +191,6 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 32, // Safe area padding
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#E5E5EA',
