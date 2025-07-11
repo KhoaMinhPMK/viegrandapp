@@ -12,6 +12,7 @@ import ElderlySettingsScreen from '../screens/Elderly/Settings';
 import Icon from 'react-native-vector-icons/Ionicons';
 import SettingsNavigator from './SettingsNavigator';
 import HomeNavigator from './HomeNavigator';
+import PremiumNavigator from './PremiumNavigator'; // Added PremiumNavigator import
 
 // Import voice components
 import { useVoice } from '../contexts/VoiceContext';
@@ -174,10 +175,10 @@ const ElderlyBottomTabNavigator = () => {
         }}
       />
       <Tab.Screen 
-        name="Phone" 
-        component={PhoneScreen}
+        name="PremiumTab" // Changed name to be specific
+        component={PremiumNavigator}
         options={{
-          tabBarIcon: renderTabBarIcon('phone')
+          tabBarIcon: renderTabBarIcon('shield')
         }}
       />
       <Tab.Screen 

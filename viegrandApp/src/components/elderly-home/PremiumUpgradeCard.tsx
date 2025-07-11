@@ -13,7 +13,8 @@ const PremiumUpgradeCard = memo(({ isPremium, daysRemaining }: PremiumUpgradeCar
   const navigation = useNavigation<any>();
 
   const handleNavigate = useCallback(() => {
-    navigation.navigate('Premium');
+    // Navigate to the specific tab that holds the PremiumNavigator
+    navigation.navigate('PremiumTab');
   }, [navigation]);
 
   if (isPremium) {
