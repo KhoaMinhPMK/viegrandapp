@@ -125,6 +125,9 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
       />
       
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.getParent()?.navigate('HomeStack')} style={styles.homeButton}>
+          <Feather name="home" size={20} color="#007AFF" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Tin Nhắn</Text>
         <TouchableOpacity style={styles.headerAction}>
           <Feather name="edit" size={22} color="#007AFF" />
@@ -190,17 +193,27 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 16,
   },
+  homeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 122, 255, 0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   headerTitle: {
     fontSize: 34,
     fontWeight: '700',
     color: '#1C1C1E',
     letterSpacing: -0.5,
+    flex: 1,
+    textAlign: 'center',
   },
   headerAction: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    backgroundColor: 'rgba(0, 122, 255, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -239,15 +252,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     marginHorizontal: 16,
-    marginVertical: 2,
+    marginVertical: 3,
     borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowColor: 'rgba(0, 0, 0, 0.1)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 3,
+    elevation: 1,
   },
   avatarContainer: {
     position: 'relative',
@@ -318,11 +331,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 12,
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
   },
   unreadCount: {
     color: 'white',
@@ -340,11 +348,11 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowColor: 'rgba(0, 122, 255, 0.4)',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 1,
     shadowRadius: 12,
-    elevation: 8,
+    elevation: 4,
   },
   fabGradient: {
     width: 56,

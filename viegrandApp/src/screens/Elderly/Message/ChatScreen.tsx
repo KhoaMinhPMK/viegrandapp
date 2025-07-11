@@ -109,6 +109,10 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
           </View>
         </View>
 
+        <TouchableOpacity onPress={() => navigation.getParent()?.getParent()?.navigate('HomeStack')} style={styles.homeButton}>
+          <Feather name="home" size={18} color="#007AFF" />
+        </TouchableOpacity>
+        
         <TouchableOpacity style={styles.headerAction}>
           <Feather name="phone" size={20} color="#007AFF" />
         </TouchableOpacity>
@@ -184,19 +188,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderBottomWidth: 0.33,
+    borderBottomColor: 'rgba(0, 0, 0, 0.08)',
   },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    backgroundColor: 'rgba(0, 122, 255, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -243,11 +242,20 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     marginTop: 1,
   },
+  homeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 122, 255, 0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
   headerAction: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    backgroundColor: 'rgba(0, 122, 255, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -280,11 +288,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 20,
-    shadowColor: '#000',
+    shadowColor: 'rgba(0, 0, 0, 0.08)',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 1,
+    shadowRadius: 2,
+    elevation: 1,
   },
   myMessageBubble: {
     backgroundColor: '#007AFF',
@@ -328,8 +336,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderTopWidth: 0.5,
-    borderTopColor: 'rgba(0, 0, 0, 0.1)',
+    borderTopWidth: 0.33,
+    borderTopColor: 'rgba(0, 0, 0, 0.08)',
   },
   attachmentButton: {
     width: 36,
@@ -377,11 +385,11 @@ const styles = StyleSheet.create({
   },
   sendButtonActive: {
     backgroundColor: '#007AFF',
-    shadowColor: '#007AFF',
+    shadowColor: 'rgba(0, 122, 255, 0.3)',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 1,
     shadowRadius: 4,
-    elevation: 4,
+    elevation: 2,
   },
 });
 
