@@ -7,6 +7,7 @@ import HomeScreen from '../screens/Elderly/Home';
 import ProfileScreen from '../screens/Elderly/Profile';
 import PhoneScreen from '../screens/Elderly/Phone';
 import MessageScreen from '../screens/Elderly/Message';
+import MessageNavigator from './MessageNavigator'; // Import the new navigator
 import ElderlySettingsScreen from '../screens/Elderly/Settings';
 import Icon from 'react-native-vector-icons/Ionicons';
 import SettingsNavigator from './SettingsNavigator';
@@ -76,6 +77,12 @@ const TabBarItem = memo(({
 });
 
 const CustomTabBar = memo(({ state, descriptors, navigation }: any) => {
+  // Ẩn tab bar khi đang ở trong Message tab
+  const currentRouteName = state.routes[state.index].name;
+  if (currentRouteName === 'Message') {
+    return null;
+  }
+
   const renderTab = useCallback((route: any, index: number) => {
     const { options } = descriptors[route.key];
     const isFocused = state.index === index;
@@ -154,9 +161,9 @@ const ElderlyBottomTabNavigator = () => {
       />
       <Tab.Screen 
         name="Message" 
-        component={MessageScreen}
+        component={MessageNavigator} // Replace MessageScreen with MessageNavigator
         options={{
-          tabBarIcon: renderTabBarIcon('message-square')
+          tabBarIcon: renderTabBarIcon('message-square'),
         }}
       />
       <Tab.Screen
@@ -175,12 +182,12 @@ const ElderlyBottomTabNavigator = () => {
       />
       <Tab.Screen 
         name="Settings"
-        component={SettingsNavigator}
-        initialParams={{ initialRouteName: 'ElderlySettings' }}
         options={{
           tabBarIcon: renderTabBarIcon('settings')
         }}
-      />
+      >
+        {() => <SettingsNavigator initialRouteName="ElderlySettings" />}
+      </Tab.Screen>
     </Tab.Navigator>
   );
 };
