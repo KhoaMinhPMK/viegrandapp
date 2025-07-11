@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,9 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
-  KeyboardAvoidingView,
   Platform,
   Keyboard,
-  TouchableWithoutFeedback,
+  Dimensions,
 } from 'react-native';
 import { BackgroundImages } from '../../../utils/assetUtils';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -56,8 +55,29 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
 
   const [messages, setMessages] = useState<Message[]>(mockMessages.filter(m => m.sender === 'me' || m.sender === 'contact'));
   const [inputText, setInputText] = useState('');
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const textInputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      keyboardDidHideListener.remove();
+      keyboardDidShowListener.remove();
+    };
+  }, []);
 
   const handleSend = () => {
     if (inputText.trim().length > 0) {
@@ -77,8 +97,10 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
     }
   };
 
-  const dismissKeyboard = () => {
-    Keyboard.dismiss();
+  const handleInputFocus = () => {
+    setTimeout(() => {
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    }, 200);
   };
 
   const renderMessage = ({ item }: { item: Message }) => {
@@ -130,64 +152,54 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
         </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
-      >
-        <TouchableWithoutFeedback onPress={dismissKeyboard}>
-          <View style={styles.messagesContainer}>
-            <FlatList
-              ref={flatListRef}
-              data={messages}
-              renderItem={renderMessage}
-              keyExtractor={item => item.id}
-              style={styles.messageList}
-              contentContainerStyle={styles.messageListContent}
-              inverted
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              maintainVisibleContentPosition={{
-                minIndexForVisible: 0,
-                autoscrollToTopThreshold: 10,
-              }}
-            />
-          </View>
-        </TouchableWithoutFeedback>
+      <View style={[styles.messagesContainer, { marginBottom: keyboardHeight }]}>
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          renderItem={renderMessage}
+          keyExtractor={item => item.id}
+          style={styles.messageList}
+          contentContainerStyle={styles.messageListContent}
+          inverted
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        />
+      </View>
 
-        <View style={styles.inputContainer}>
-          <TouchableOpacity style={styles.attachmentButton}>
-            <Feather name="plus" size={22} color="#8E8E93" />
-          </TouchableOpacity>
-          
-          <View style={styles.inputWrapper}>
-            <TextInput
-              ref={textInputRef}
-              style={styles.textInput}
-              placeholder="Tin nhắn..."
-              placeholderTextColor="#8E8E93"
-              value={inputText}
-              onChangeText={setInputText}
-              multiline
-              maxLength={500}
-              blurOnSubmit={false}
-              onSubmitEditing={handleSend}
-              returnKeyType="send"
-            />
-            <TouchableOpacity style={styles.voiceButton}>
-              <Feather name="mic" size={20} color="#8E8E93" />
-            </TouchableOpacity>
-          </View>
-          
-          <TouchableOpacity 
-            onPress={handleSend} 
-            style={[styles.sendButton, inputText.trim().length > 0 && styles.sendButtonActive]}
-            disabled={inputText.trim().length === 0}
-          >
-            <Feather name="send" size={18} color={inputText.trim().length > 0 ? "white" : "#8E8E93"} />
+      <View style={[styles.inputContainer, { bottom: keyboardHeight }]}>
+        <TouchableOpacity style={styles.attachmentButton}>
+          <Feather name="plus" size={22} color="#8E8E93" />
+        </TouchableOpacity>
+        
+        <View style={styles.inputWrapper}>
+          <TextInput
+            ref={textInputRef}
+            style={styles.textInput}
+            placeholder="Tin nhắn..."
+            placeholderTextColor="#8E8E93"
+            value={inputText}
+            onChangeText={setInputText}
+            multiline={false}
+            maxLength={500}
+            onFocus={handleInputFocus}
+            autoCorrect={true}
+            autoCapitalize="sentences"
+            returnKeyType="send"
+            onSubmitEditing={handleSend}
+          />
+          <TouchableOpacity style={styles.voiceButton}>
+            <Feather name="mic" size={20} color="#8E8E93" />
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
+        
+        <TouchableOpacity 
+          onPress={handleSend} 
+          style={[styles.sendButton, inputText.trim().length > 0 && styles.sendButtonActive]}
+          disabled={inputText.trim().length === 0}
+        >
+          <Feather name="send" size={18} color={inputText.trim().length > 0 ? "white" : "#8E8E93"} />
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -196,9 +208,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
-  },
-  keyboardAvoidingView: {
-    flex: 1,
   },
   backgroundGradient: {
     position: 'absolute',
@@ -215,7 +224,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderBottomWidth: 0.33,
     borderBottomColor: 'rgba(0, 0, 0, 0.08)',
-    zIndex: 1,
+    zIndex: 10,
+    elevation: 10,
   },
   backButton: {
     width: 36,
@@ -361,14 +371,20 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   inputContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    backgroundColor: 'rgba(255, 255, 255, 1)',
     borderTopWidth: 0.33,
     borderTopColor: 'rgba(0, 0, 0, 0.08)',
-    paddingBottom: Platform.OS === 'ios' ? 12 : 16,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+    zIndex: 10,
+    elevation: 10,
   },
   attachmentButton: {
     width: 36,
@@ -382,14 +398,13 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flex: 1,
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     backgroundColor: 'rgba(118, 118, 128, 0.12)',
     borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     marginHorizontal: 8,
-    minHeight: 36,
-    maxHeight: 100,
+    minHeight: 40,
   },
   textInput: {
     flex: 1,
@@ -397,8 +412,8 @@ const styles = StyleSheet.create({
     color: '#1C1C1E',
     fontWeight: '400',
     lineHeight: 20,
-    paddingVertical: Platform.OS === 'ios' ? 8 : 0,
-    textAlignVertical: 'center',
+    minHeight: 20,
+    padding: 0,
   },
   voiceButton: {
     width: 28,
