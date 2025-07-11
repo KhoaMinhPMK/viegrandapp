@@ -10,6 +10,8 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { BackgroundImages } from '../../../utils/assetUtils';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -54,7 +56,8 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
 
   const [messages, setMessages] = useState<Message[]>(mockMessages.filter(m => m.sender === 'me' || m.sender === 'contact'));
   const [inputText, setInputText] = useState('');
-  const flatListRef = useRef(null);
+  const flatListRef = useRef<FlatList>(null);
+  const textInputRef = useRef<TextInput>(null);
 
   const handleSend = () => {
     if (inputText.trim().length > 0) {
@@ -66,7 +69,16 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       };
       setMessages(prevMessages => [newMessage, ...prevMessages]);
       setInputText('');
+      
+      // Scroll to top after sending message
+      setTimeout(() => {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      }, 100);
     }
+  };
+
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
   };
 
   const renderMessage = ({ item }: { item: Message }) => {
@@ -120,19 +132,28 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
 
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.flexGrow}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        style={styles.keyboardAvoidingView}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
       >
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          renderItem={renderMessage}
-          keyExtractor={item => item.id}
-          style={styles.messageList}
-          contentContainerStyle={styles.messageListContent}
-          inverted
-          showsVerticalScrollIndicator={false}
-        />
+        <TouchableWithoutFeedback onPress={dismissKeyboard}>
+          <View style={styles.messagesContainer}>
+            <FlatList
+              ref={flatListRef}
+              data={messages}
+              renderItem={renderMessage}
+              keyExtractor={item => item.id}
+              style={styles.messageList}
+              contentContainerStyle={styles.messageListContent}
+              inverted
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              maintainVisibleContentPosition={{
+                minIndexForVisible: 0,
+                autoscrollToTopThreshold: 10,
+              }}
+            />
+          </View>
+        </TouchableWithoutFeedback>
 
         <View style={styles.inputContainer}>
           <TouchableOpacity style={styles.attachmentButton}>
@@ -141,6 +162,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
           
           <View style={styles.inputWrapper}>
             <TextInput
+              ref={textInputRef}
               style={styles.textInput}
               placeholder="Tin nhắn..."
               placeholderTextColor="#8E8E93"
@@ -148,6 +170,9 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
               onChangeText={setInputText}
               multiline
               maxLength={500}
+              blurOnSubmit={false}
+              onSubmitEditing={handleSend}
+              returnKeyType="send"
             />
             <TouchableOpacity style={styles.voiceButton}>
               <Feather name="mic" size={20} color="#8E8E93" />
@@ -172,7 +197,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8F9FA',
   },
-  flexGrow: {
+  keyboardAvoidingView: {
     flex: 1,
   },
   backgroundGradient: {
@@ -190,6 +215,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderBottomWidth: 0.33,
     borderBottomColor: 'rgba(0, 0, 0, 0.08)',
+    zIndex: 1,
   },
   backButton: {
     width: 36,
@@ -259,6 +285,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  messagesContainer: {
+    flex: 1,
+  },
   messageList: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -266,6 +295,7 @@ const styles = StyleSheet.create({
   messageListContent: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+    flexGrow: 1,
   },
   messageRow: {
     flexDirection: 'row',
@@ -335,9 +365,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
     borderTopWidth: 0.33,
     borderTopColor: 'rgba(0, 0, 0, 0.08)',
+    paddingBottom: Platform.OS === 'ios' ? 12 : 16,
   },
   attachmentButton: {
     width: 36,
@@ -366,7 +397,8 @@ const styles = StyleSheet.create({
     color: '#1C1C1E',
     fontWeight: '400',
     lineHeight: 20,
-    paddingVertical: 0,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 0,
+    textAlignVertical: 'center',
   },
   voiceButton: {
     width: 28,
