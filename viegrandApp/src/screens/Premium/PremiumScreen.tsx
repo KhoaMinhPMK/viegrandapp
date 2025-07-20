@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { PremiumStackParamList } from '../../types/navigation';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 const { width } = Dimensions.get('window');
 
@@ -62,6 +63,7 @@ const CheckIcon = ({ size = 16, color = '#34C759' }) => (
 
 const PremiumScreen: React.FC = () => {
   const navigation = useNavigation<StackNavigationProp<PremiumStackParamList>>();
+  const tabBarHeight = useBottomTabBarHeight();
 
   const handleUpgrade = (planId?: number) => {
     navigation.navigate('PlanComparison', { initialPlanId: planId });
@@ -192,7 +194,7 @@ const PremiumScreen: React.FC = () => {
           </TouchableOpacity>
 
           {/* Footer */}
-          <View style={styles.footer}>
+          <View style={[styles.footer, { paddingBottom: tabBarHeight + 16 }]}>
             <Text style={styles.footerText}>
               Dùng thử miễn phí 7 ngày • Hủy bất kỳ lúc nào
             </Text>

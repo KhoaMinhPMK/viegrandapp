@@ -27,13 +27,13 @@ import { initializeAPI } from './src/services/api';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const AppContent = memo(() => {
-  // Khởi tạo API khi app start
+  // Khởi tạo API khi app start - ĐÃ COMMENT LẠI
   useEffect(() => {
     const initAPI = async () => {
       try {
-        console.log('🚀 Initializing API...');
-        await initializeAPI();
-        console.log('✅ API initialization completed');
+        console.log('🚀 Initializing API... (COMMENTED)');
+        // await initializeAPI();
+        console.log('✅ API initialization completed (COMMENTED)');
       } catch (error) {
         console.error('❌ API initialization failed:', error);
       }

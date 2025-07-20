@@ -33,12 +33,23 @@ const PaymentMethodScreen: React.FC<{
   const [selectedMethodId, setSelectedMethodId] = useState<string | null>('credit_card');
   const tabBarHeight = useBottomTabBarHeight();
 
-  const paymentMethods: PaymentMethodType[] = useMemo(() => [
+  const { paymentMethods, fetchPaymentMethods } = usePremium();
+  
+  // Load payment methods on mount
+  React.useEffect(() => {
+    fetchPaymentMethods();
+  }, [fetchPaymentMethods]);
+
+  // Fallback payment methods if API fails
+  const fallbackPaymentMethods: PaymentMethodType[] = useMemo(() => [
     { id: 'credit_card', type: 'credit_card', name: 'Thẻ Tín dụng / Ghi nợ', description: 'Visa, Mastercard', icon: '💳', enabled: true, isAvailable: true, processingFee: 0 },
     { id: 'momo', type: 'e_wallet', name: 'Ví MoMo', description: 'Thanh toán qua MoMo', icon: '🐷', enabled: true, isAvailable: true, processingFee: 0 },
     { id: 'zalopay', type: 'e_wallet', name: 'ZaloPay', description: 'Thanh toán qua ZaloPay', icon: '🔵', enabled: true, isAvailable: true, processingFee: 0 },
-    { id: 'bank_transfer', type: 'bank_transfer', name: 'Chuyển khoản Ngân hàng', description: 'Internet Banking, QR Code', icon: '🏦', enabled: true, isAvailable: true, processingFee: 0 },
+    { id: 'vnpay', type: 'e_wallet', name: 'VNPay', description: 'Thanh toán qua VNPay', icon: '🏦', enabled: true, isAvailable: true, processingFee: 0 },
   ], []);
+
+  // Use API data or fallback
+  const availablePaymentMethods = paymentMethods.length > 0 ? paymentMethods : fallbackPaymentMethods;
 
   const handleSelectMethod = (method: PaymentMethodType) => {
     if (!method.isAvailable) return;
@@ -111,21 +122,23 @@ const PaymentMethodScreen: React.FC<{
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Chọn phương thức</Text>
             <View style={styles.card}>
-              {paymentMethods.map((method, index) => (
+              {availablePaymentMethods.map((method, index) => (
                 <React.Fragment key={method.id}>
                   <TouchableOpacity
                     style={styles.paymentMethodRow}
                     onPress={() => handleSelectMethod(method)}
                     disabled={!method.isAvailable}
                   >
-                    <View style={styles.paymentMethodIcon}><Text style={styles.paymentMethodIconText}>{method.icon}</Text></View>
+                    <View style={styles.paymentMethodIcon}>
+                      <Text style={styles.paymentMethodIconText}>{method.icon || '💳'}</Text>
+                    </View>
                     <View style={styles.paymentMethodInfo}>
                       <Text style={styles.paymentMethodName}>{method.name}</Text>
-                      <Text style={styles.paymentMethodDesc}>{method.description}</Text>
+                      <Text style={styles.paymentMethodDesc}>{method.description || ''}</Text>
                     </View>
                     {selectedMethodId === method.id && <CheckIcon />}
                   </TouchableOpacity>
-                  {index < paymentMethods.length - 1 && <View style={styles.divider} />}
+                  {index < availablePaymentMethods.length - 1 && <View style={styles.divider} />}
                 </React.Fragment>
               ))}
             </View>
@@ -139,7 +152,7 @@ const PaymentMethodScreen: React.FC<{
       </ScrollView>
 
       {/* Footer Button */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: tabBarHeight + 16 }]}>
         <TouchableOpacity
           style={[styles.continueButton, (!selectedMethodId || isPurchasing) && styles.disabledButton]}
           onPress={handleProceedToPayment}

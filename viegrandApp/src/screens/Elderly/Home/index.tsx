@@ -7,7 +7,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { usePremium } from '../../../contexts/PremiumContext';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../../contexts/AuthContext';
 import { BackgroundImages } from '../../../utils/assetUtils';
 import Header from '../../../components/elderly-home/Header';
@@ -25,7 +25,8 @@ const MemoizedVoiceTranscript = memo(VoiceTranscript);
 
 const ElderlyHomeScreen = () => {
   const { user } = useAuth();
-  const { premiumStatus, fetchPremiumStatus } = usePremium();
+  const { premiumStatus, fetchPremiumStatus, refreshTrigger } = usePremium();
+  const navigation = useNavigation();
   const isPremium = premiumStatus?.isPremium || false;
 
   useFocusEffect(
@@ -33,6 +34,22 @@ const ElderlyHomeScreen = () => {
       fetchPremiumStatus();
     }, [fetchPremiumStatus])
   );
+
+  // Thêm useEffect để lắng nghe thay đổi premium status
+  React.useEffect(() => {
+    // Fetch premium status khi component mount và khi có thay đổi
+    fetchPremiumStatus();
+  }, [fetchPremiumStatus, refreshTrigger]);
+
+  // Thêm useEffect để refresh premium status khi quay về từ màn hình thanh toán
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      // Refresh premium status khi focus vào màn hình
+      fetchPremiumStatus();
+    });
+
+    return unsubscribe;
+  }, [navigation, fetchPremiumStatus]);
 
   // Notifications state remains here as it's passed to the Header
   const [notifications, setNotifications] = useState([

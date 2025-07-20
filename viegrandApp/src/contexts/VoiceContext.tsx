@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import Voice, { SpeechResultsEvent, SpeechErrorEvent } from '@react-native-voice/voice';
-import { Alert, Platform, PermissionsAndroid } from 'react-native';
+import { Alert, Platform, PermissionsAndroid, NativeEventEmitter, NativeModules } from 'react-native';
 
 interface VoiceContextProps {
   isListening: boolean;
@@ -19,6 +19,17 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Khởi tạo Voice với NativeEventEmitter đúng cách
+    let voiceEmitter: NativeEventEmitter | null = null;
+    
+    try {
+      if (NativeModules.Voice) {
+        voiceEmitter = new NativeEventEmitter(NativeModules.Voice);
+      }
+    } catch (error) {
+      console.warn('Voice module not available:', error);
+    }
+
     // Khởi tạo Voice
     const onSpeechResults = (e: SpeechResultsEvent) => {
       if (e.value) {

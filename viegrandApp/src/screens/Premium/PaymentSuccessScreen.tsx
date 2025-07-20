@@ -23,13 +23,16 @@ const PaymentSuccessScreen: React.FC<{
   route: RouteProp<PremiumStackParamList, 'PaymentSuccess'>;
 }> = ({ navigation, route }) => {
   const { transactionId, planName } = route.params;
-  const { fetchPremiumStatus } = usePremium();
+  const { fetchPremiumStatus, triggerRefresh } = usePremium();
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const tabBarHeight = useBottomTabBarHeight();
 
   useEffect(() => {
     fetchPremiumStatus();
+    
+    // Trigger refresh để các màn hình khác cập nhật ngay lập tức
+    triggerRefresh();
 
     Animated.parallel([
       Animated.spring(scaleAnim, {
@@ -43,9 +46,16 @@ const PaymentSuccessScreen: React.FC<{
         useNativeDriver: true,
       }),
     ]).start();
-  }, [scaleAnim, opacityAnim, fetchPremiumStatus]);
+  }, [scaleAnim, opacityAnim, fetchPremiumStatus, triggerRefresh]);
 
   const handleDone = () => {
+    // Fetch premium status một lần nữa trước khi quay về
+    fetchPremiumStatus();
+    
+    // Trigger refresh để các màn hình khác cập nhật
+    triggerRefresh();
+    
+    // Reset navigation về PremiumHome
     navigation.reset({
       index: 0,
       routes: [{ name: 'PremiumHome' }],

@@ -6,7 +6,7 @@ import {
   PaymentMethod,
   PaymentTransaction,
 } from '../types/premium';
-import apiClient from '../services/api';
+import { premiumAPI } from '../services/api';
 
 const PremiumContext = createContext<PremiumContextType | undefined>(undefined);
 
@@ -25,15 +25,16 @@ export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
     const [isPurchasing, setIsPurchasing] = useState(false);
     const [purchaseResult, setPurchaseResult] = useState<any>(null);
+    
+    // Refresh trigger state
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     // Actions
     const fetchPlans = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await apiClient.get('/premium/plans');
-            if (response.data.success) {
-                setPlans(response.data.data);
-            }
+            const plansData = await premiumAPI.getPlans();
+            setPlans(plansData);
         } catch (err) {
             setError('Không thể tải danh sách gói Premium.');
         } finally {
@@ -44,11 +45,9 @@ export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children })
     const fetchPremiumStatus = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await apiClient.get('/premium/my-status');
-            if (response.data.success) {
-                setPremiumStatus(response.data.data);
-                setCurrentSubscription(response.data.data.subscription);
-            }
+            const statusData = await premiumAPI.getMyPremiumStatus();
+            setPremiumStatus(statusData);
+            setCurrentSubscription(statusData.subscription);
         } catch (err) {
             setError('Không thể lấy trạng thái Premium.');
         } finally {
@@ -59,10 +58,8 @@ export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children })
     const fetchPaymentMethods = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await apiClient.get('/premium/payment-methods');
-            if (response.data.success) {
-                setPaymentMethods(response.data.data);
-            }
+            const methodsData = await premiumAPI.getPaymentMethods();
+            setPaymentMethods(methodsData);
         } catch (err) {
             setError('Không thể tải phương thức thanh toán.');
         } finally {
@@ -73,10 +70,8 @@ export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children })
     const fetchTransactions = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await apiClient.get('/premium/payment/my-transactions');
-            if (response.data.success) {
-                setTransactions(response.data.data);
-            }
+            const transactionsData = await premiumAPI.getMyTransactions();
+            setTransactions(transactionsData);
         } catch (err) {
             setError('Không thể tải lịch sử giao dịch.');
         } finally {
@@ -103,25 +98,27 @@ export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children })
         setPurchaseResult(null);
 
         try {
-            const response = await apiClient.post('/premium/purchase', {
-                planId,
-                paymentMethod,
-            });
+            const result = await premiumAPI.purchase(planId, paymentMethod);
 
             // Set result regardless of success or failure
-            setPurchaseResult(response.data.data);
+            setPurchaseResult(result);
 
-            if (response.data.success) {
+            if (result.success) {
                 // On success, clear any previous error and refresh data
                 setError(null);
                 await fetchPremiumStatus();
                 await fetchTransactions();
+                
+                // Thêm một delay nhỏ để đảm bảo data được cập nhật
+                setTimeout(() => {
+                    fetchPremiumStatus();
+                }, 1000);
             } else {
                 // On logical failure, set the error message from the server
-                setError(response.data.message || 'Giao dịch không thành công.');
+                setError(result.message || 'Giao dịch không thành công.');
             }
             
-            return response.data.data;
+            return result;
 
         } catch (err: any) {
             // Handle network or server errors
@@ -142,7 +139,7 @@ export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
         setLoading(true);
         try {
-            await apiClient.put(`/premium/subscription/${currentSubscription.id}/cancel`, { cancelReason: reason });
+            await premiumAPI.cancelSubscription(currentSubscription.id, reason);
             await fetchPremiumStatus(); // Refresh status
         } catch (err) {
             setError('Không thể hủy gói Premium.');
@@ -168,6 +165,17 @@ export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children })
         setPurchaseResult(null);
     }, []);
 
+    const triggerRefresh = useCallback(() => {
+        setRefreshTrigger(prev => prev + 1);
+    }, []);
+
+    // Auto refresh premium status when refreshTrigger changes
+    useEffect(() => {
+        if (refreshTrigger > 0) {
+            fetchPremiumStatus();
+        }
+    }, [refreshTrigger, fetchPremiumStatus]);
+
     const value: PremiumContextType = useMemo(() => ({
         plans,
         currentSubscription,
@@ -180,6 +188,7 @@ export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children })
         selectedPaymentMethod,
         isPurchasing,
         purchaseResult,
+        refreshTrigger,
         fetchPlans,
         fetchPremiumStatus,
         fetchPaymentMethods,
@@ -191,12 +200,13 @@ export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children })
         retryPayment,
         clearError,
         reset,
+        triggerRefresh,
     }), [
         plans, currentSubscription, premiumStatus, paymentMethods, transactions,
-        loading, error, selectedPlan, selectedPaymentMethod, isPurchasing, purchaseResult,
+        loading, error, selectedPlan, selectedPaymentMethod, isPurchasing, purchaseResult, refreshTrigger,
         fetchPlans, fetchPremiumStatus, fetchPaymentMethods, fetchTransactions,
         selectPlan, selectPaymentMethod, purchasePremium, cancelSubscription, retryPayment,
-        clearError, reset
+        clearError, reset, triggerRefresh
     ]);
 
     return <PremiumContext.Provider value={value}>{children}</PremiumContext.Provider>;

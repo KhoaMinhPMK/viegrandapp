@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import { getAPIURL, getNetworkInfo } from '../config/network';
 
-// Hàm để detect thiết bị thật vs emulator/simulator và lấy URL phù hợp
+// Hàm để detect thiết bị thật vs emulator/simulator và lấy URL phù hợp - ĐÃ CẬP NHẬT
 const getBaseURL = async (): Promise<string> => {
   try {
     // Sử dụng config để lấy URL
@@ -32,51 +32,51 @@ const getBaseURL = async (): Promise<string> => {
   }
 };
 
-// Khởi tạo baseURL (sẽ được cập nhật khi app khởi động)
+// Khởi tạo baseURL (sẽ được cập nhật khi app khởi động) - ĐÃ CẬP NHẬT
 let currentBaseURL = getAPIURL();
 
-// Hàm để update baseURL
+// Hàm để update baseURL - ĐÃ COMMENT LẠI
 export const initializeAPI = async (): Promise<void> => {
   try {
     // Import debug utilities
-    const { logNetworkDebugInfo, testNetworkConnection } = await import('../utils/networkDebug');
+    // const { logNetworkDebugInfo, testNetworkConnection } = await import('../utils/networkDebug');
     
     // Log debug info
-    await logNetworkDebugInfo();
+    // await logNetworkDebugInfo();
     
     // Get the correct baseURL
-    currentBaseURL = await getBaseURL();
+    // currentBaseURL = await getBaseURL();
     
     // Test connection
-    const isConnected = await testNetworkConnection(currentBaseURL);
+    // const isConnected = await testNetworkConnection(currentBaseURL);
     
-    if (!isConnected) {
-      console.warn('⚠️ Initial connection test failed, but API URL has been set');
-      console.log('💡 Suggestions:');
-      console.log('   1. Make sure backend is running on your computer');
-      console.log('   2. Check if your phone and computer are on the same WiFi network');
-      console.log('   3. Check if firewall is blocking the connection');
-      console.log('   4. Verify the IP address in API_CONFIG.HOST_IP');
-    }
+    // if (!isConnected) {
+    //   console.warn('⚠️ Initial connection test failed, but API URL has been set');
+    //   console.log('💡 Suggestions:');
+    //   console.log('   1. Make sure backend is running on your computer');
+    //   console.log('   2. Check if your phone and computer are on the same WiFi network');
+    //   console.log('   3. Check if firewall is blocking the connection');
+    //   console.log('   4. Verify the IP address in API_CONFIG.HOST_IP');
+    // }
     
     // Cập nhật baseURL cho axios instance
-    apiClient.defaults.baseURL = currentBaseURL;
-    console.log('✅ API initialized with baseURL:', currentBaseURL);
+    // apiClient.defaults.baseURL = currentBaseURL;
+    console.log('✅ API initialized with baseURL: http://localhost:3000/api (COMMENTED)');
   } catch (error) {
     console.error('❌ Failed to initialize API:', error);
   }
 };
 
-// Tạo axios instance
+// Tạo axios instance - ĐÃ CẬP NHẬT
 const apiClient = axios.create({
-  baseURL: currentBaseURL,
+  baseURL: getAPIURL(),
   timeout: 30000, // Tăng timeout lên 30 giây
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Interceptor để thêm token vào header
+// Interceptor để thêm token vào header - ĐÃ KHÔI PHỤC
 apiClient.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('access_token');
@@ -90,7 +90,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Interceptor để xử lý response
+// Interceptor để xử lý response - ĐÃ KHÔI PHỤC
 apiClient.interceptors.response.use(
   (response) => {
     return response;
@@ -285,76 +285,86 @@ export interface ApiErrorResponse {
   };
 }
 
-// Auth API
+// Auth API - ĐÃ CẬP NHẬT
 export const authAPI = {
   login: async (data: LoginRequest): Promise<AuthResponse> => {
     console.log('Login request data:', data);
-    const response = await apiClient.post('/auth/login', data);
+    const response = await apiClient.post('/login.php', data);
     console.log('Login response:', response.data);
-    return response.data;
+    return response.data.data;
   },
 
   register: async (data: RegisterRequest): Promise<AuthResponse> => {
     console.log('Register request data:', data);
-    const response = await apiClient.post('/auth/register', data);
+    const response = await apiClient.post('/signup.php', data);
     console.log('Register response:', response.data);
-    return response.data;
+    return response.data.data;
   },
 };
 
-// Users API
+// Users API - ĐÃ COMMENT LẠI
 export const usersAPI = {
   getAll: async (): Promise<User[]> => {
-    const response = await apiClient.get('/users');
-    return response.data;
+    // const response = await apiClient.get('/users');
+    // return response.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
   getById: async (id: number): Promise<User> => {
-    const response = await apiClient.get(`/users/${id}`);
-    return response.data;
+    // const response = await apiClient.get(`/users/${id}`);
+    // return response.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
   getProfile: async (): Promise<User> => {
-    const response = await apiClient.get('/users/me');
-    return response.data;
+    // const response = await apiClient.get('/users/me');
+    // return response.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
   getTest: async (): Promise<User> => {
-    const response = await apiClient.get('/users/test');
-    return response.data;
+    // const response = await apiClient.get('/users/test');
+    // return response.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
   getProfileById: async (id: number): Promise<User> => {
-    const response = await apiClient.get(`/users/profile/${id}`);
-    return response.data;
+    // const response = await apiClient.get(`/users/profile/${id}`);
+    // return response.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
   testProfile: async (): Promise<User> => {
-    const response = await apiClient.get('/users/test');
-    return response.data;
+    // const response = await apiClient.get('/users/test');
+    // return response.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
   create: async (userData: any): Promise<User> => {
-    const response = await apiClient.post('/users', userData);
-    return response.data;
+    // const response = await apiClient.post('/users', userData);
+    // return response.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
   update: async (id: number, userData: any): Promise<User> => {
-    const response = await apiClient.put(`/users/${id}`, userData);
-    return response.data;
+    // const response = await apiClient.put(`/users/${id}`, userData);
+    // return response.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
   updateMyProfile: async (userData: Partial<User>): Promise<User> => {
-    const response = await apiClient.patch('/users/me', userData);
-    return response.data;
+    // const response = await apiClient.patch('/users/me', userData);
+    // return response.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
   delete: async (id: number): Promise<void> => {
-    await apiClient.delete(`/users/${id}`);
+    // await apiClient.delete(`/users/${id}`);
+    throw new Error('Backend API đã được comment lại');
   },
 };
 
-// Premium API
+// Premium API - ĐÃ COMMENT LẠI
 export const premiumAPI = {
   // Premium Plans
   getPlans: async (): Promise<PremiumPlan[]> => {
@@ -363,14 +373,16 @@ export const premiumAPI = {
   },
 
   getPlanById: async (id: number): Promise<PremiumPlan> => {
-    const response = await apiClient.get(`/premium/plans/${id}`);
-    return response.data.data;
+    // const response = await apiClient.get(`/premium/plans/${id}`);
+    // return response.data.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
   // User Subscription
   getMySubscription: async (): Promise<UserSubscription | null> => {
-    const response = await apiClient.get('/premium/my-subscription');
-    return response.data.data;
+    // const response = await apiClient.get('/premium/my-subscription');
+    // return response.data.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
   getMyPremiumStatus: async (): Promise<PremiumStatus> => {
@@ -379,13 +391,15 @@ export const premiumAPI = {
   },
 
   getMySubscriptions: async (): Promise<UserSubscription[]> => {
-    const response = await apiClient.get('/premium/my-subscriptions');
-    return response.data.data;
+    // const response = await apiClient.get('/premium/my-subscriptions');
+    // return response.data.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
   subscribe: async (data: CreateSubscriptionRequest): Promise<UserSubscription> => {
-    const response = await apiClient.post('/premium/subscribe', data);
-    return response.data.data;
+    // const response = await apiClient.post('/premium/subscribe', data);
+    // return response.data.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
   cancelSubscription: async (subscriptionId: number, reason: string): Promise<UserSubscription> => {
@@ -402,18 +416,21 @@ export const premiumAPI = {
   },
 
   createPayment: async (data: CreatePaymentRequest): Promise<PaymentTransaction> => {
-    const response = await apiClient.post('/premium/payment/create', data);
-    return response.data.data;
+    // const response = await apiClient.post('/premium/payment/create', data);
+    // return response.data.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
   initiatePayment: async (transactionId: number, data: PaymentInitRequest): Promise<PaymentGatewayResponse> => {
-    const response = await apiClient.post(`/premium/payment/${transactionId}/initiate`, data);
-    return response.data.data;
+    // const response = await apiClient.post(`/premium/payment/${transactionId}/initiate`, data);
+    // return response.data.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
   getTransaction: async (transactionCode: string): Promise<PaymentTransaction> => {
-    const response = await apiClient.get(`/premium/payment/transaction/${transactionCode}`);
-    return response.data.data;
+    // const response = await apiClient.get(`/premium/payment/transaction/${transactionCode}`);
+    // return response.data.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
   getMyTransactions: async (): Promise<PaymentTransaction[]> => {
@@ -422,62 +439,91 @@ export const premiumAPI = {
   },
 
   retryPayment: async (transactionId: number): Promise<PaymentGatewayResponse> => {
-    const response = await apiClient.post(`/premium/payment/${transactionId}/retry`);
-    return response.data.data;
+    // const response = await apiClient.post(`/premium/payment/${transactionId}/retry`);
+    // return response.data.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
   // Statistics
   getMyStats: async (): Promise<any> => {
-    const response = await apiClient.get('/premium/stats');
-    return response.data.data;
+    // const response = await apiClient.get('/premium/stats');
+    // return response.data.data;
+    throw new Error('Backend API đã được comment lại');
   },
 
-  // Complete subscription flow
+  // Complete subscription flow - ĐÃ COMMENT LẠI
   purchasePremium: async (planId: number, paymentMethod: string, customerInfo: any): Promise<{
     subscription: UserSubscription;
     transaction: PaymentTransaction;
     paymentUrl: string;
   }> => {
     try {
-      // Step 1: Create subscription
-      const subscription = await premiumAPI.subscribe({
+      console.log('🛒 Starting premium purchase:', { planId, paymentMethod });
+      
+      // Call purchase API endpoint
+      const response = await apiClient.post('/premium.php/purchase', {
         planId,
-        paymentMethod: paymentMethod as any,
-        autoRenewal: true,
-      });
-
-      // Step 2: Create payment transaction
-      const plan = await premiumAPI.getPlanById(planId);
-      const transaction = await premiumAPI.createPayment({
-        subscriptionId: subscription.id,
-        planId,
-        amount: plan.price,
-        paymentMethod: paymentMethod as any,
-        type: 'subscription',
-        description: `Thanh toán gói ${plan.name}`,
-        customerInfo: JSON.stringify(customerInfo),
-      });
-
-      // Step 3: Initiate payment
-      const paymentInit = await premiumAPI.initiatePayment(transaction.id, {
-        amount: plan.price,
-        currency: 'VND',
-        description: `Thanh toán gói ${plan.name}`,
         paymentMethod,
-        customerInfo,
-        callbackUrl: `${currentBaseURL}/premium/payment/callback`,
-        returnUrl: 'viegrandapp://payment/result',
       });
 
-      return {
-        subscription,
-        transaction,
-        paymentUrl: paymentInit.paymentUrl || '',
-      };
-    } catch (error) {
-      console.error('Purchase premium error:', error);
+      console.log('🎉 Purchase response:', response.data);
+
+      if (response.data.success) {
+        const { subscription, transaction, plan } = response.data.data;
+        
+        return {
+          subscription: {
+            id: subscription.id,
+            userId: subscription.userId,
+            planId: subscription.planId,
+            status: subscription.status,
+            startDate: subscription.startDate,
+            endDate: subscription.endDate,
+            paidAmount: subscription.paidAmount,
+            paymentMethod: subscription.paymentMethod,
+            autoRenewal: subscription.autoRenewal,
+            failedPaymentAttempts: 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          transaction: {
+            id: transaction.id,
+            userId: transaction.userId || subscription.userId,
+            subscriptionId: subscription.id,
+            planId: transaction.planId || planId,
+            transactionCode: transaction.transactionCode,
+            amount: transaction.amount,
+            currency: transaction.currency,
+            status: transaction.status,
+            paymentMethod: transaction.paymentMethod,
+            type: transaction.type,
+            description: transaction.description,
+            paidAt: transaction.paidAt,
+            createdAt: transaction.createdAt,
+            retryCount: 0,
+            updatedAt: transaction.createdAt,
+          },
+          paymentUrl: '', // No payment URL needed for completed payment
+        };
+      } else {
+        throw new Error(response.data.error?.message || 'Purchase failed');
+      }
+    } catch (error: any) {
+      console.error('❌ Purchase error:', error);
+      if (error.response?.data?.error?.message) {
+        throw new Error(error.response.data.error.message);
+      }
       throw error;
     }
+  },
+
+  // Simple purchase method
+  purchase: async (planId: number, paymentMethod: string): Promise<any> => {
+    const response = await apiClient.post('/premium/purchase', {
+      planId,
+      paymentMethod,
+    });
+    return response.data.data;
   },
 };
 
@@ -499,16 +545,16 @@ export interface UserSettings {
 
 export type UpdateUserSettingsDto = Partial<Omit<UserSettings, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>;
 
-// Settings API
+// Settings API - ĐÃ CẬP NHẬT
 export const settingsAPI = {
   getSettings: async (): Promise<UserSettings> => {
-    const response = await apiClient.get('/settings');
-    return response.data;
+    const response = await apiClient.get('/settings.php');
+    return response.data.data;
   },
 
   updateSettings: async (data: UpdateUserSettingsDto): Promise<UserSettings> => {
-    const response = await apiClient.put('/settings', data);
-    return response.data;
+    const response = await apiClient.put('/settings.php', data);
+    return response.data.data;
   },
 };
 

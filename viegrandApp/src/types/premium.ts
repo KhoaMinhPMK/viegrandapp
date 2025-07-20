@@ -199,6 +199,8 @@ export interface PremiumContextType {
   // Utility
   clearError: () => void;
   reset: () => void;
+  refreshTrigger: number;
+  triggerRefresh: () => void;
 }
 
 // Premium feature types
