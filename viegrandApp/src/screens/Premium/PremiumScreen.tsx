@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,14 +7,34 @@ import {
   TouchableOpacity,
   Alert,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { PremiumStackParamList } from '../../types/navigation';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import Feather from 'react-native-vector-icons/Feather';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import apiClient from '../../services/api';
 
 const { width } = Dimensions.get('window');
+
+// Interface cho Premium Plan từ API
+interface PremiumPlan {
+  id: number;
+  name: string;
+  display_name: string;
+  price: number;
+  currency: string;
+  duration_type: 'monthly' | 'yearly';
+  duration_value: number;
+  description: string;
+  is_recommended: boolean;
+  discount_percentage: number;
+  savings_text: string | null;
+  features: string[];
+}
 
 // Minimalist Black Icons - Apple Style
 const CrownIcon = ({ size = 24 }) => (
@@ -64,6 +84,39 @@ const CheckIcon = ({ size = 16, color = '#34C759' }) => (
 const PremiumScreen: React.FC = () => {
   const navigation = useNavigation<StackNavigationProp<PremiumStackParamList>>();
   const tabBarHeight = useBottomTabBarHeight();
+  
+  // State cho premium plans từ API
+  const [plans, setPlans] = useState<PremiumPlan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch premium plans từ API
+  const fetchPremiumPlans = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await apiClient.get('/get_premium_list.php');
+      
+      console.log('Premium plans API response:', response.data);
+      
+      if (response.data.success) {
+        setPlans(response.data.data || []);
+      } else {
+        setError(response.data.message || 'Không thể tải danh sách gói Premium');
+      }
+    } catch (error: any) {
+      console.error('Fetch premium plans error:', error);
+      setError('Lỗi kết nối. Vui lòng thử lại.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Load data khi component mount
+  useEffect(() => {
+    fetchPremiumPlans();
+  }, []);
 
   const handleUpgrade = (planId?: number) => {
     navigation.navigate('PlanComparison', { initialPlanId: planId });
@@ -73,13 +126,18 @@ const PremiumScreen: React.FC = () => {
     navigation.goBack();
   };
 
+  // Format giá tiền
+  const formatPrice = (price: number) => {
+    return price.toLocaleString('vi-VN');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Text style={styles.backButtonText}>←</Text>
+            <Feather name="arrow-left" size={24} color="#0D4C92" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Premium</Text>
           <View style={styles.headerRight} />
@@ -88,7 +146,8 @@ const PremiumScreen: React.FC = () => {
         {/* Hero Section */}
         <View style={styles.heroSection}>
           <View style={styles.heroIconContainer}>
-            <CrownIcon size={36} />
+              
+              <FontAwesome5 name="crown" size={36} color="#006699" />
           </View>
           <Text style={styles.heroTitle}>Nâng cấp trải nghiệm</Text>
           <Text style={styles.heroSubtitle}>
@@ -122,71 +181,71 @@ const PremiumScreen: React.FC = () => {
         <View style={styles.plansSection}>
           <Text style={styles.plansTitle}>Chọn gói phù hợp</Text>
           
-          {/* Monthly Plan */}
-          <TouchableOpacity style={styles.planCard} onPress={() => handleUpgrade(1)}>
-            <View style={styles.planHeader}>
-              <Text style={styles.planName}>Premium Monthly</Text>
-              <View style={styles.planPrice}>
-                <Text style={styles.planPriceAmount}>99.000</Text>
-                <Text style={styles.planPriceCurrency}>đ</Text>
-              </View>
+          {/* Loading State */}
+          {isLoading && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#007AFF" />
+              <Text style={styles.loadingText}>Đang tải danh sách gói...</Text>
             </View>
-            <Text style={styles.planDescription}>
-              Hàng tháng • Hủy bất kỳ lúc nào
-            </Text>
-            <View style={styles.planFeatures}>
-              <View style={styles.planFeatureRow}>
-                <CheckIcon size={16} color="#34C759" />
-                <Text style={styles.planFeatureItem}>Gọi video không giới hạn</Text>
-              </View>
-              <View style={styles.planFeatureRow}>
-                <CheckIcon size={16} color="#34C759" />
-                <Text style={styles.planFeatureItem}>Theo dõi sức khỏe AI</Text>
-              </View>
-              <View style={styles.planFeatureRow}>
-                <CheckIcon size={16} color="#34C759" />
-                <Text style={styles.planFeatureItem}>Hỗ trợ 24/7</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
+          )}
 
-          {/* Yearly Plan - Recommended */}
-          <TouchableOpacity style={[styles.planCard, styles.planCardRecommended]} onPress={() => handleUpgrade(2)}>
+          {/* Error State */}
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={fetchPremiumPlans}>
+                <Text style={styles.retryButtonText}>Thử lại</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Plans từ API */}
+          {!isLoading && !error && plans.map((plan) => (
+            <TouchableOpacity 
+              key={plan.id}
+              style={[
+                styles.planCard, 
+                plan.is_recommended && styles.planCardRecommended
+              ]} 
+              onPress={() => handleUpgrade(plan.id)}
+            >
+              {/* Recommended Badge */}
+              {plan.is_recommended && (
             <View style={styles.recommendedBadge}>
               <Text style={styles.recommendedText}>Được khuyến nghị</Text>
             </View>
+              )}
+              
+              {/* Plan Header */}
             <View style={styles.planHeader}>
-              <Text style={styles.planName}>Premium Yearly</Text>
+                <Text style={styles.planName}>{plan.display_name}</Text>
               <View style={styles.planPrice}>
-                <Text style={styles.planPriceAmount}>990.000</Text>
+                  <Text style={styles.planPriceAmount}>{formatPrice(plan.price)}</Text>
                 <Text style={styles.planPriceCurrency}>đ</Text>
               </View>
             </View>
+
+              {/* Savings Badge */}
+              {plan.discount_percentage > 0 && plan.savings_text && (
             <View style={styles.savingsBadge}>
-              <Text style={styles.savingsText}>Tiết kiệm 20%</Text>
+                  <Text style={styles.savingsText}>{plan.savings_text}</Text>
             </View>
-            <Text style={styles.planDescription}>
-              Hàng năm • Thanh toán một lần
-            </Text>
+              )}
+
+              {/* Plan Description */}
+              <Text style={styles.planDescription}>{plan.description}</Text>
+
+              {/* Plan Features */}
             <View style={styles.planFeatures}>
-              <View style={styles.planFeatureRow}>
+                {plan.features.map((feature, index) => (
+                  <View key={index} style={styles.planFeatureRow}>
                 <CheckIcon size={16} color="#34C759" />
-                <Text style={styles.planFeatureItem}>Tất cả tính năng Premium</Text>
+                    <Text style={styles.planFeatureItem}>{feature}</Text>
               </View>
-              <View style={styles.planFeatureRow}>
-                <CheckIcon size={16} color="#34C759" />
-                <Text style={styles.planFeatureItem}>Báo cáo sức khỏe chi tiết</Text>
-              </View>
-              <View style={styles.planFeatureRow}>
-                <CheckIcon size={16} color="#34C759" />
-                <Text style={styles.planFeatureItem}>Ưu tiên hỗ trợ</Text>
-              </View>
-              <View style={styles.planFeatureRow}>
-                <CheckIcon size={16} color="#34C759" />
-                <Text style={styles.planFeatureItem}>Tính năng độc quyền</Text>
-              </View>
+                ))}
             </View>
           </TouchableOpacity>
+          ))}
 
           {/* CTA Button */}
           <TouchableOpacity style={styles.ctaButton} onPress={() => handleUpgrade()}>
@@ -677,6 +736,37 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 40,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: 'rgba(0, 0, 0, 0.6)',
+    marginTop: 12,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#FF3B30',
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 22,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

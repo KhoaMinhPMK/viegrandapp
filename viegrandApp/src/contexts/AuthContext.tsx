@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
-import { authAPI, storageUtils, User, LoginRequest, RegisterRequest, usersAPI } from '../services/api';
+import { storageUtils, User, LoginRequest, RegisterRequest, registerUser, loginUser } from '../services/api';
 import { Alert } from 'react-native';
-import { usePremium } from './PremiumContext';
 
 interface AuthContextType {
   user: User | null;
@@ -23,7 +22,6 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { fetchPremiumStatus, reset: resetPremiumContext } = usePremium();
 
   const checkAuthStatus = useCallback(async () => {
     try {
@@ -32,108 +30,90 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       if (token && savedUser) {
         setUser(savedUser);
-        await fetchPremiumStatus();
       }
     } catch (error) {
       console.error('Error checking auth status:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [fetchPremiumStatus]);
+  }, []);
 
   useEffect(() => {
     checkAuthStatus();
   }, [checkAuthStatus]);
 
-
   const login = useCallback(async (credentials: LoginRequest): Promise<boolean> => {
     try {
       setIsLoading(true);
-      const response = await authAPI.login(credentials);
       
-      if (response.access_token && response.user) {
-        await storageUtils.saveToken(response.access_token);
-        await storageUtils.saveUser(response.user);
+      // Gọi API login thật
+      const result = await loginUser(credentials);
+      
+      if (result.success && result.user) {
+        // Lưu user và token
+        const token = result.token || 'token_' + Date.now();
         
-        setUser(response.user);
-        await fetchPremiumStatus();
+        await storageUtils.saveToken(token);
+        await storageUtils.saveUser(result.user);
+        
+        setUser(result.user);
+        Alert.alert('Thành công', result.message || 'Đăng nhập thành công');
         return true;
+      } else {
+        Alert.alert('Lỗi', result.message || 'Đăng nhập thất bại');
+        return false;
       }
-      return false;
     } catch (error: any) {
       console.error('Login error:', error);
-      let errorMessage = 'Đăng nhập thất bại';
-      
-      if (error.response?.data?.message) {
-        if (Array.isArray(error.response.data.message)) {
-          errorMessage = error.response.data.message.join('\n');
-        } else {
-          errorMessage = error.response.data.message;
-        }
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      Alert.alert('Lỗi', errorMessage);
+      Alert.alert('Lỗi', 'Đăng nhập thất bại: ' + (error.message || 'Lỗi không xác định'));
       return false;
     } finally {
       setIsLoading(false);
     }
-  }, [fetchPremiumStatus]);
+  }, []);
 
   const register = useCallback(async (userData: RegisterRequest): Promise<boolean> => {
     try {
       setIsLoading(true);
-      const response = await authAPI.register(userData);
       
-      if (response.access_token && response.user) {
-        await storageUtils.saveToken(response.access_token);
-        await storageUtils.saveUser(response.user);
+      // Gọi API register thật
+      const result = await registerUser(userData);
+      
+      if (result.success && result.user) {
+        // Lưu user và tạo mock token
+        const mockToken = 'token_' + Date.now();
         
-        setUser(response.user);
-        await fetchPremiumStatus();
+        await storageUtils.saveToken(mockToken);
+        await storageUtils.saveUser(result.user);
+        
+        setUser(result.user);
+        Alert.alert('Thành công', result.message || 'Đăng ký thành công');
         return true;
+      } else {
+        Alert.alert('Lỗi', result.message || 'Đăng ký thất bại');
+        return false;
       }
-      return false;
     } catch (error: any) {
       console.error('Register error:', error);
-      let errorMessage = 'Đăng ký thất bại';
-      
-      if (error.response?.data?.message) {
-        if (Array.isArray(error.response.data.message)) {
-          errorMessage = error.response.data.message.join('\n');
-        } else {
-          errorMessage = error.response.data.message;
-        }
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      Alert.alert('Lỗi', errorMessage);
+      Alert.alert('Lỗi', 'Đăng ký thất bại: ' + (error.message || 'Lỗi không xác định'));
       return false;
     } finally {
       setIsLoading(false);
     }
-  }, [fetchPremiumStatus]);
+  }, []);
 
   const logout = useCallback(async (): Promise<void> => {
     try {
       await storageUtils.clearAuth();
       setUser(null);
-      resetPremiumContext();
     } catch (error) {
       console.error('Logout error:', error);
     }
-  }, [resetPremiumContext]);
+  }, []);
 
   const refreshUserProfile = useCallback(async (): Promise<void> => {
-    try {
-      const profile = await usersAPI.getProfile();
-      setUser(profile);
-      await storageUtils.saveUser(profile);
-    } catch (error) {
-      console.error('Error refreshing user profile:', error);
-    }
+    // Mock refresh - không làm gì
+    console.log('Profile refresh disabled - no backend');
   }, []);
 
   const updateCurrentUser = useCallback((updatedUser: User) => {

@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
-import { usersAPI, User } from '../../../services/api';
-import { usePremium, useIsPremium } from '../../../contexts/PremiumContext';
+import { User } from '../../../services/api';
+import { usePremium } from '../../../contexts/PremiumContext';
 
 const { width } = Dimensions.get('window');
 
@@ -30,7 +30,7 @@ const RelativeHomeScreen = ({ navigation }: any) => {
     const premiumContext = usePremium();
     premiumStatus = premiumContext.premiumStatus;
     fetchPremiumStatus = premiumContext.fetchPremiumStatus;
-    isPremium = useIsPremium();
+    isPremium = premiumContext.premiumStatus?.isPremium || false;
   } catch (error) {
     console.log('Premium context not available yet:', error);
   }
@@ -42,22 +42,20 @@ const RelativeHomeScreen = ({ navigation }: any) => {
 
   const loadUserProfile = async () => {
     try {
-      console.log('Loading user profile...');
-      // Thử API thật trước (cần authentication)
-      const profile = await usersAPI.getProfile();
-      console.log('User profile loaded:', profile);
-      setUserProfile(profile);
+      console.log('Loading user profile (mock)...');
+      // Mock user profile
+      const mockProfile: User = {
+        id: 1,
+        fullName: 'Người dùng thân thuộc',
+        email: 'relative@example.com',
+        role: 'relative',
+        active: true,
+      };
+      console.log('Mock profile loaded:', mockProfile);
+      setUserProfile(mockProfile);
     } catch (error) {
       console.error('Error loading user profile:', error);
-      // Fallback to test API nếu không có token
-      try {
-        const testProfile = await usersAPI.getTest();
-        console.log('Test profile loaded (fallback):', testProfile);
-        setUserProfile(testProfile);
-      } catch (testError) {
-        console.error('Error loading test profile:', testError);
-        Alert.alert('Lỗi', 'Không thể tải thông tin người dùng');
-      }
+      Alert.alert('Lỗi', 'Không thể tải thông tin người dùng');
     } finally {
       setLoading(false);
     }
@@ -95,7 +93,7 @@ const RelativeHomeScreen = ({ navigation }: any) => {
         <View style={styles.header}>
           <View style={styles.userInfo}>
             <Text style={styles.greeting}>
-              Xin chào, {userProfile?.name || 'Người dùng'}!
+              Xin chào, {userProfile?.fullName || 'Người dùng'}!
             </Text>
             <Text style={styles.subtitle}>
               {userProfile?.active ? '🌟 Tài khoản Premium' : 'Tài khoản Cơ bản'}

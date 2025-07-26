@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,14 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Feather from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
 
 import { useAuth } from '../../../contexts/AuthContext';
 import { usePremium } from '../../../contexts/PremiumContext';
+import { getUserData } from '../../../services/api';
 import { SettingsSection } from '../../../components/settings/SettingsSection';
 import { SettingsRow } from '../../../components/settings/SettingsRow';
 import { SettingsContainer } from '../../../components/settings/SettingsContainer';
@@ -23,7 +25,89 @@ const ElderlySettingsScreen = () => {
     const navigation = useNavigation<any>();
     const { user, logout } = useAuth();
     const { premiumStatus } = usePremium();
-    const isPremium = premiumStatus?.isPremium || false;
+    
+    // State cho user data từ API
+    const [userData, setUserData] = useState<any>(null);
+    const [isPremium, setIsPremium] = useState(false);
+    const [premiumEndDate, setPremiumEndDate] = useState<string | null>(null);
+    const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
+    const [isLoadingUserData, setIsLoadingUserData] = useState(true);
+
+    // Function để fetch user data - gọi API mỗi khi vào trang
+    const fetchUserDataAndUpdatePremium = useCallback(async () => {
+        try {
+            setIsLoadingUserData(true);
+            
+            // Lấy email từ cache
+            const userEmail = await AsyncStorage.getItem('user_email');
+            
+            if (!userEmail) {
+                console.log('No email found in cache for elderly settings');
+                setIsLoadingUserData(false);
+                return;
+            }
+
+            console.log('ElderlySettings: Fetching user data for email:', userEmail);
+            
+            // Gọi API get user data
+            const result = await getUserData(userEmail);
+            
+            if (result.success && result.user) {
+                const apiUser = result.user;
+                const premiumStatus = apiUser.premium_status;
+                const premiumEndDateFromAPI = apiUser.premium_end_date;
+                
+                // Tính số ngày còn lại
+                let daysLeft = null;
+                if (premiumStatus && premiumEndDateFromAPI) {
+                    const endDate = new Date(premiumEndDateFromAPI);
+                    const currentDate = new Date();
+                    const timeDiff = endDate.getTime() - currentDate.getTime();
+                    daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                    
+                    // Nếu hết hạn thì set premium = false
+                    if (daysLeft <= 0) {
+                        setIsPremium(false);
+                        daysLeft = 0;
+                    } else {
+                        setIsPremium(premiumStatus);
+                    }
+                } else {
+                    setIsPremium(premiumStatus);
+                }
+                
+                // Cập nhật state
+                setUserData(apiUser);
+                setPremiumEndDate(premiumEndDateFromAPI);
+                setDaysRemaining(daysLeft);
+                
+                console.log('ElderlySettings premium data updated:', {
+                    status: premiumStatus,
+                    endDate: premiumEndDateFromAPI,
+                    daysRemaining: daysLeft
+                });
+            } else {
+                console.error('Failed to fetch user data for elderly settings:', result.message);
+            }
+        } catch (error) {
+            console.error('Error fetching user data for elderly settings:', error);
+        } finally {
+            setIsLoadingUserData(false);
+        }
+    }, []);
+
+    // ✅ GỌI API MỖI KHI VÀO TRANG - useFocusEffect đảm bảo data luôn fresh
+    useFocusEffect(
+        useCallback(() => {
+            console.log('🔄 ElderlySettings: Auto-fetching user data on every page visit');
+            fetchUserDataAndUpdatePremium();
+        }, [fetchUserDataAndUpdatePremium])
+    );
+
+    // Backup: Fetch data khi component mount
+    useEffect(() => {
+        fetchUserDataAndUpdatePremium();
+    }, [fetchUserDataAndUpdatePremium]);
 
     const getAvatarText = (fullName: string | undefined) => {
         if (!fullName) return '';
@@ -57,7 +141,7 @@ const ElderlySettingsScreen = () => {
                     {/* User Profile Section */}
                     <TouchableOpacity
                         style={styles.profileSection}
-                        onPress={() => navigation.navigate('EditProfile')}
+                        onPress={() => navigation.navigate('ElderlyProfile')}
                     >
                         <View style={[styles.avatarContainer, isPremium ? styles.premiumAvatar : styles.normalAvatar]}>
                             {isPremium ? (
@@ -69,15 +153,49 @@ const ElderlySettingsScreen = () => {
                             )}
                         </View>
                         <View style={styles.userInfo}>
-                            <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">{user?.fullName || 'Chưa có tên'}</Text>
-                            <Text style={styles.userEmail} numberOfLines={1} ellipsizeMode="tail">{user?.email || 'Chưa có email'}</Text>
+                            <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
+                                {userData?.userName || user?.fullName || 'Chưa có tên'}
+                            </Text>
+                            <Text style={styles.userEmail} numberOfLines={1} ellipsizeMode="tail">
+                                {userData?.email || user?.email || 'Chưa có email'}
+                            </Text>
+                            {/* Hiển thị premium status nếu có */}
+                            {isPremium && daysRemaining && (
+                                <Text style={styles.premiumStatusText}>
+                                    Premium • Còn {daysRemaining} ngày
+                                </Text>
+                            )}
                         </View>
                         <Feather name="chevron-right" size={22} color="#C7C7CC" />
                     </TouchableOpacity>
 
                     {/* Premium Section */}
-                    {!isPremium && (
                         <SettingsSection>
+                        {isLoadingUserData ? (
+                            <TouchableOpacity style={styles.premiumRow} onPress={() => {}}>
+                                <LinearGradient colors={['#1E3A8A', '#3B82F6']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.premiumIconContainer}>
+                                    <ActivityIndicator size="small" color="#FFD700" />
+                                </LinearGradient>
+                                <View style={styles.premiumInfo}>
+                                    <Text style={styles.premiumTitle}>Premium</Text>
+                                    <Text style={styles.premiumSubtitle}>Đang tải...</Text>
+                                </View>
+                                <Feather name="chevron-right" size={22} color="#C7C7CC" />
+                            </TouchableOpacity>
+                        ) : isPremium ? (
+                            <TouchableOpacity style={styles.premiumRow} onPress={() => navigation.navigate('Premium')}>
+                                <LinearGradient colors={['#32CD32', '#228B22']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.premiumIconContainer}>
+                                    <Feather name="check" size={20} color="#FFFFFF" />
+                                </LinearGradient>
+                                <View style={styles.premiumInfo}>
+                                    <Text style={styles.premiumTitle}>Premium Active</Text>
+                                    <Text style={styles.premiumSubtitle}>
+                                        {daysRemaining ? `Còn ${daysRemaining} ngày` : 'Đang hoạt động'}
+                                    </Text>
+                                </View>
+                                <Feather name="chevron-right" size={22} color="#C7C7CC" />
+                            </TouchableOpacity>
+                        ) : (
                             <TouchableOpacity style={styles.premiumRow} onPress={() => navigation.navigate('Premium')}>
                                 <LinearGradient colors={['#1E3A8A', '#3B82F6']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.premiumIconContainer}>
                                     <Feather name="star" size={20} color="#FFD700" />
@@ -88,15 +206,15 @@ const ElderlySettingsScreen = () => {
                                 </View>
                                 <Feather name="chevron-right" size={22} color="#C7C7CC" />
                             </TouchableOpacity>
+                        )}
                         </SettingsSection>
-                    )}
 
                     <SettingsSection title="Tài khoản">
                         <SettingsRow
                             title="Thông tin cá nhân"
                             icon="user"
                             type="navigation"
-                            onPress={() => navigation.navigate('EditProfile')}
+                            onPress={() => navigation.navigate('ElderlyProfile')}
                         />
                         <SettingsRow
                             title="Bảo mật"
@@ -203,6 +321,12 @@ const styles = StyleSheet.create({
     userEmail: {
         fontSize: 14,
         color: '#8E8E93',
+    },
+    premiumStatusText: {
+        fontSize: 12,
+        color: '#32CD32',
+        fontWeight: '600',
+        marginTop: 2,
     },
     premiumRow: {
         flexDirection: 'row',

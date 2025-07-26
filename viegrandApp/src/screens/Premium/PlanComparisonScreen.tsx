@@ -13,7 +13,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import Feather from 'react-native-vector-icons/Feather';
 import { usePremium } from '../../contexts/PremiumContext'
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-
+import { PremiumStackParamList } from '../../types/navigation';
+import { StackNavigationProp } from '@react-navigation/stack';
 // --- Icons (as simple, direct components) ---
 const BackArrowIcon = () => (
     <View style={styles.iconBackArrow} />
@@ -41,6 +42,11 @@ function PlanComparisonScreen({ navigation }: any) {
   const { plans, fetchPlans, loading } = usePremium()
   const [selectedPlan, setSelectedPlan] = useState<any>(null)
   const tabBarHeight = useBottomTabBarHeight();
+  
+  // ✅ ĐÚNG: Hook được gọi bên trong component
+  const handleBack = () => {
+    navigation.goBack();
+  };
 
   useEffect(() => {
     // Initial fetch of plans
@@ -73,10 +79,23 @@ function PlanComparisonScreen({ navigation }: any) {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         {/* Scrollable Content */}
-        <ScrollView style={styles.scrollView} contentContainerStyle={[styles.scrollContent, { paddingBottom: 150 + tabBarHeight }]}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={[styles.scrollContent, { paddingBottom: 250 + tabBarHeight }]}>
           {/* Hero Section */}
+          
+          <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <Feather name="arrow-left" size={24} color="#0D4C92" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Premium</Text>
+          <View style={styles.headerRight} />
+        </View>
+
+
+
           <View style={styles.heroSection}>
-            <View style={styles.heroIconContainer}><StarIcon /></View>
+            <View style={styles.heroIconContainer}>
+              <Feather name="star" size={36} color="#FFD700" />
+            </View>
             <Text style={styles.heroTitle}>Nâng cấp Premium</Text>
             <Text style={styles.heroSubtitle}>Trải nghiệm đầy đủ các tính năng cao cấp dành cho người thân yêu.</Text>
           </View>
@@ -154,10 +173,8 @@ function PlanComparisonScreen({ navigation }: any) {
               ))}
             </View>
           </View>
-        </ScrollView>
-        
-        {/* Bottom Action Bar */}
-        <View style={[styles.bottomAction, { paddingBottom: tabBarHeight > 0 ? tabBarHeight : 24 }]}>
+
+          <View style={[styles.bottomAction, { paddingBottom: tabBarHeight > 0 ? tabBarHeight : 24}]}>
           <TouchableOpacity
             onPress={handleContinue}
             disabled={!selectedPlan}
@@ -170,13 +187,18 @@ function PlanComparisonScreen({ navigation }: any) {
               style={styles.continueButton}
             >
               <Text style={styles.continueButtonText}>
-                {selectedPlan ? `Tiếp tục với gói ${selectedPlan.name}` : 'Chọn một gói'}
+                {selectedPlan ? `Tiếp tục với ${selectedPlan.name}` : 'Chọn một gói'}
               </Text>
               <Feather name="arrow-right" size={22} color="#FFFFFF" />
             </LinearGradient>
           </TouchableOpacity>
           <Text style={styles.secureText}>Thanh toán an toàn và bảo mật</Text>
         </View>
+
+        </ScrollView>
+        
+        {/* Bottom Action Bar */}
+
       </View>
     </SafeAreaView>
   )
@@ -218,9 +240,19 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden', // Ensures inner elements respect border radius
   },
+
+
+  
   planCardSelected: {
     borderColor: '#007AFF',
     backgroundColor: 'rgba(0, 122, 255, 0.08)',
+  },
+
+
+
+
+  headerRight: {
+    width: 44,
   },
   checkIconContainer: {
     position: 'absolute',
@@ -285,7 +317,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginRight: 8,
   },
-  secureText: { fontSize: 13, color: '#8E8E93', textAlign: 'center', marginTop: 12 },
+  secureText: { fontSize: 13, color: '#8E8E93', textAlign: 'center', marginTop: 12, paddingBottom: 100},
   
   // --- Loading/Empty ---
   emptyContainer: { alignItems: 'center', paddingVertical: 40 },

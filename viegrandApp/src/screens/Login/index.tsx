@@ -17,6 +17,7 @@ import {
 import Feather from 'react-native-vector-icons/Feather';
 import { StackActions } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -39,7 +40,7 @@ const LoginScreen = ({ navigation }: any) => {
       return;
     }
 
-    // Validate password length
+    // Validate password length (UX consistency - backend chỉ cần email để đơn giản hóa cho người già)
     if (password.length < 6) {
       Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự.');
       return;
@@ -48,6 +49,13 @@ const LoginScreen = ({ navigation }: any) => {
     console.log('Attempting login with:', { email, password: '***' });
     const success = await login({ email, password });
     if (success) {
+      // Lưu email vào bộ nhớ đệm sau khi đăng nhập thành công
+      try {
+        await AsyncStorage.setItem('user_email', email);
+        console.log('Email saved to cache:', email);
+      } catch (error) {
+        console.error('Error saving email to cache:', error);
+      }
       navigation.dispatch(StackActions.replace('SelectRole'));
     }
   };
