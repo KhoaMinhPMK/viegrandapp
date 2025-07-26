@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,17 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
+  Alert,
+  Modal,
 } from 'react-native';
 import { BackgroundImages } from '../../../utils/assetUtils';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MessageStackParamList } from './ChatScreen';
 import Feather from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
+import { searchFriend, requestFriend, getUserData, cancelFriendRequest, getUserPhone, acceptFriendRequest, rejectFriendRequest } from '../../../services/api';
+import { useAuth } from '../../../contexts/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // --- TYPE DEFINITIONS ---
 interface Conversation {
@@ -24,6 +29,16 @@ interface Conversation {
   time: string;
   unreadCount: number;
 }
+
+interface SearchResult {
+  userId: number;
+  userName: string;
+  phone: string;
+  avatar: string;
+  isFound: boolean;
+}
+
+type ListItem = Conversation | SearchResult;
 
 // --- MOCK DATA ---
 const mockConversations: Conversation[] = [
@@ -72,18 +87,301 @@ const mockConversations: Conversation[] = [
 type MessageScreenProps = NativeStackScreenProps<MessageStackParamList, 'MessageList'>;
 
 const MessageScreen = ({ navigation }: MessageScreenProps) => {
+  const { user } = useAuth();
   const [conversations, setConversations] = useState(mockConversations);
   const [searchText, setSearchText] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [userPhone, setUserPhone] = useState<string>('');
+  
+  // Modal states
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [selectedFriend, setSelectedFriend] = useState<SearchResult | null>(null);
+  const [friendRequestMessage, setFriendRequestMessage] = useState('');
+  
+  // Success modal states
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [successTitle, setSuccessTitle] = useState('');
 
+  // Already sent modal states
+  const [showAlreadySentModal, setShowAlreadySentModal] = useState(false);
+  const [existingRequestData, setExistingRequestData] = useState<any>(null);
+
+  // Lấy số điện thoại của user hiện tại
+  useEffect(() => {
+    const getCurrentUserPhone = async () => {
+      console.log('🔄 MessageScreen: Getting current user phone...');
+      
+      try {
+        // Thử lấy từ AuthContext trước
+        if (user?.phone) {
+          console.log('✅ MessageScreen: Got phone from AuthContext:', user.phone);
+          setUserPhone(user.phone);
+          return;
+        }
+
+        // Nếu không có trong AuthContext, gọi API
+        const userEmail = await AsyncStorage.getItem('user_email');
+        console.log('🔄 MessageScreen: Fetching phone for email:', userEmail);
+        
+        if (userEmail) {
+          // Thử dùng API chuyên lấy phone trước
+          const phoneResult = await getUserPhone(userEmail);
+          console.log('📞 MessageScreen: getUserPhone result:', phoneResult);
+          
+          if (phoneResult.success && phoneResult.phone) {
+            console.log('✅ MessageScreen: Setting phone from getUserPhone API:', phoneResult.phone);
+            setUserPhone(phoneResult.phone);
+            return;
+          }
+
+          // Fallback: dùng getUserData nếu getUserPhone thất bại
+          console.log('🔄 MessageScreen: getUserPhone failed, trying getUserData...');
+          const result = await getUserData(userEmail);
+          console.log('📞 MessageScreen: getUserData result:', { 
+            success: result.success, 
+            phone: result.user?.phone,
+            userEmail: result.user?.email 
+          });
+          
+          if (result.success && result.user?.phone) {
+            console.log('✅ MessageScreen: Setting phone from getUserData API:', result.user.phone);
+            setUserPhone(result.user.phone);
+          } else {
+            console.log('❌ MessageScreen: User exists but has no phone number in database');
+            console.log('📋 User data:', { 
+              email: result.user?.email, 
+              userName: result.user?.userName,
+              phone: result.user?.phone 
+            });
+          }
+        } else {
+          console.log('❌ MessageScreen: No email found in AsyncStorage');
+        }
+      } catch (error) {
+        console.error('❌ MessageScreen: Error getting user phone:', error);
+      }
+    };
+
+    getCurrentUserPhone();
+  }, [user]); // Thêm user vào dependency để re-run khi user thay đổi
+
+  // Filter conversations based on search text (for existing conversations)
   const filteredConversations = conversations.filter(conv => 
     conv.name.toLowerCase().includes(searchText.toLowerCase())
   );
+
+  // Check if search text looks like a phone number
+  const isPhoneSearch = /^[0-9+\-\s()]*$/.test(searchText) && searchText.length >= 10;
+
+  const handleSearchFriend = async (phone: string) => {
+    if (!phone || phone.length < 10) return;
+    
+    setIsSearching(true);
+    try {
+      const result = await searchFriend(phone, user?.email);
+      
+      if (result.success && result.results) {
+        setSearchResults(result.results);
+        setShowSearchResults(true);
+        
+        if (result.results.length === 0) {
+          Alert.alert('Không tìm thấy', 'Không có người dùng nào với số điện thoại này');
+        }
+      } else {
+        setSearchResults([]);
+        setShowSearchResults(true);
+        Alert.alert('Lỗi', result.message || 'Không thể tìm kiếm bạn bè');
+      }
+    } catch (error) {
+      console.error('Search friend error:', error);
+      Alert.alert('Lỗi', 'Có lỗi xảy ra khi tìm kiếm');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSearchTextChange = (text: string) => {
+    setSearchText(text);
+    
+    if (text.length === 0) {
+      setShowSearchResults(false);
+      setSearchResults([]);
+    } else if (isPhoneSearch && text.length >= 10) {
+      // Auto search when typing phone number
+      const timeoutId = setTimeout(() => {
+        handleSearchFriend(text);
+      }, 1000); // Debounce 1 second
+      
+      return () => clearTimeout(timeoutId);
+    } else {
+      setShowSearchResults(false);
+    }
+  };
 
   const handleNavigateToChat = (item: Conversation) => {
     navigation.navigate('Chat', {
       conversationId: item.id,
       name: item.name,
       avatar: item.avatar,
+    });
+  };
+
+  const handleAddFriend = async (friend: SearchResult) => {
+    console.log('🔄 MessageScreen: handleAddFriend called:', { userPhone, friend: friend.userName });
+    if (!userPhone) {
+      console.log('❌ MessageScreen: No userPhone available for friend request');
+      Alert.alert(
+        'Cần cập nhật số điện thoại', 
+        'Tài khoản của bạn chưa có số điện thoại. Vui lòng vào Cài đặt → Hồ sơ để cập nhật số điện thoại trước khi sử dụng tính năng này.',
+        [
+          { text: 'Đi đến Cài đặt', onPress: () => {
+            // Navigate to settings/profile
+            // navigation.navigate('Settings');
+            console.log('Navigate to settings to update phone number');
+          }},
+          { text: 'Đóng', style: 'cancel' }
+        ]
+      );
+      return;
+    }
+
+    console.log('✅ MessageScreen: Setting up friend request modal');
+    setSelectedFriend(friend);
+    setFriendRequestMessage(`Xin chào ${friend.userName}, tôi muốn kết bạn với bạn!`);
+    setShowMessageModal(true);
+  };
+
+  const handleSendFriendRequest = async () => {
+    if (!selectedFriend || !userPhone) {
+      console.log('❌ MessageScreen: Cannot send friend request - missing data:', { selectedFriend: !!selectedFriend, userPhone });
+      return;
+    }
+
+    console.log('🔄 MessageScreen: Sending friend request:', {
+      from: userPhone,
+      to: selectedFriend.phone,
+      toName: selectedFriend.userName,
+      message: friendRequestMessage
+    });
+
+    try {
+      setShowMessageModal(false);
+      
+      const result = await requestFriend(userPhone, selectedFriend.phone, friendRequestMessage);
+      
+      console.log('📤 MessageScreen: Friend request result:', result);
+      
+      if (result.success) {
+        if (result.data?.alreadySent) {
+          // Đã gửi request trước đó - hiển thị modal
+          setExistingRequestData(result.data.existingRequest);
+          setShowAlreadySentModal(true);
+        } else if (result.canAccept && result.existingRequest) {
+          // Người kia đã gửi request cho mình
+          Alert.alert(
+            'Có lời mời kết bạn',
+            `${result.existingRequest.from_name} đã gửi lời mời kết bạn cho bạn:\n\n"${result.existingRequest.message}"\n\nBạn có muốn chấp nhận không?`,
+            [
+              { text: 'Từ chối', style: 'cancel' },
+              {
+                text: 'Chấp nhận',
+                onPress: () => {
+                  // TODO: Implement accept friend API
+                  setSuccessTitle('Kết bạn thành công!');
+                  setSuccessMessage(`Bạn và ${selectedFriend.userName} giờ đã là bạn bè. Hãy bắt đầu trò chuyện nhé!`);
+                  setShowSuccessModal(true);
+                  addToConversationsList(selectedFriend);
+                }
+              }
+            ]
+          );
+        } else {
+          // Gửi lời mời thành công - hiển thị modal đẹp
+          setSuccessTitle('Lời mời đã gửi!');
+          setSuccessMessage(`Lời mời kết bạn đã được gửi đến ${selectedFriend.userName}. Họ sẽ nhận được thông báo và có thể chấp nhận lời mời của bạn.`);
+          setShowSuccessModal(true);
+          setSearchText('');
+          setShowSearchResults(false);
+        }
+      } else {
+        console.log('❌ MessageScreen: Friend request failed:', result.message);
+        Alert.alert('Lỗi', result.message || 'Không thể gửi lời mời kết bạn');
+      }
+    } catch (error) {
+      console.error('❌ MessageScreen: Error sending friend request:', error);
+      Alert.alert('Lỗi', 'Có lỗi xảy ra khi gửi lời mời kết bạn');
+    } finally {
+      setSelectedFriend(null);
+      setFriendRequestMessage('');
+    }
+  };
+
+  const handleCancelRequest = () => {
+    setShowMessageModal(false);
+    setSelectedFriend(null);
+    setFriendRequestMessage('');
+  };
+
+  const handleCancelFriendRequest = async () => {
+    if (!userPhone || !existingRequestData) return;
+
+    try {
+      const result = await cancelFriendRequest(
+        userPhone, 
+        existingRequestData.to_phone, 
+        existingRequestData.id
+      );
+
+      if (result.success) {
+        setShowAlreadySentModal(false);
+        setSuccessTitle('Đã hủy lời mời!');
+        setSuccessMessage(`Lời mời kết bạn đến ${existingRequestData.to_name} đã được hủy thành công.`);
+        setShowSuccessModal(true);
+      } else {
+        Alert.alert('Lỗi', result.message || 'Không thể hủy lời mời kết bạn');
+      }
+    } catch (error) {
+      console.error('Error cancelling friend request:', error);
+      Alert.alert('Lỗi', 'Có lỗi xảy ra khi hủy lời mời kết bạn');
+    } finally {
+      setExistingRequestData(null);
+    }
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    setSuccessMessage('');
+    setSuccessTitle('');
+  };
+
+  const handleCloseAlreadySentModal = () => {
+    setShowAlreadySentModal(false);
+    setExistingRequestData(null);
+  };
+
+  const addToConversationsList = (friend: SearchResult) => {
+    // Add to conversations list
+    const newConversation: Conversation = {
+      id: friend.userId.toString(),
+      name: friend.userName,
+      avatar: `data:image/svg+xml;base64,${btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="#007AFF"/><text x="50" y="50" font-family="Arial" font-size="30" fill="white" text-anchor="middle" dy=".3em">${friend.avatar}</text></svg>`)}`,
+      lastMessage: 'Đã kết bạn - Bắt đầu trò chuyện!',
+      time: 'Bây giờ',
+      unreadCount: 0,
+    };
+    
+    setConversations(prev => [newConversation, ...prev]);
+    setSearchText('');
+    setShowSearchResults(false);
+    
+    // Navigate to chat
+    navigation.navigate('Chat', {
+      conversationId: newConversation.id,
+      name: newConversation.name,
+      avatar: newConversation.avatar,
     });
   };
 
@@ -117,6 +415,37 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
     </TouchableOpacity>
   );
 
+  const renderSearchResult = ({ item }: { item: SearchResult }) => (
+    <TouchableOpacity 
+      style={styles.searchResultItem} 
+      onPress={() => handleAddFriend(item)}
+      activeOpacity={0.7}
+    >
+      <View style={styles.searchAvatarContainer}>
+        <View style={styles.searchAvatar}>
+          <Text style={styles.searchAvatarText}>{item.avatar}</Text>
+        </View>
+      </View>
+      <View style={styles.searchResultContent}>
+        <Text style={styles.searchResultName}>{item.userName}</Text>
+        <Text style={styles.searchResultPhone}>{item.phone}</Text>
+      </View>
+      <TouchableOpacity style={styles.addButton}>
+        <Feather name="plus" size={16} color="#007AFF" />
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+
+  const renderListItem = ({ item }: { item: ListItem }) => {
+    if ('userId' in item) {
+      // SearchResult
+      return renderSearchResult({ item: item as SearchResult });
+    } else {
+      // Conversation
+      return renderConversation({ item: item as Conversation });
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
@@ -139,23 +468,52 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
           <Feather name="search" size={18} color="#8E8E93" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Tìm kiếm..."
+            placeholder={isPhoneSearch ? "Nhập số điện thoại để tìm bạn bè..." : "Tìm kiếm..."}
             placeholderTextColor="#8E8E93"
             value={searchText}
-            onChangeText={setSearchText}
+            onChangeText={handleSearchTextChange}
+            keyboardType={isPhoneSearch ? "phone-pad" : "default"}
           />
           {searchText.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchText('')} style={styles.clearButton}>
+            <TouchableOpacity onPress={() => { setSearchText(''); setShowSearchResults(false); }} style={styles.clearButton}>
               <Feather name="x-circle" size={16} color="#8E8E93" />
             </TouchableOpacity>
           )}
+          {isSearching && (
+            <Feather name="loader" size={16} color="#007AFF" style={styles.loadingIcon} />
+          )}
         </View>
+        {isPhoneSearch && searchText.length >= 10 && (
+          <TouchableOpacity 
+            style={styles.searchButton}
+            onPress={() => handleSearchFriend(searchText)}
+            disabled={isSearching}
+          >
+            <Text style={styles.searchButtonText}>
+              {isSearching ? 'Đang tìm...' : 'Tìm bạn bè'}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      <FlatList
-        data={filteredConversations}
-        renderItem={renderConversation}
-        keyExtractor={item => item.id}
+      {showSearchResults && (
+        <View style={styles.searchResultsHeader}>
+          <Text style={styles.searchResultsTitle}>
+            Kết quả tìm kiếm ({searchResults.length})
+          </Text>
+        </View>
+      )}
+
+      <FlatList<ListItem>
+        data={showSearchResults ? searchResults : filteredConversations}
+        renderItem={renderListItem}
+        keyExtractor={(item, index) => {
+          if ('userId' in item) {
+            return `search-${item.userId}`;
+          } else {
+            return item.id;
+          }
+        }}
         style={styles.list}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
@@ -169,6 +527,157 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
           <Feather name="plus" size={24} color="white" />
         </LinearGradient>
       </TouchableOpacity>
+      
+      {/* Friend Request Message Modal */}
+      <Modal
+        visible={showMessageModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={handleCancelRequest}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Gửi lời mời kết bạn</Text>
+              <TouchableOpacity onPress={handleCancelRequest} style={styles.modalCloseButton}>
+                <Feather name="x" size={24} color="#8E8E93" />
+              </TouchableOpacity>
+            </View>
+            
+            {selectedFriend && (
+              <View style={styles.friendInfo}>
+                <View style={styles.friendAvatar}>
+                  <Text style={styles.friendAvatarText}>{selectedFriend.avatar}</Text>
+                </View>
+                <View style={styles.friendDetails}>
+                  <Text style={styles.friendName}>{selectedFriend.userName}</Text>
+                  <Text style={styles.friendPhone}>{selectedFriend.phone}</Text>
+                </View>
+              </View>
+            )}
+            
+            <Text style={styles.messageLabel}>Tin nhắn kèm theo:</Text>
+            <TextInput
+              style={styles.messageInput}
+              value={friendRequestMessage}
+              onChangeText={setFriendRequestMessage}
+              placeholder="Nhập tin nhắn muốn gửi kèm theo lời mời..."
+              placeholderTextColor="#8E8E93"
+              multiline
+              numberOfLines={3}
+              maxLength={200}
+            />
+            <Text style={styles.characterCount}>{friendRequestMessage.length}/200</Text>
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={handleCancelRequest}
+              >
+                <Text style={styles.cancelButtonText}>Hủy</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.sendButton}
+                onPress={handleSendFriendRequest}
+              >
+                <Text style={styles.sendButtonText}>Gửi lời mời</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal
+        visible={showSuccessModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCloseSuccessModal}
+      >
+        <View style={styles.successModalOverlay}>
+          <View style={styles.successModalContainer}>
+            <View style={styles.successIconContainer}>
+              <View style={styles.successIcon}>
+                <Feather name="check" size={32} color="white" />
+              </View>
+            </View>
+            
+            <Text style={styles.successTitle}>{successTitle}</Text>
+            <Text style={styles.successMessage}>{successMessage}</Text>
+            
+            <TouchableOpacity
+              style={styles.successButton}
+              onPress={handleCloseSuccessModal}
+            >
+              <Text style={styles.successButtonText}>Tuyệt vời!</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Already Sent Modal */}
+      <Modal
+        visible={showAlreadySentModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={handleCloseAlreadySentModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Lời mời đã gửi</Text>
+              <TouchableOpacity onPress={handleCloseAlreadySentModal} style={styles.modalCloseButton}>
+                <Feather name="x" size={24} color="#8E8E93" />
+              </TouchableOpacity>
+            </View>
+            
+            {existingRequestData && (
+              <>
+                <View style={styles.friendInfo}>
+                  <View style={styles.friendAvatar}>
+                    <Text style={styles.friendAvatarText}>
+                      {existingRequestData.to_name?.substring(0, 2).toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.friendDetails}>
+                    <Text style={styles.friendName}>{existingRequestData.to_name}</Text>
+                    <Text style={styles.friendPhone}>{existingRequestData.to_phone}</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.sentMessageContainer}>
+                  <Text style={styles.sentMessageLabel}>Tin nhắn đã gửi:</Text>
+                  <Text style={styles.sentMessageText}>"{existingRequestData.message}"</Text>
+                  <Text style={styles.sentMessageTime}>
+                    Gửi lúc: {new Date(existingRequestData.sent_at).toLocaleString('vi-VN')}
+                  </Text>
+                </View>
+                
+                <Text style={styles.alreadySentInfo}>
+                  Bạn đã gửi lời mời kết bạn đến người này. Họ sẽ nhận được thông báo và có thể chấp nhận lời mời của bạn.
+                </Text>
+              </>
+            )}
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelRequestButton}
+                onPress={handleCancelFriendRequest}
+              >
+                <Text style={styles.cancelRequestButtonText}>Hủy lời mời</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.okButton}
+                onPress={handleCloseAlreadySentModal}
+              >
+                <Text style={styles.okButtonText}>Đã hiểu</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -241,6 +750,32 @@ const styles = StyleSheet.create({
   clearButton: {
     padding: 4,
   },
+  searchButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  searchButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loadingIcon: {
+    marginLeft: 8,
+  },
+  searchResultsHeader: {
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+  },
+  searchResultsTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    letterSpacing: -0.2,
+  },
   list: {
     flex: 1,
   },
@@ -248,6 +783,21 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   conversationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    marginHorizontal: 16,
+    marginVertical: 3,
+    borderRadius: 16,
+    shadowColor: 'rgba(0, 0, 0, 0.1)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  searchResultItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -341,6 +891,45 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     opacity: 0.6,
   },
+  searchAvatarContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E0E0E0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  searchAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchAvatarText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  searchResultContent: {
+    flex: 1,
+  },
+  searchResultName: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    letterSpacing: -0.2,
+  },
+  searchResultPhone: {
+    fontSize: 14,
+    color: '#8E8E93',
+    fontWeight: '400',
+  },
+  addButton: {
+    padding: 8,
+  },
   fab: {
     position: 'absolute',
     bottom: 30,
@@ -360,6 +949,247 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1C1C1E',
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  friendInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    padding: 16,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+  },
+  friendAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  friendAvatarText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  friendDetails: {
+    flex: 1,
+  },
+  friendName: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    marginBottom: 4,
+  },
+  friendPhone: {
+    fontSize: 14,
+    color: '#8E8E93',
+  },
+  messageLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1C1C1E',
+    marginBottom: 8,
+  },
+  messageInput: {
+    borderWidth: 1,
+    borderColor: '#E5E5E7',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+    color: '#1C1C1E',
+    textAlignVertical: 'top',
+    minHeight: 80,
+    marginBottom: 8,
+  },
+  characterCount: {
+    fontSize: 12,
+    color: '#8E8E93',
+    textAlign: 'right',
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5E7',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#8E8E93',
+  },
+  sendButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    backgroundColor: '#007AFF',
+    alignItems: 'center',
+  },
+  sendButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+  },
+  successModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  successModalContainer: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    width: '100%',
+    maxWidth: 350,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  successIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#30D158',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  successIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  successTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    marginBottom: 10,
+  },
+  successMessage: {
+    fontSize: 16,
+    color: '#8E8E93',
+    textAlign: 'center',
+    marginBottom: 25,
+  },
+  successButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    alignItems: 'center',
+  },
+  successButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+  },
+  sentMessageContainer: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+  sentMessageLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#8E8E93',
+    marginBottom: 8,
+  },
+  sentMessageText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#1C1C1E',
+    marginBottom: 8,
+  },
+  sentMessageTime: {
+    fontSize: 12,
+    color: '#8E8E93',
+  },
+  alreadySentInfo: {
+    fontSize: 14,
+    color: '#8E8E93',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  cancelRequestButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5E7',
+    alignItems: 'center',
+  },
+  cancelRequestButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#8E8E93',
+  },
+  okButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    backgroundColor: '#007AFF',
+    alignItems: 'center',
+  },
+  okButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
   },
 });
 

@@ -17,6 +17,7 @@ import WeatherCard from '../../../components/elderly-home/WeatherCard';
 import FunctionGrid from '../../../components/elderly-home/FunctionGrid';
 import PremiumUpgradeCard from '../../../components/elderly-home/PremiumUpgradeCard';
 import VoiceTranscript from '../../../components/elderly-home/VoiceTranscript';
+import { useSocket } from '../../../contexts/SocketContext';
 
 // --- Memoized Components for Performance Optimization ---
 const MemoizedHeader = memo(Header);
@@ -29,6 +30,7 @@ const ElderlyHomeScreen = () => {
   const { user } = useAuth();
   const { premiumStatus, fetchPremiumStatus, refreshTrigger } = usePremium();
   const navigation = useNavigation();
+  const { unreadCount } = useSocket(); // Lấy số thông báo chưa đọc
   
   // State cho premium status từ cache và API
   const [isPremium, setIsPremium] = useState(false);
@@ -159,17 +161,33 @@ const ElderlyHomeScreen = () => {
     fetchPremiumStatus();
   }, [fetchPremiumStatus]);
 
-  // Notifications state remains here as it's passed to the Header
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: 'Nhắc nhở uống thuốc', message: 'Đã đến giờ uống thuốc huyết áp', time: '10:30', read: false },
-    { id: 2, title: 'Lịch khám bệnh', message: 'Bạn có lịch khám tim mạch vào ngày mai', time: '09:00', read: false },
-    { id: 3, title: 'Cập nhật sức khỏe', message: 'Hãy cập nhật chỉ số huyết áp hôm nay', time: '08:00', read: false },
-  ]);
+  // Get real notifications from SocketContext instead of mock data
+  const { notifications, markAsRead } = useSocket();
+
+  // Convert SocketContext notifications to Header format (keep all data for modal)
+  const formattedNotifications = notifications.map(notif => ({
+    id: notif.id,
+    title: notif.title,
+    message: notif.body,
+    time: new Date(notif.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+    read: notif.isRead,
+    // Keep original data for FriendRequestModal
+    type: notif.type,
+    data: notif.data,
+    createdAt: notif.createdAt
+  }));
 
   // Use useCallback to memoize the function, preventing re-renders of the Header
   const handleNotificationsUpdate = useCallback((newNotifications: any) => {
-    setNotifications(newNotifications);
-  }, []);
+    // Handle marking notifications as read
+    const readIds = newNotifications
+      .filter((notif: any, index: number) => notif.read && !formattedNotifications[index]?.read)
+      .map((notif: any) => notif.id);
+    
+    if (readIds.length > 0) {
+      markAsRead(readIds);
+    }
+  }, [markAsRead, formattedNotifications]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -178,7 +196,8 @@ const ElderlyHomeScreen = () => {
       <MemoizedHeader 
         user={user}
         isPremium={isPremium}
-        notifications={notifications}
+        notifications={formattedNotifications}
+        unreadNotificationCount={unreadCount} // Truyền vào Header
         onNotificationsUpdate={handleNotificationsUpdate}
       />
 

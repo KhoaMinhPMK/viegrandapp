@@ -1,36 +1,104 @@
-import React, { useState, useRef, useCallback, memo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useRef, memo } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Feather from 'react-native-vector-icons/Feather';
-import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import NotificationDropdown from '../NotificationDropdown';
-import { User } from '../../contexts/AuthContext'; // Assuming User type is exported from AuthContext
+import { User } from '../../contexts/AuthContext';
+import { useSocket } from '../../contexts/SocketContext';
+import { getUserData } from '../../services/api';
 
 interface HeaderProps {
   user: User | null;
   isPremium: boolean;
-  notifications: any[]; // Replace with a proper Notification type
+  notifications: any[];
+  unreadNotificationCount: number;
   onNotificationsUpdate: (notifications: any[]) => void;
 }
 
-const getAvatarText = (fullName: string | undefined) => {
-  if (!fullName) return '';
-  const names = fullName.split(' ');
-  if (names.length >= 2) {
-    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
-  }
-  return fullName.slice(0, 2).toUpperCase();
-};
-
-const Header = memo(({ user, isPremium, notifications, onNotificationsUpdate }: HeaderProps) => {
+const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, onNotificationsUpdate }: HeaderProps) => {
   const navigation = useNavigation<any>();
   const [showNotifications, setShowNotifications] = useState(false);
+  const notificationButtonRef = useRef<any>(null);
   const [notificationPosition, setNotificationPosition] = useState({ top: 0, right: 0 });
-  const notificationButtonRef = useRef<TouchableOpacity>(null);
+  
+  // Get user phone from socket context for friend request handling
+  const socketContext = useSocket();
+  
+  // Multi-fallback để lấy userPhone một cách đáng tin cậy
+  const [userPhone, setUserPhone] = React.useState<string>('');
+  
+     React.useEffect(() => {
+     const getUserPhone = async () => {
+       console.log('🔍 Header: Getting user phone with fallbacks...', {
+         userFromAuth: user,
+         userPhone: user?.phone,
+         userEmail: user?.email
+       });
+       
+       // Try 1: AuthContext user
+       if (user?.phone) {
+         console.log('✅ Header: Got phone from AuthContext:', user.phone);
+         setUserPhone(user.phone);
+         return;
+       }
+       
+       console.log('🔄 Header: AuthContext phone not found, trying AsyncStorage...');
+       
+       // Try 2: AsyncStorage
+       try {
+         const storedPhone = await AsyncStorage.getItem('user_phone');
+         console.log('🔍 Header: AsyncStorage result:', storedPhone);
+         if (storedPhone) {
+           console.log('✅ Header: Got phone from AsyncStorage:', storedPhone);
+           setUserPhone(storedPhone);
+           return;
+         }
+       } catch (error) {
+         console.log('❌ Header: AsyncStorage phone fetch failed:', error);
+       }
+       
+       console.log('🔄 Header: AsyncStorage failed, trying API call...');
+       
+       // Try 3: Get from API if we have email
+       if (user?.email) {
+         try {
+           console.log('🔄 Header: Calling getUserData API for email:', user.email);
+           const result = await getUserData(user.email);
+           console.log('🔍 Header: getUserData API result:', {
+             success: result.success,
+             userPhone: result.user?.phone,
+             fullUser: result.user
+           });
+           
+           if (result.success && result.user?.phone) {
+             console.log('✅ Header: Got phone from getUserData API:', result.user.phone);
+             setUserPhone(result.user.phone);
+             // Save to AsyncStorage for next time
+             await AsyncStorage.setItem('user_phone', result.user.phone);
+             return;
+           } else {
+             console.log('❌ Header: getUserData returned no phone - user.phone is:', result.user?.phone);
+           }
+         } catch (error) {
+           console.log('❌ Header: API phone fetch failed:', error);
+         }
+       } else {
+         console.log('❌ Header: No user email available for API call');
+       }
+       
+       console.log('❌ Header: No phone found from any source');
+       setUserPhone(''); // Explicitly set empty string
+     };
+     
+     getUserPhone();
+   }, [user?.phone, user?.email]);
+  
+  console.log('🔍 Header: Final userPhone value:', userPhone);
 
-  const handleToggleNotifications = useCallback(() => {
+  const handleToggleNotifications = () => {
     if (notificationButtonRef.current) {
-      notificationButtonRef.current.measure((x, y, width, height, pageX, pageY) => {
+      notificationButtonRef.current.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
         setNotificationPosition({
           top: pageY + height,
           right: 20,
@@ -38,88 +106,153 @@ const Header = memo(({ user, isPremium, notifications, onNotificationsUpdate }: 
         setShowNotifications(prev => !prev);
       });
     }
-  }, []);
+  };
 
-  const handleCloseNotifications = useCallback(() => setShowNotifications(false), []);
-
-  const handleMarkAllAsRead = useCallback(() => {
-    onNotificationsUpdate(prev => prev.map(n => ({ ...n, read: true })));
-  }, [onNotificationsUpdate]);
-
-  const handlePressNotification = useCallback((notification: any) => {
-    onNotificationsUpdate(prev => prev.map(item => item.id === notification.id ? { ...item, read: true } : item));
+  const handleCloseNotifications = () => {
     setShowNotifications(false);
-  }, [onNotificationsUpdate]);
+  };
 
-  const handleViewAllNotifications = useCallback(() => {
+  const handleNavigateToPremium = () => {
+    navigation.navigate('Premium');
+  };
+
+  const handleMarkAllAsRead = () => {
+    onNotificationsUpdate(notifications.map(n => ({ ...n, read: true })));
+  };
+
+  const handlePressNotification = (notification: any) => {
+    onNotificationsUpdate(notifications.map(item => item.id === notification.id ? { ...item, read: true } : item));
+    setShowNotifications(false);
+  };
+
+  const handleViewAllNotifications = () => {
     setShowNotifications(false);
     navigation.navigate('Notifications', { notifications });
-  }, [navigation, notifications]);
-
-  const handleUpgradePress = useCallback(() => {
-      navigation.navigate('Premium');
-  }, [navigation]);
-
-  const unreadCount = notifications.filter(notification => !notification.read).length;
+  };
 
   return (
     <>
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={styles.userInfo}>
-            <View style={[styles.avatarContainer, isPremium ? styles.premiumAvatar : styles.normalAvatar]}>
-              {isPremium ? (
-                <LinearGradient colors={['#007AFF', '#5856D6']} style={styles.avatarGradient}>
-                  <Text style={styles.avatarText}>{getAvatarText(user?.fullName)}</Text>
-                </LinearGradient>
-              ) : (
-                <Text style={styles.avatarTextNormal}>{getAvatarText(user?.fullName)}</Text>
-              )}
-            </View>
-            <View style={styles.userDetails}>
-              <Text style={styles.userName}>{user?.fullName || 'Đang tải...'}</Text>
-              <View style={styles.statusContainer}>
-                {isPremium ? (
-                  <LinearGradient colors={['#007AFF', '#5856D6']} style={styles.premiumBadge}>
-                    <Feather name="award" size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
-                    <Text style={styles.premiumText}>Premium</Text>
-                  </LinearGradient>
-                ) : (
-                  <TouchableOpacity style={styles.upgradeBadge} onPress={handleUpgradePress}>
-                    <Feather name="award" size={14} color="#007AFF" style={{ marginRight: 6 }} />
-                    <Text style={styles.upgradeText}>Nâng cấp Premium</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
+      <View style={styles.container}>
+        <View style={styles.userInfo}>
+          <Image
+            source={{ uri: 'https://i.pravatar.cc/150?img=3' }}
+            style={styles.avatar}
+          />
+          <View>
+            <Text style={styles.greeting}>Chào buổi sáng</Text>
+            <Text style={styles.userName}>{user?.fullName || 'Bác'}</Text>
           </View>
+        </View>
+        <View style={styles.rightIcons}>
+          {!isPremium && (
+            <TouchableOpacity style={styles.premiumButton} onPress={handleNavigateToPremium}>
+              <Feather name="shield" size={16} color="#FFC700" />
+              <Text style={styles.premiumText}>Nâng cấp</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity ref={notificationButtonRef} style={styles.notificationButton} onPress={handleToggleNotifications}>
             <Feather name="bell" size={24} color="#007AFF" />
-            {unreadCount > 0 && (
+            {unreadNotificationCount > 0 && (
               <View style={styles.notificationBadge}>
-                <Text style={styles.notificationCount}>{unreadCount}</Text>
+                <Text style={styles.notificationCount}>{unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}</Text>
               </View>
             )}
           </TouchableOpacity>
         </View>
       </View>
-      <NotificationDropdown 
-        visible={showNotifications} 
-        notifications={notifications} 
-        onClose={handleCloseNotifications} 
-        onMarkAllAsRead={handleMarkAllAsRead} 
-        onPressNotification={handlePressNotification} 
-        onViewAll={handleViewAllNotifications} 
-        position={notificationPosition} 
-      />
+      {showNotifications && (
+        <NotificationDropdown
+          visible={showNotifications}
+          notifications={notifications}
+          onClose={handleCloseNotifications}
+          onMarkAllAsRead={handleMarkAllAsRead}
+          onPressNotification={handlePressNotification}
+          onViewAll={handleViewAllNotifications}
+          position={notificationPosition}
+          userPhone={userPhone}
+        />
+      )}
     </>
   );
 });
 
 const styles = StyleSheet.create({
+  container: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  userInfo: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    flex: 1 
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 15,
+  },
+  greeting: {
+    fontSize: 14,
+    color: '#8A8A8E',
+    marginBottom: 2,
+  },
+  userName: { 
+    fontSize: 18, 
+    fontWeight: '600', 
+    color: '#007AFF', 
+  },
+  rightIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  premiumButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF9E6',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    gap: 6,
+  },
+  premiumText: {
+    color: '#FFC700',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  notificationButton: { 
+    backgroundColor: '#F2F2F7', 
+    borderRadius: 20, 
+    padding: 10, 
+    position: 'relative' 
+  },
+  notificationBadge: {
+    position: 'absolute',
+    right: -5,
+    top: -5,
+    backgroundColor: '#FF3B30',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#F8F9FA',
+  },
+  notificationCount: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  // Legacy styles - keeping for backward compatibility
   header: { backgroundColor: 'transparent', paddingHorizontal: 20, paddingTop: 60, paddingBottom: 20 },
   headerContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  userInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   avatarContainer: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   normalAvatar: { backgroundColor: '#F2F2F7' },
   premiumAvatar: { backgroundColor: 'transparent' },
@@ -127,15 +260,10 @@ const styles = StyleSheet.create({
   avatarText: { color: '#FFFFFF', fontSize: 18, fontWeight: 'bold' },
   avatarTextNormal: { color: '#007AFF', fontSize: 18, fontWeight: '600' },
   userDetails: { flex: 1 },
-  userName: { fontSize: 18, fontWeight: '600', color: '#007AFF', marginBottom: 5 },
   statusContainer: { flexDirection: 'row', alignItems: 'center' },
   premiumBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 },
-  premiumText: { color: '#FFFFFF', fontSize: 11, fontWeight: '600' },
   upgradeBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F2F2F7', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 },
   upgradeText: { color: '#007AFF', fontSize: 11, fontWeight: '500' },
-  notificationButton: { backgroundColor: '#F2F2F7', borderRadius: 20, padding: 10, position: 'relative' },
-  notificationBadge: { position: 'absolute', top: -2, right: -2, backgroundColor: '#FF3B30', borderRadius: 9, minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center' },
-  notificationCount: { color: '#FFFFFF', fontSize: 9, fontWeight: '600' },
 });
 
 export default Header; 

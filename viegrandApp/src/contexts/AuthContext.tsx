@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
-import { storageUtils, User, LoginRequest, RegisterRequest, registerUser, loginUser } from '../services/api';
+import { storageUtils, User as ApiUser, LoginRequest, RegisterRequest, registerUser, loginUser } from '../services/api';
 import { Alert } from 'react-native';
+
+export interface User extends ApiUser {}
 
 interface AuthContextType {
   user: User | null;

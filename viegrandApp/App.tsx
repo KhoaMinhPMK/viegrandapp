@@ -12,9 +12,11 @@ import AuthNavigator from './src/navigation/AuthNavigator';
 import ElderlyNavigator from './src/navigation/ElderlyNavigator';
 import RelativeNavigator from './src/navigation/RelativeNavigator';
 import { VoiceProvider } from './src/contexts/VoiceContext';
-import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+import { AuthProvider } from './src/contexts/AuthContext';
+import { SocketProvider } from './src/contexts/SocketContext';
 import { PremiumProvider } from './src/contexts/PremiumContext';
 import { SettingsProvider } from './src/contexts/SettingsContext';
+import HomeNavigator from './src/navigation/HomeNavigator';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -34,19 +36,21 @@ const AppContent = memo(() => {
 
 const App = () => {
   return (
-    <SafeAreaProvider>
-      <PremiumProvider>
-        <AuthProvider>
-          <SettingsProvider>
-            <VoiceProvider>
-              <NavigationContainer>
-                <AppContent />
-              </NavigationContainer>
-            </VoiceProvider>
-          </SettingsProvider>
-        </AuthProvider>
-      </PremiumProvider>
-    </SafeAreaProvider>
+    <AuthProvider>
+      <SocketProvider>
+        <SafeAreaProvider>
+          <PremiumProvider>
+            <SettingsProvider>
+              <VoiceProvider>
+                <NavigationContainer>
+                  <AppContent />
+                </NavigationContainer>
+              </VoiceProvider>
+            </SettingsProvider>
+          </PremiumProvider>
+        </SafeAreaProvider>
+      </SocketProvider>
+    </AuthProvider>
   );
 };
 

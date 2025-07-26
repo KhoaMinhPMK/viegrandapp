@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Animated,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
+import FriendRequestModal from './FriendRequestModal';
+import { useSocket } from '../contexts/SocketContext';
 
 const { width } = Dimensions.get('window');
 
@@ -18,6 +20,9 @@ interface Notification {
   message: string;
   time: string;
   read?: boolean;
+  type?: string;
+  data?: any;
+  createdAt?: string;
 }
 
 interface NotificationDropdownProps {
@@ -28,6 +33,8 @@ interface NotificationDropdownProps {
   onPressNotification: (notification: Notification) => void;
   onViewAll: () => void;
   position: { top: number; right: number };
+  userPhone?: string;
+  onFriendRequestPress?: (notification: Notification) => void;
 }
 
 const NotificationDropdown = ({
@@ -38,6 +45,8 @@ const NotificationDropdown = ({
   onPressNotification,
   onViewAll,
   position,
+  userPhone,
+  onFriendRequestPress,
 }: NotificationDropdownProps) => {
   const animatedValue = React.useRef(new Animated.Value(0)).current;
 
@@ -102,15 +111,67 @@ const NotificationDropdown = ({
                   styles.notificationItem,
                   notification.read ? styles.readNotification : styles.unreadNotification,
                 ]}
-                onPress={() => onPressNotification(notification)}>
+                onPress={() => {
+                  console.log('🔄 NotificationDropdown: Notification clicked:', {
+                    id: notification.id,
+                    type: notification.type,
+                    title: notification.title,
+                    hasData: !!notification.data
+                  });
+                  
+                  if (notification.type === 'friend_request_received') {
+                    console.log('✅ NotificationDropdown: Opening friend request modal');
+                    onFriendRequestPress?.(notification);
+                  } else {
+                    console.log('📝 NotificationDropdown: Regular notification tap');
+                    onPressNotification(notification);
+                  }
+                }}>
                 <View style={styles.notificationContent}>
                   <View style={styles.notificationHeader}>
                     <Text style={styles.notificationTitle}>{notification.title}</Text>
-                    <Text style={styles.notificationTime}>{notification.time}</Text>
+                    <View style={styles.rightSection}>
+                      {notification.type === 'friend_request_received' && (
+                        <View style={styles.friendRequestIndicator}>
+                          <Feather name="users" size={12} color="#007AFF" />
+                        </View>
+                      )}
+                      <Text style={styles.notificationTime}>{notification.time}</Text>
+                    </View>
                   </View>
                   <Text style={styles.notificationMessage} numberOfLines={2}>
                     {notification.message}
                   </Text>
+                  {notification.type === 'friend_request_received' && (() => {
+                    // Check if friend request is still pending
+                    const requestData = typeof notification.data === 'string' 
+                      ? JSON.parse(notification.data) 
+                      : notification.data;
+                    const isPending = !requestData?.status || requestData?.status === 'pending';
+                    
+                    return (
+                      <View style={styles.friendRequestActions}>
+                        {isPending ? (
+                          <TouchableOpacity
+                            style={styles.respondButton}
+                            onPress={(e) => {
+                              e.stopPropagation(); // Prevent triggering parent onPress
+                              console.log('✅ Friend request respond button clicked');
+                              onFriendRequestPress?.(notification);
+                            }}
+                          >
+                            <Feather name="message-square" size={14} color="#007AFF" />
+                            <Text style={styles.respondButtonText}>Phản hồi</Text>
+                          </TouchableOpacity>
+                        ) : (
+                          <View style={styles.processedIndicator}>
+                            <Feather name="check-circle" size={14} color="#34C759" />
+                            <Text style={styles.processedText}>Đã xử lý</Text>
+                          </View>
+                        )}
+                      </View>
+                    );
+                  })()}
                 </View>
                 {!notification.read && <View style={styles.unreadIndicator} />}
               </TouchableOpacity>
@@ -258,6 +319,108 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#007AFF',
   },
+  rightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  friendRequestIndicator: {
+    backgroundColor: '#E3F2FF',
+    borderRadius: 10,
+    padding: 4,
+  },
+  actionHint: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F2F2F7',
+  },
+  actionHintText: {
+    fontSize: 12,
+    color: '#007AFF',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  friendRequestActions: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F2F2F7',
+    alignItems: 'center',
+  },
+  respondButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E3F2FF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 6,
+  },
+  respondButtonText: {
+    fontSize: 12,
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+  processedIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F9FF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 6,
+  },
+  processedText: {
+    fontSize: 12,
+    color: '#34C759',
+    fontWeight: '600',
+  },
 });
 
-export default NotificationDropdown; 
+const NotificationDropdownWithModal = (props: NotificationDropdownProps) => {
+  const [showFriendRequestModal, setShowFriendRequestModal] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+  const { refetchNotifications } = useSocket();
+
+  return (
+    <>
+      <NotificationDropdown 
+        {...props}
+        onFriendRequestPress={(notification) => {
+          console.log('✅ NotificationDropdownWrapper: Opening friend request modal from callback');
+          setSelectedNotification(notification);
+          setShowFriendRequestModal(true);
+        }}
+        onPressNotification={(notification) => {
+          console.log('🔄 NotificationDropdownWrapper: Regular notification clicked:', {
+            id: notification.id,
+            type: notification.type,
+            title: notification.title
+          });
+          props.onPressNotification(notification);
+        }}
+      />
+      
+      {/* Friend Request Modal */}
+      <FriendRequestModal
+        visible={showFriendRequestModal}
+        notification={selectedNotification}
+        userPhone={props.userPhone || ''}
+        onClose={() => {
+          setShowFriendRequestModal(false);
+          setSelectedNotification(null);
+        }}
+        onSuccess={(action) => {
+          console.log(`Friend request ${action}`);
+          // Refresh notifications to reflect the change
+          refetchNotifications();
+          // Close the dropdown as well
+          props.onClose();
+        }}
+      />
+    </>
+  );
+};
+
+export default NotificationDropdownWithModal; 

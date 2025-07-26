@@ -1,30 +1,25 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   SafeAreaView,
   FlatList,
-  Image,
   TouchableOpacity,
   TextInput,
-  Platform,
-  KeyboardAvoidingView,
+  Alert,
 } from 'react-native';
-import { BackgroundImages } from '../../../utils/assetUtils';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Feather from 'react-native-vector-icons/Feather';
-import LinearGradient from 'react-native-linear-gradient';
+import io from 'socket.io-client';
 
-// --- TYPE DEFINITIONS ---
+// Type definitions
 interface Message {
   id: string;
   text: string;
-  time: string;
-  sender: 'me' | 'contact' | 'other_contact';
+  timestamp: number;
 }
 
-// This should be moved to a central navigation types file eventually
 export type MessageStackParamList = {
   MessageList: undefined;
   Chat: {
@@ -36,141 +31,151 @@ export type MessageStackParamList = {
 
 type ChatScreenProps = NativeStackScreenProps<MessageStackParamList, 'Chat'>;
 
-// --- MOCK DATA ---
-const mockMessages: Message[] = [
-  { id: '1', text: 'Tối nay ba mẹ ăn cơm với gì ạ?', time: '18:32', sender: 'contact' },
-  { id: '2', text: 'Ba mẹ ăn cơm sườn, con gái ăn gì chưa?', time: '18:33', sender: 'me' },
-  { id: '3', text: 'Dạ con ăn rồi ạ. Ba mẹ nhớ giữ gìn sức khỏe nhé!', time: '18:35', sender: 'contact' },
-  { id: '4', text: 'Con cũng vậy nhé, đi làm cẩn thận.', time: '18:36', sender: 'me' },
-  { id: '5', text: 'Ba nhớ uống thuốc nhé, con mua thêm yến sào rồi ạ.', time: '15:10', sender: 'other_contact' },
-];
-
 const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
-  const name = route.params?.name || 'Ngọc Anh (Con gái)';
-  const avatar = route.params?.avatar || 'https://i.pravatar.cc/150?img=26';
-
-  const [messages, setMessages] = useState<Message[]>(
-    mockMessages.filter(m => m.sender === 'me' || m.sender === 'contact'),
-  );
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
-  const textInputRef = useRef<TextInput>(null);
+  const [socket, setSocket] = useState<any>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  
+  // Sử dụng ref để tránh multiple connections
+  const socketRef = useRef<any>(null);
+  const isConnectingRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    // Tránh tạo multiple connections
+    if (isConnectingRef.current || socketRef.current) {
+      console.log('Socket already exists or connecting, skipping...');
+      return;
+    }
+
+    console.log('🚀 Bắt đầu kết nối socket...');
+    isConnectingRef.current = true;
+
+    // Kết nối socket
+    const newSocket = io("https://chat.viegrand.site", {
+      forceNew: true, // Đảm bảo connection mới
+      timeout: 10000, // 10 giây timeout
+    });
+    
+    newSocket.on('connect', () => {
+      console.log('✅ Đã kết nối socket:', newSocket.id);
+      setIsConnected(true);
+      Alert.alert('Thành công', `Đã kết nối socket!\nID: ${newSocket.id}`);
+    });
+
+    newSocket.on('disconnect', (reason) => {
+      console.log('❌ Socket đã ngắt kết nối:', reason);
+      setIsConnected(false);
+    });
+
+    newSocket.on('chat message', (msg: string) => {
+      console.log('📨 Nhận tin nhắn:', msg);
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        text: msg,
+        timestamp: Date.now(),
+      };
+      setMessages(prev => [newMessage, ...prev]);
+    });
+
+    newSocket.on('connect_error', (error: any) => {
+      console.log('💥 Lỗi kết nối socket:', error);
+      Alert.alert('Lỗi', 'Không thể kết nối socket: ' + error.message);
+      isConnectingRef.current = false;
+    });
+
+    socketRef.current = newSocket;
+    setSocket(newSocket);
+    isConnectingRef.current = false;
+
+    // Cleanup khi component unmount
+    return () => {
+      console.log('🧹 Cleanup socket connection...');
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+      isConnectingRef.current = false;
+    };
+  }, []); // Chỉ chạy 1 lần khi mount
+
+  // Cleanup khi navigate away
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', () => {
+      console.log('🚪 Navigate away - disconnect socket');
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const handleSend = () => {
-    if (inputText.trim().length > 0) {
-      const newMessage: Message = {
-        id: (messages.length + 1).toString(),
-        text: inputText.trim(),
-        time: new Date().toLocaleTimeString('vi-VN', {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-        sender: 'me',
-      };
-      setMessages(prevMessages => [newMessage, ...prevMessages]);
+    if (inputText.trim() && socket && isConnected) {
+      console.log('📤 Gửi tin nhắn:', inputText.trim());
+      socket.emit('chat message', inputText.trim());
       setInputText('');
+    } else if (!isConnected) {
+      Alert.alert('Lỗi', 'Socket chưa kết nối!');
     }
   };
 
-  const renderMessage = ({ item }: { item: Message }) => {
-    const isMyMessage = item.sender === 'me';
-    return (
-      <View
-        style={[
-          styles.messageRow,
-          { justifyContent: isMyMessage ? 'flex-end' : 'flex-start' },
-        ]}>
-        {!isMyMessage && (
-          <Image source={{ uri: avatar }} style={styles.messageAvatar} />
-        )}
-        <View
-          style={[
-            styles.messageBubble,
-            isMyMessage ? styles.myMessageBubble : styles.contactMessageBubble,
-          ]}>
-          <Text
-            style={
-              isMyMessage ? styles.myMessageText : styles.contactMessageText
-            }>
-            {item.text}
-          </Text>
-          <Text
-            style={
-              isMyMessage ? styles.myMessageTime : styles.contactMessageTime
-            }>
-            {item.time}
-          </Text>
-        </View>
-      </View>
-    );
-  };
+  const renderMessage = ({ item }: { item: Message }) => (
+    <View style={styles.messageItem}>
+      <Text style={styles.messageText}>{item.text}</Text>
+      <Text style={styles.messageTime}>
+        {new Date(item.timestamp).toLocaleTimeString()}
+      </Text>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#FFFFFF', '#F7F8FA']}
-        style={styles.backgroundGradient}
-      />
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
-          style={styles.headerButton}>
+          style={styles.backButton}>
           <Feather name="chevron-left" size={24} color="#007AFF" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Image source={{ uri: avatar }} style={styles.headerAvatar} />
-          <View>
-            <Text style={styles.headerName}>{name}</Text>
-            <Text style={styles.headerStatus}>Đang hoạt động</Text>
-          </View>
+          <Text style={styles.headerTitle}>Chat Test Socket</Text>
+          <Text style={[styles.headerStatus, { color: isConnected ? '#34C759' : '#FF3B30' }]}>
+            {isConnected ? `Đã kết nối (${socketRef.current?.id?.substring(0, 8)}...)` : 'Chưa kết nối'}
+          </Text>
         </View>
-        <TouchableOpacity style={styles.headerButton}>
-          <Feather name="phone" size={20} color="#007AFF" />
-        </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
-        <FlatList
-          data={messages}
-          renderItem={renderMessage}
-          keyExtractor={item => item.id}
-          style={styles.messageList}
-          contentContainerStyle={styles.messageListContent}
-          inverted
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        />
+      {/* Messages List */}
+      <FlatList
+        data={messages}
+        renderItem={renderMessage}
+        keyExtractor={item => item.id}
+        style={styles.messagesList}
+        inverted
+        showsVerticalScrollIndicator={false}
+      />
 
-        <View style={styles.inputContainer}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Feather name="plus" size={22} color="#8A8A8E" />
-          </TouchableOpacity>
-          <View style={styles.inputWrapper}>
-            <TextInput
-              ref={textInputRef}
-              style={styles.textInput}
-              placeholder="Tin nhắn..."
-              placeholderTextColor="#8A8A8E"
-              value={inputText}
-              onChangeText={setInputText}
-              multiline
-              enablesReturnKeyAutomatically
-              returnKeyType="send"
-              onSubmitEditing={handleSend}
-            />
-            <TouchableOpacity style={styles.iconButton}>
-              <Feather name="mic" size={20} color="#8A8A8E" />
-            </TouchableOpacity>
-          </View>
-          {inputText.trim().length > 0 && (
-            <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
-              <Feather name="arrow-up" size={18} color="white" />
-            </TouchableOpacity>
-          )}
-        </View>
-      </KeyboardAvoidingView>
+      {/* Input */}
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Nhập tin nhắn..."
+          placeholderTextColor="#8A8A8E"
+          value={inputText}
+          onChangeText={setInputText}
+          onSubmitEditing={handleSend}
+          returnKeyType="send"
+        />
+        <TouchableOpacity 
+          onPress={handleSend} 
+          style={[styles.sendButton, { opacity: inputText.trim() ? 1 : 0.5 }]}
+          disabled={!inputText.trim()}>
+          <Text style={styles.sendButtonText}>Gửi</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -180,23 +185,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  backgroundGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(0, 0, 0, 0.15)',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E7',
   },
-  headerButton: {
+  backButton: {
     width: 36,
     height: 36,
     justifyContent: 'center',
@@ -204,123 +201,68 @@ const styles = StyleSheet.create({
   },
   headerCenter: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  headerAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    marginRight: 10,
-  },
-  headerName: {
-    fontSize: 17,
+  headerTitle: {
+    fontSize: 18,
     fontWeight: '600',
     color: '#1C1C1E',
   },
   headerStatus: {
-    fontSize: 13,
-    color: '#34C759',
+    fontSize: 12,
     fontWeight: '400',
+    marginTop: 2,
   },
-  keyboardAvoidingView: {
+  messagesList: {
     flex: 1,
-  },
-  messageList: {
-    flex: 1,
-  },
-  messageListContent: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
   },
-  messageRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+  messageItem: {
+    backgroundColor: '#F2F2F7',
+    padding: 12,
     marginVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    maxWidth: '80%',
   },
-  messageAvatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    marginRight: 8,
-  },
-  messageBubble: {
-    maxWidth: '75%',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  myMessageBubble: {
-    backgroundColor: '#007AFF',
-    borderBottomRightRadius: 5,
-  },
-  contactMessageBubble: {
-    backgroundColor: '#E9E9EB',
-    borderBottomLeftRadius: 5,
-  },
-  myMessageText: {
-    fontSize: 16,
-    color: 'white',
-    lineHeight: 22,
-  },
-  contactMessageText: {
+  messageText: {
     fontSize: 16,
     color: '#1C1C1E',
-    lineHeight: 22,
+    lineHeight: 20,
   },
-  myMessageTime: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.7)',
-    marginTop: 4,
-    alignSelf: 'flex-end',
-  },
-  contactMessageTime: {
+  messageTime: {
     fontSize: 11,
     color: '#8A8A8E',
     marginTop: 4,
-    alignSelf: 'flex-end',
   },
   inputContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 0.5,
-    borderTopColor: 'rgba(0, 0, 0, 0.15)',
-    paddingBottom: Platform.OS === 'ios' ? 34 : 8,
-  },
-  inputWrapper: {
-    flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F2F2F7',
-    borderRadius: 20,
-    paddingHorizontal: 4,
-    paddingVertical: 4,
-    marginHorizontal: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5E7',
   },
   textInput: {
     flex: 1,
+    backgroundColor: '#F2F2F7',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     fontSize: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
     color: '#1C1C1E',
-    maxHeight: 100,
-  },
-  iconButton: {
-    padding: 8,
+    marginRight: 12,
   },
   sendButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
     backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 4,
-    marginBottom: 4,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  sendButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
