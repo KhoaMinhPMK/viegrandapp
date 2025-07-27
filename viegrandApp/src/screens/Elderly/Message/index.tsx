@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,15 +10,18 @@ import {
   TextInput,
   Alert,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { BackgroundImages } from '../../../utils/assetUtils';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MessageStackParamList } from './ChatScreen';
 import Feather from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
-import { searchFriend, requestFriend, getUserData, cancelFriendRequest, getUserPhone, acceptFriendRequest, rejectFriendRequest } from '../../../services/api';
+import { searchFriend, requestFriend, getUserData, cancelFriendRequest, getUserPhone, acceptFriendRequest, rejectFriendRequest, getFriendsList, getConversationsList, debugConversations } from '../../../services/api';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useSocket } from '../../../contexts/SocketContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 
 // --- TYPE DEFINITIONS ---
 interface Conversation {
@@ -88,12 +91,14 @@ type MessageScreenProps = NativeStackScreenProps<MessageStackParamList, 'Message
 
 const MessageScreen = ({ navigation }: MessageScreenProps) => {
   const { user } = useAuth();
-  const [conversations, setConversations] = useState(mockConversations);
+  const { notifications } = useSocket(); // Get notifications from SocketContext
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [searchText, setSearchText] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [userPhone, setUserPhone] = useState<string>('');
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   
   // Modal states
   const [showMessageModal, setShowMessageModal] = useState(false);
@@ -167,6 +172,83 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
 
     getCurrentUserPhone();
   }, [user]); // Thêm user vào dependency để re-run khi user thay đổi
+
+  // Load conversations list when userPhone is available
+  useEffect(() => {
+    if (userPhone) {
+      loadConversationsList();
+    }
+  }, [userPhone]);
+
+  // Auto-refresh conversations when notifications change (friend request accepted)
+  useEffect(() => {
+    if (userPhone && notifications.length > 0) {
+      // Check if there are any friend request notifications
+      const hasFriendRequestNotifications = notifications.some(notif => 
+        notif.type === 'friend_request_received' && !notif.isRead
+      );
+      
+      if (hasFriendRequestNotifications) {
+        console.log('🔄 MessageScreen: Friend request notification detected, refreshing conversations...');
+        loadConversationsList();
+      }
+    }
+  }, [notifications, userPhone]);
+
+  // Auto-refresh conversations when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (userPhone) {
+        console.log('🔄 MessageScreen: Screen focused, refreshing conversations...');
+        loadConversationsList();
+      }
+    }, [userPhone])
+  );
+
+  // Function to load conversations list from API
+  const loadConversationsList = async () => {
+    if (!userPhone) return;
+    
+    setIsLoadingConversations(true);
+    try {
+      console.log('🔄 MessageScreen: Loading conversations for user:', userPhone);
+      
+      // Debug conversations first
+      console.log('🔍 MessageScreen: Debugging conversations...');
+      const debugResult = await debugConversations(userPhone);
+      if (debugResult.success) {
+        console.log('🔍 MessageScreen: Debug data:', debugResult.data);
+      } else {
+        console.log('⚠️ MessageScreen: Debug failed:', debugResult.message);
+      }
+      
+      const result = await getConversationsList(userPhone);
+      
+      if (result.success && result.conversations) {
+        console.log('✅ MessageScreen: Conversations loaded successfully:', result.conversations.length, 'conversations');
+        
+        // Convert conversations to UI format
+        const conversationsAsUI: Conversation[] = result.conversations.map(conv => ({
+          id: conv.id,
+          name: conv.otherParticipantName,
+          avatar: conv.avatar,
+          lastMessage: conv.lastMessage,
+          time: formatTime(conv.lastMessageTime),
+          unreadCount: 0 // TODO: Implement unread count
+        }));
+        
+        setConversations(conversationsAsUI);
+      } else {
+        console.log('⚠️ MessageScreen: No conversations found or API error:', result.message);
+        setConversations([]);
+      }
+    } catch (error) {
+      console.error('❌ MessageScreen: Error loading conversations:', error);
+      setConversations([]);
+    } finally {
+      setIsLoadingConversations(false);
+    }
+  };
 
   // Filter conversations based on search text (for existing conversations)
   const filteredConversations = conversations.filter(conv => 
@@ -362,28 +444,50 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
     setExistingRequestData(null);
   };
 
-  const addToConversationsList = (friend: SearchResult) => {
-    // Add to conversations list
-    const newConversation: Conversation = {
-      id: friend.userId.toString(),
-      name: friend.userName,
-      avatar: `data:image/svg+xml;base64,${btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="#007AFF"/><text x="50" y="50" font-family="Arial" font-size="30" fill="white" text-anchor="middle" dy=".3em">${friend.avatar}</text></svg>`)}`,
-      lastMessage: 'Đã kết bạn - Bắt đầu trò chuyện!',
-      time: 'Bây giờ',
-      unreadCount: 0,
-    };
+  // Helper function to format time
+  const formatTime = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffHours = diffMs / (1000 * 60 * 60);
+      
+      if (diffHours < 1) {
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        return `${diffMins} phút trước`;
+      } else if (diffHours < 24) {
+        return `${Math.floor(diffHours)} giờ trước`;
+      } else {
+        return date.toLocaleDateString('vi-VN');
+      }
+    } catch {
+      return 'Vừa xong';
+    }
+  };
+
+  const addToConversationsList = async (friend: SearchResult) => {
+    // Refresh the entire conversations list instead of just adding one
+    console.log('🔄 MessageScreen: Refreshing conversations list after accepting friend request');
+    await loadConversationsList();
     
-    setConversations(prev => [newConversation, ...prev]);
     setSearchText('');
     setShowSearchResults(false);
     
-    // Navigate to chat
+    // Navigate to chat with the new friend
     navigation.navigate('Chat', {
-      conversationId: newConversation.id,
-      name: newConversation.name,
-      avatar: newConversation.avatar,
+      conversationId: friend.phone, // Use phone as ID
+      name: friend.userName,
+      avatar: friend.avatar,
     });
   };
+
+  // Function to refresh conversations list (can be called from outside)
+  const refreshConversationsList = useCallback(async () => {
+    if (userPhone) {
+      console.log('🔄 MessageScreen: Manual refresh of conversations list');
+      await loadConversationsList();
+    }
+  }, [userPhone]);
 
   const renderConversation = ({ item }: { item: Conversation }) => (
     <TouchableOpacity 
@@ -455,12 +559,12 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
       
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.getParent()?.navigate('HomeStack')} style={styles.homeButton}>
-          <Feather name="home" size={20} color="#007AFF" />
+          <Feather name="arrow-left" size={20} color="#007AFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Tin Nhắn</Text>
-        <TouchableOpacity style={styles.headerAction}>
-          <Feather name="edit" size={22} color="#007AFF" />
-        </TouchableOpacity>
+        {/* <TouchableOpacity style={styles.headerAction}> */}
+          {/* <Feather name="edit" size={22} color="#007AFF" /> */}
+        {/* </TouchableOpacity> */}
       </View>
 
       <View style={styles.searchContainer}>
@@ -504,29 +608,47 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
         </View>
       )}
 
-      <FlatList<ListItem>
-        data={showSearchResults ? searchResults : filteredConversations}
-        renderItem={renderListItem}
-        keyExtractor={(item, index) => {
-          if ('userId' in item) {
-            return `search-${item.userId}`;
-          } else {
-            return item.id;
+      {isLoadingConversations && !showSearchResults ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Đang tải danh sách cuộc trò chuyện...</Text>
+        </View>
+      ) : (
+        <FlatList<ListItem>
+          data={showSearchResults ? searchResults : filteredConversations}
+          renderItem={renderListItem}
+          keyExtractor={(item, index) => {
+            if ('userId' in item) {
+              return `search-${item.userId}`;
+            } else {
+              return item.id;
+            }
+          }}
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            !showSearchResults && !isLoadingConversations ? (
+              <View style={styles.emptyContainer}>
+                <Feather name="users" size={48} color="#C7C7CC" />
+                <Text style={styles.emptyTitle}>Chưa có bạn bè</Text>
+                <Text style={styles.emptySubtitle}>
+                  Tìm kiếm và kết bạn với người thân, bạn bè để bắt đầu trò chuyện
+                </Text>
+              </View>
+            ) : null
           }
-        }}
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+        />
+      )}
       
-      <TouchableOpacity style={styles.fab} activeOpacity={0.8}>
+      {/* <TouchableOpacity style={styles.fab} activeOpacity={0.8}>
         <LinearGradient
           colors={['#007AFF', '#0051D5']}
           style={styles.fabGradient}
         >
           <Feather name="plus" size={24} color="white" />
         </LinearGradient>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
       
       {/* Friend Request Message Modal */}
       <Modal
@@ -699,7 +821,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: "10%",
     paddingBottom: 16,
   },
   homeButton: {
@@ -1190,6 +1312,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: 'white',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#8E8E93',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 40,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#8E8E93',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 

@@ -28,7 +28,7 @@ const CustomBackButton = ({ onPress }: { onPress: () => void }) => (
         blurAmount={10}
         reducedTransparencyFallbackColor="white"
       />
-      <Feather name="chevron-left" size={24} color="#000" />
+      <Feather name="chevron-left" size={24} color="#007AFF" />
     </TouchableOpacity>
 );
 
@@ -69,7 +69,7 @@ const HomeNavigator = () => {
         component={WordSearchScreen}
         options={{ headerShown: false }} // Ẩn header để full-screen game experience
       />
-      <Stack.Screen name="Notifications" component={NotificationsScreen} />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Premium" component={PremiumNavigator} />
       <Stack.Screen 
         name="EditProfile" 

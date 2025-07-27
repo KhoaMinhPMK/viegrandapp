@@ -114,8 +114,16 @@ export const storageUtils = {
 
   clearAuth: async () => {
     try {
+      // Xóa tất cả dữ liệu liên quan đến user
       await AsyncStorage.removeItem('access_token');
       await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('user_email');
+      await AsyncStorage.removeItem('user_phone');
+      await AsyncStorage.removeItem('premium_status');
+      await AsyncStorage.removeItem('premium_end_date');
+      await AsyncStorage.removeItem('premium_days_remaining');
+      
+      console.log('✅ All user data cleared from AsyncStorage');
     } catch (error) {
       console.error('Error clearing auth:', error);
     }
@@ -128,7 +136,7 @@ export const registerUser = async (userData: RegisterRequest): Promise<{ success
     const response = await apiClient.post('/register.php', {
       userName: userData.fullName,
       email: userData.email,
-      relative_phone: userData.phone, // Map phone to relative_phone
+      phone: userData.phone, // Map phone vào field phone thay vì relative_phone
       // password field doesn't exist in backend, will be ignored
     });
 
@@ -161,7 +169,7 @@ export const registerUser = async (userData: RegisterRequest): Promise<{ success
         fullName: apiUser.userName || userData.fullName,
         email: apiUser.email || userData.email,
         role: 'user', // Mặc định là user
-        phone: userData.phone, // Lưu phone từ input vì API chưa có field này
+        phone: apiUser.phone || userData.phone, // Lấy phone từ API response
         active: true,
         age: apiUser.age,
         gender: apiUser.gender,
@@ -538,6 +546,31 @@ export const cancelFriendRequest = async (fromPhone: string, toPhone: string, re
   }
 };
 
+// Debug phone check API
+export const debugPhoneCheck = async (email: string): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    const response = await apiClient.post('/debug_phone_check.php', {
+      email: email.trim()
+    });
+    console.log('Debug phone check API response:', response.data);
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    }
+    return { success: false, data: null, message: response.data.message };
+  } catch (error: any) {
+    console.error('Debug phone check API error:', error);
+    return {
+      success: false,
+      data: null,
+      message: error.response?.data?.error?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
 // Get notifications API
 export const getNotifications = async (userPhone: string): Promise<{ success: boolean; notifications?: any[]; message?: string }> => {
   try {
@@ -584,6 +617,32 @@ export const markNotificationsRead = async (userPhone: string, notificationIds: 
     return {
       success: false,
       message: error.response?.data?.error?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Delete notifications API
+export const deleteNotifications = async (userPhone: string, notificationIds: number[]): Promise<{ success: boolean; deletedCount?: number; message?: string }> => {
+  try {
+    console.log('🔄 deleteNotifications - Deleting notifications:', { userPhone, notificationIds });
+    const response = await apiClient.post('/delete_noti.php', {
+      user_phone: userPhone.trim(),
+      notification_ids: notificationIds
+    });
+    console.log('🗑️ deleteNotifications API response:', response.data);
+    if (response.data.success) {
+      return {
+        success: true,
+        deletedCount: response.data.data?.deletedCount || 0,
+        message: response.data.message
+      };
+    }
+    return { success: false, message: response.data.message };
+  } catch (error: any) {
+    console.error('❌ deleteNotifications API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Lỗi kết nối'
     };
   }
 };
@@ -686,6 +745,274 @@ export const getUserPhone = async (email: string): Promise<{ success: boolean; p
     });
     return {
       success: false,
+      message: error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Get friends list API
+export const getFriendsList = async (userPhone: string): Promise<{ success: boolean; friends?: any[]; total?: number; message?: string }> => {
+  try {
+    console.log('🔄 getFriendsList - Sending request:', { userPhone });
+    const response = await apiClient.post('/get_friends.php', {
+      user_phone: userPhone.trim()
+    });
+    
+    console.log('✅ getFriendsList API - Full response:', {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data
+    });
+
+    // Handle case where PHP warnings are included in response
+    let responseData = response.data;
+    if (typeof responseData === 'string') {
+      // Extract JSON from string that might contain PHP warnings
+      const jsonMatch = responseData.match(/\{.*\}$/);
+      if (jsonMatch) {
+        try {
+          responseData = JSON.parse(jsonMatch[0]);
+        } catch (parseError) {
+          console.error('Failed to parse JSON from response:', parseError);
+          return {
+            success: false,
+            friends: [],
+            total: 0,
+            message: 'Invalid response format from server'
+          };
+        }
+      }
+    }
+
+    if (responseData.success) {
+      console.log('✅ getFriendsList - Success response data:', responseData.data);
+      return {
+        success: true,
+        friends: responseData.data.friends || [],
+        total: responseData.data.total || 0,
+        message: responseData.message
+      };
+    } else {
+      console.log('❌ getFriendsList - API returned success=false:', responseData.message);
+      return {
+        success: false,
+        friends: [],
+        total: 0,
+        message: responseData.message || 'Không thể lấy danh sách bạn bè'
+      };
+    }
+  } catch (error: any) {
+    console.error('❌ getFriendsList API - Detailed error:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      headers: error.response?.headers,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        data: error.config?.data,
+        headers: error.config?.headers
+      }
+    });
+    return {
+      success: false,
+      friends: [],
+      total: 0,
+      message: error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Debug conversations API
+export const debugConversations = async (userPhone: string): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    console.log('🔄 debugConversations - Sending request:', { userPhone });
+    const response = await apiClient.post('/debug_conversations.php', {
+      user_phone: userPhone.trim()
+    });
+    
+    console.log('✅ debugConversations API - Full response:', {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data
+    });
+
+    if (response.data.success) {
+      console.log('✅ debugConversations - Success response data:', response.data.data);
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } else {
+      console.log('❌ debugConversations - API returned success=false:', response.data.message);
+      return {
+        success: false,
+        data: null,
+        message: response.data.message || 'Không thể debug conversations'
+      };
+    }
+  } catch (error: any) {
+    console.error('❌ debugConversations API - Detailed error:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data
+    });
+    return {
+      success: false,
+      data: null,
+      message: error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Get conversations list API
+export const getConversationsList = async (userPhone: string): Promise<{ success: boolean; conversations?: any[]; total?: number; message?: string }> => {
+  try {
+    console.log('🔄 getConversationsList - Sending request:', { userPhone });
+    const response = await apiClient.post('/get_conversations.php', {
+      user_phone: userPhone.trim()
+    });
+    
+    console.log('✅ getConversationsList API - Full response:', {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data
+    });
+
+    // Handle case where PHP warnings are included in response
+    let responseData = response.data;
+    if (typeof responseData === 'string') {
+      // Extract JSON from string that might contain PHP warnings
+      const jsonMatch = responseData.match(/\{.*\}$/);
+      if (jsonMatch) {
+        try {
+          responseData = JSON.parse(jsonMatch[0]);
+        } catch (parseError) {
+          console.error('Failed to parse JSON from response:', parseError);
+          return {
+            success: false,
+            conversations: [],
+            total: 0,
+            message: 'Invalid response format from server'
+          };
+        }
+      }
+    }
+
+    if (responseData.success) {
+      console.log('✅ getConversationsList - Success response data:', responseData.data);
+      return {
+        success: true,
+        conversations: responseData.data.conversations || [],
+        total: responseData.data.total || 0,
+        message: responseData.message
+      };
+    } else {
+      console.log('❌ getConversationsList - API returned success=false:', responseData.message);
+      return {
+        success: false,
+        conversations: [],
+        total: 0,
+        message: responseData.message || 'Không thể lấy danh sách cuộc trò chuyện'
+      };
+    }
+  } catch (error: any) {
+    console.error('❌ getConversationsList API - Detailed error:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      headers: error.response?.headers,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        data: error.config?.data,
+        headers: error.config?.headers
+      }
+    });
+    return {
+      success: false,
+      conversations: [],
+      total: 0,
+      message: error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Get messages API
+export const getMessages = async (conversationId: string, userPhone: string): Promise<{ success: boolean; messages?: any[]; conversation?: any; total?: number; message?: string }> => {
+  try {
+    console.log('🔄 getMessages - Sending request:', { conversationId, userPhone });
+    const response = await apiClient.post('/get_messages.php', {
+      conversation_id: conversationId,
+      user_phone: userPhone.trim()
+    });
+    
+    console.log('✅ getMessages API - Full response:', {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data
+    });
+
+    // Handle case where PHP warnings are included in response
+    let responseData = response.data;
+    if (typeof responseData === 'string') {
+      // Extract JSON from string that might contain PHP warnings
+      const jsonMatch = responseData.match(/\{.*\}$/);
+      if (jsonMatch) {
+        try {
+          responseData = JSON.parse(jsonMatch[0]);
+        } catch (parseError) {
+          console.error('Failed to parse JSON from response:', parseError);
+          return {
+            success: false,
+            messages: [],
+            total: 0,
+            message: 'Invalid response format from server'
+          };
+        }
+      }
+    }
+
+    if (responseData.success) {
+      console.log('✅ getMessages - Success response data:', responseData.data);
+      return {
+        success: true,
+        messages: responseData.data.messages || [],
+        conversation: responseData.data.conversation,
+        total: responseData.data.total || 0,
+        message: responseData.message
+      };
+    } else {
+      console.log('❌ getMessages - API returned success=false:', responseData.message);
+      return {
+        success: false,
+        messages: [],
+        total: 0,
+        message: responseData.message || 'Không thể lấy tin nhắn'
+      };
+    }
+  } catch (error: any) {
+    console.error('❌ getMessages API - Detailed error:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      headers: error.response?.headers,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        data: error.config?.data,
+        headers: error.config?.headers
+      }
+    });
+    return {
+      success: false,
+      messages: [],
+      total: 0,
       message: error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Lỗi kết nối'
     };
   }

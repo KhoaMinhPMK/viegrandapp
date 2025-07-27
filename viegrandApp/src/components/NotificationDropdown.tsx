@@ -35,6 +35,7 @@ interface NotificationDropdownProps {
   position: { top: number; right: number };
   userPhone?: string;
   onFriendRequestPress?: (notification: Notification) => void;
+  onConversationsRefresh?: () => void; // New callback for refreshing conversations
 }
 
 const NotificationDropdown = ({
@@ -136,7 +137,7 @@ const NotificationDropdown = ({
                           <Feather name="users" size={12} color="#007AFF" />
                         </View>
                       )}
-                      <Text style={styles.notificationTime}>{notification.time}</Text>
+                    <Text style={styles.notificationTime}>{notification.time}</Text>
                     </View>
                   </View>
                   <Text style={styles.notificationMessage} numberOfLines={2}>
@@ -415,6 +416,11 @@ const NotificationDropdownWithModal = (props: NotificationDropdownProps) => {
           console.log(`Friend request ${action}`);
           // Refresh notifications to reflect the change
           refetchNotifications();
+          // Refresh conversations list if callback provided
+          if (props.onConversationsRefresh) {
+            console.log('🔄 NotificationDropdown: Refreshing conversations list after friend request action');
+            props.onConversationsRefresh();
+          }
           // Close the dropdown as well
           props.onClose();
         }}

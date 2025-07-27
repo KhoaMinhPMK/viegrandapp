@@ -219,7 +219,7 @@ const RelativeSettingsScreen = ({ navigation }: any) => {
           ) : isPremium ? (
             <SettingsRow
               type="navigation"
-              icon="star"
+              icon="crown"
               iconBackgroundColor="#32CD32"
               title="Premium Active"
               value={daysRemaining ? `Còn ${daysRemaining} ngày` : 'Đang hoạt động'}

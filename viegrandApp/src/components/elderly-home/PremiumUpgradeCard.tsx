@@ -23,7 +23,7 @@ const PremiumUpgradeCard = memo(({ isPremium, daysRemaining }: PremiumUpgradeCar
         <LinearGradient colors={['#1E3A8A', '#3B82F6']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cardGradient}>
           <View style={styles.cardOverlay}>
             <View style={styles.cardHeader}>
-              <Feather name="crown" size={18} color="#FFD700" />
+              <Feather name="star" size={18} color="#FFD700" />
               <Text style={styles.cardTitle}>PREMIUM ACTIVE</Text>
               <TouchableOpacity style={styles.cardButton} onPress={handleNavigate}>
                 <Text style={styles.cardButtonText}>Quản lý</Text>

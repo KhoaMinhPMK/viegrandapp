@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,11 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Image,
+  Alert,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { BackgroundImages } from '../../../utils/assetUtils';
+import { useSocket } from '../../../contexts/SocketContext';
 
 interface Notification {
   id: number;
@@ -21,42 +23,88 @@ interface Notification {
 }
 
 const NotificationsScreen = ({ navigation, route }: any) => {
-  // Nhận thông báo từ route params hoặc sử dụng dữ liệu mẫu
-  const initialNotifications = route.params?.notifications || [
-    { id: 1, title: 'Nhắc nhở uống thuốc', message: 'Đã đến giờ uống thuốc huyết áp', time: '10:30', date: 'Hôm nay', read: false },
-    { id: 2, title: 'Lịch khám bệnh', message: 'Bạn có lịch khám tim mạch vào ngày mai', time: '09:00', date: 'Hôm nay', read: false },
-    { id: 3, title: 'Cập nhật sức khỏe', message: 'Hãy cập nhật chỉ số huyết áp hôm nay', time: '08:00', date: 'Hôm nay', read: false },
-    { id: 4, title: 'Nhắc nhở tập thể dục', message: 'Đã đến giờ tập thể dục buổi sáng', time: '07:30', date: 'Hôm qua', read: true },
-    { id: 5, title: 'Nhắc nhở uống nước', message: 'Hãy nhớ uống đủ nước trong ngày', time: '14:00', date: 'Hôm qua', read: true },
-    { id: 6, title: 'Thông báo từ gia đình', message: 'Con gái bạn đã gửi một tin nhắn mới', time: '18:45', date: '20/08/2023', read: true },
-  ];
-
-  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  // Sử dụng thông báo real từ SocketContext
+  const { notifications: socketNotifications, markAsRead, deleteNotification, isLoading } = useSocket();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
-  const handleMarkAllAsRead = () => {
-    const updatedNotifications = notifications.map(notification => ({
-      ...notification,
-      read: true,
-    }));
-    setNotifications(updatedNotifications);
+  // Format thông báo từ SocketContext để phù hợp với UI
+  const formattedNotifications = useMemo(() => {
+    return socketNotifications.map(notification => {
+      const createdAt = new Date(notification.createdAt);
+      const now = new Date();
+      const diffHours = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+      
+      let dateLabel = '';
+      if (diffHours < 24) {
+        dateLabel = 'Hôm nay';
+      } else if (diffHours < 48) {
+        dateLabel = 'Hôm qua';
+      } else {
+        dateLabel = createdAt.toLocaleDateString('vi-VN', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric' 
+        });
+      }
+
+      let timeLabel = '';
+      if (diffHours < 1) {
+        const diffMins = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60));
+        timeLabel = `${diffMins} phút trước`;
+      } else if (diffHours < 24) {
+        timeLabel = `${Math.floor(diffHours)} giờ trước`;
+      } else {
+        timeLabel = createdAt.toLocaleTimeString('vi-VN', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+      }
+
+      return {
+        id: notification.id,
+        title: notification.title,
+        message: notification.body,
+        time: timeLabel,
+        date: dateLabel,
+        read: notification.isRead,
+      };
+    });
+  }, [socketNotifications]);
+
+  const handleMarkAllAsRead = async () => {
+    const unreadIds = formattedNotifications
+      .filter(notification => !notification.read)
+      .map(notification => notification.id);
+    
+    if (unreadIds.length > 0) {
+      await markAsRead(unreadIds);
+    }
   };
 
-  const handleMarkAsRead = (id: number) => {
-    const updatedNotifications = notifications.map(notification =>
-      notification.id === id ? { ...notification, read: true } : notification
+  const handleMarkAsRead = async (id: number) => {
+    await markAsRead([id]);
+  };
+
+  const handleDeleteNotification = async (id: number) => {
+    Alert.alert(
+      'Xóa thông báo',
+      'Bạn có chắc chắn muốn xóa thông báo này không?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        { 
+          text: 'Xóa', 
+          style: 'destructive',
+          onPress: async () => {
+            await deleteNotification([id]);
+          }
+        }
+      ]
     );
-    setNotifications(updatedNotifications);
-  };
-
-  const handleDeleteNotification = (id: number) => {
-    const updatedNotifications = notifications.filter(notification => notification.id !== id);
-    setNotifications(updatedNotifications);
   };
 
   const filteredNotifications = filter === 'all' 
-    ? notifications 
-    : notifications.filter(notification => !notification.read);
+    ? formattedNotifications 
+    : formattedNotifications.filter(notification => !notification.read);
 
   // Nhóm thông báo theo ngày
   const groupedNotifications: { [key: string]: Notification[] } = {};

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useRef, ReactNode, useCallback } from 'react';
 import io, { Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
-import { getUserData, getNotifications, markNotificationsRead } from '../services/api';
+import { getUserData, getNotifications, markNotificationsRead, deleteNotifications, debugPhoneCheck } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState } from 'react-native';
 
@@ -22,6 +22,8 @@ interface SocketContextType {
   unreadCount: number;
   isLoading: boolean;
   markAsRead: (ids: number[]) => Promise<void>;
+  deleteNotification: (ids: number[]) => Promise<void>;
+  removeNotification: (ids: number[]) => void;
   refetchNotifications: () => Promise<void>;
 }
 
@@ -56,7 +58,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
           setUserPhone(user.phone);
           return;
         }
-        const email = await AsyncStorage.getItem('user_email');
+        // Sử dụng email từ user context thay vì AsyncStorage
+        const email = user.email;
         console.log('🔄 SocketContext - Fetching phone for email:', email);
         if (email) {
           const result = await getUserData(email);
@@ -201,12 +204,41 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     }
   }, [userPhone]);
 
+  // Hàm để xóa thông báo với API call
+  const deleteNotification = useCallback(async (ids: number[]) => {
+    if (!userPhone || ids.length === 0) return;
+
+    // Optimistic update - xóa khỏi UI ngay lập tức
+    const previousNotifications = notifications;
+    setNotifications(prev => prev.filter(n => !ids.includes(n.id)));
+    
+    try {
+      const result = await deleteNotifications(userPhone, ids);
+      if (!result.success) {
+        // Nếu API thất bại, rollback UI
+        setNotifications(previousNotifications);
+        console.error("SocketContext: Failed to delete notifications:", result.message);
+      }
+    } catch (error) {
+      console.error("SocketContext: Failed to delete notifications", error);
+      // Rollback UI nếu API thất bại
+      setNotifications(previousNotifications);
+    }
+  }, [userPhone, notifications]);
+
+  // Hàm để xóa local (chỉ UI, không gọi API)
+  const removeNotification = useCallback((ids: number[]) => {
+    setNotifications(prev => prev.filter(n => !ids.includes(n.id)));
+  }, []);
+
   const value = {
     socket: socketRef.current,
     notifications,
     unreadCount: notifications.filter(n => !n.isRead).length,
     isLoading,
     markAsRead,
+    deleteNotification,
+    removeNotification,
     refetchNotifications: fetchNotifications,
   };
 

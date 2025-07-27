@@ -8,16 +8,30 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Feather from 'react-native-vector-icons/Feather';
 import io from 'socket.io-client';
+import { getMessages } from '../../../services/api';
+import { useAuth } from '../../../contexts/AuthContext';
 
 // Type definitions
 interface Message {
-  id: string;
-  text: string;
-  timestamp: number;
+  id: number;
+  conversationId: string;
+  senderPhone: string;
+  receiverPhone: string;
+  messageText: string;
+  messageType: string;
+  fileUrl?: string;
+  isRead: boolean;
+  sentAt: string;
+  readAt?: string;
+  requiresFriendship: boolean;
+  friendshipStatus: string;
+  senderName: string;
+  isOwnMessage: boolean;
 }
 
 export type MessageStackParamList = {
@@ -32,10 +46,14 @@ export type MessageStackParamList = {
 type ChatScreenProps = NativeStackScreenProps<MessageStackParamList, 'Chat'>;
 
 const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
+  const { conversationId, name, avatar } = route.params;
+  const { user } = useAuth();
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [socket, setSocket] = useState<any>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   
   // Sử dụng ref để tránh multiple connections
   const socketRef = useRef<any>(null);
@@ -68,12 +86,21 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       setIsConnected(false);
     });
 
-    newSocket.on('chat message', (msg: string) => {
+    newSocket.on('chat message', (msg: any) => {
       console.log('📨 Nhận tin nhắn:', msg);
       const newMessage: Message = {
-        id: Date.now().toString(),
-        text: msg,
-        timestamp: Date.now(),
+        id: Date.now(),
+        conversationId: conversationId,
+        senderPhone: msg.senderPhone || user?.phone || '',
+        receiverPhone: msg.receiverPhone || '',
+        messageText: msg.messageText || msg.text || '',
+        messageType: 'text',
+        isRead: false,
+        sentAt: new Date().toISOString(),
+        requiresFriendship: true,
+        friendshipStatus: 'accepted',
+        senderName: msg.senderName || 'Bạn',
+        isOwnMessage: false
       };
       setMessages(prev => [newMessage, ...prev]);
     });
@@ -99,6 +126,36 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
     };
   }, []); // Chỉ chạy 1 lần khi mount
 
+  // Load messages from API
+  useEffect(() => {
+    if (conversationId && user?.phone) {
+      loadMessages();
+    }
+  }, [conversationId, user?.phone]);
+
+  const loadMessages = async () => {
+    if (!conversationId || !user?.phone) return;
+    
+    setIsLoadingMessages(true);
+    try {
+      console.log('🔄 ChatScreen: Loading messages for conversation:', conversationId);
+      const result = await getMessages(conversationId, user.phone);
+      
+      if (result.success && result.messages) {
+        console.log('✅ ChatScreen: Messages loaded successfully:', result.messages.length, 'messages');
+        setMessages(result.messages.reverse()); // Reverse để hiển thị tin nhắn cũ ở trên
+      } else {
+        console.log('⚠️ ChatScreen: No messages found or API error:', result.message);
+        setMessages([]);
+      }
+    } catch (error) {
+      console.error('❌ ChatScreen: Error loading messages:', error);
+      setMessages([]);
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
+
   // Cleanup khi navigate away
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', () => {
@@ -123,10 +180,13 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
   };
 
   const renderMessage = ({ item }: { item: Message }) => (
-    <View style={styles.messageItem}>
-      <Text style={styles.messageText}>{item.text}</Text>
+    <View style={[
+      styles.messageItem,
+      item.isOwnMessage ? styles.ownMessage : styles.otherMessage
+    ]}>
+      <Text style={styles.messageText}>{item.messageText}</Text>
       <Text style={styles.messageTime}>
-        {new Date(item.timestamp).toLocaleTimeString()}
+        {new Date(item.sentAt).toLocaleTimeString()}
       </Text>
     </View>
   );
@@ -141,41 +201,41 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
           <Feather name="chevron-left" size={24} color="#007AFF" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Chat Test Socket</Text>
+          <Text style={styles.headerTitle}>{name}</Text>
           <Text style={[styles.headerStatus, { color: isConnected ? '#34C759' : '#FF3B30' }]}>
-            {isConnected ? `Đã kết nối (${socketRef.current?.id?.substring(0, 8)}...)` : 'Chưa kết nối'}
+            {isConnected ? 'Đã kết nối' : 'Chưa kết nối'}
           </Text>
         </View>
       </View>
 
       {/* Messages List */}
-      <FlatList
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={item => item.id}
-        style={styles.messagesList}
-        inverted
-        showsVerticalScrollIndicator={false}
-      />
+        <FlatList
+          data={messages}
+          renderItem={renderMessage}
+          keyExtractor={item => item.id.toString()}
+          style={styles.messagesList}
+          inverted
+          showsVerticalScrollIndicator={false}
+        />
 
       {/* Input */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.textInput}
+        <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.textInput}
           placeholder="Nhập tin nhắn..."
-          placeholderTextColor="#8A8A8E"
-          value={inputText}
-          onChangeText={setInputText}
+              placeholderTextColor="#8A8A8E"
+              value={inputText}
+              onChangeText={setInputText}
           onSubmitEditing={handleSend}
-          returnKeyType="send"
-        />
+              returnKeyType="send"
+            />
         <TouchableOpacity 
           onPress={handleSend} 
           style={[styles.sendButton, { opacity: inputText.trim() ? 1 : 0.5 }]}
           disabled={!inputText.trim()}>
           <Text style={styles.sendButtonText}>Gửi</Text>
-        </TouchableOpacity>
-      </View>
+            </TouchableOpacity>
+          </View>
     </SafeAreaView>
   );
 };
@@ -218,12 +278,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   messageItem: {
-    backgroundColor: '#F2F2F7',
     padding: 12,
     marginVertical: 4,
     borderRadius: 12,
-    alignSelf: 'flex-start',
     maxWidth: '80%',
+  },
+  ownMessage: {
+    backgroundColor: '#007AFF',
+    alignSelf: 'flex-end',
+  },
+  otherMessage: {
+    backgroundColor: '#F2F2F7',
+    alignSelf: 'flex-start',
   },
   messageText: {
     fontSize: 16,

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
-import { acceptFriendRequest, rejectFriendRequest } from '../services/api';
+import { acceptFriendRequest, rejectFriendRequest, getConversationsList } from '../services/api';
 
 interface FriendRequestModalProps {
   visible: boolean;
@@ -111,6 +111,20 @@ const FriendRequestModal: React.FC<FriendRequestModalProps> = ({
       
       if (result.success) {
         console.log('✅ FriendRequestModal: Accept successful');
+        
+        // Refresh conversations list after successful accept
+        try {
+          console.log('🔄 FriendRequestModal: Refreshing conversations list...');
+          const conversationsResult = await getConversationsList(userPhone);
+          if (conversationsResult.success) {
+            console.log('✅ FriendRequestModal: Conversations list refreshed successfully');
+          } else {
+            console.log('⚠️ FriendRequestModal: Failed to refresh conversations list:', conversationsResult.message);
+          }
+        } catch (refreshError) {
+          console.error('❌ FriendRequestModal: Error refreshing conversations list:', refreshError);
+        }
+        
         Alert.alert(
           'Thành công!',
           `Bạn và ${fromName} giờ đã là bạn bè! 🎉`,
@@ -119,6 +133,7 @@ const FriendRequestModal: React.FC<FriendRequestModalProps> = ({
             onClose();
           }}]
         );
+        
       } else {
         console.log('❌ FriendRequestModal: Accept failed:', result.message);
         Alert.alert('Lỗi', result.message || 'Không thể chấp nhận lời mời kết bạn');

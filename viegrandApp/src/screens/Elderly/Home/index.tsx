@@ -189,6 +189,13 @@ const ElderlyHomeScreen = () => {
     }
   }, [markAsRead, formattedNotifications]);
 
+  // Callback to refresh conversations list (will be called from notification dropdown)
+  const handleConversationsRefresh = useCallback(() => {
+    console.log('🔄 HomeScreen: Conversations refresh requested from notification');
+    // Navigate to Message screen to trigger refresh
+    (navigation as any).navigate('Message', { screen: 'MessageList' });
+  }, [navigation]);
+
   return (
     <SafeAreaView style={styles.container}>
       <Image source={BackgroundImages.secondary} style={styles.backgroundImage} resizeMode="cover" />
@@ -199,6 +206,7 @@ const ElderlyHomeScreen = () => {
         notifications={formattedNotifications}
         unreadNotificationCount={unreadCount} // Truyền vào Header
         onNotificationsUpdate={handleNotificationsUpdate}
+        onConversationsRefresh={handleConversationsRefresh}
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

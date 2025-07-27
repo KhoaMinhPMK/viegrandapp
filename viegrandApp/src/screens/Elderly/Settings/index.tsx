@@ -118,13 +118,40 @@ const ElderlySettingsScreen = () => {
         return fullName.slice(0, 2).toUpperCase();
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
         Alert.alert(
             'Đăng xuất',
-            'Bạn có chắc chắn muốn đăng xuất không?',
+            'Bạn có chắc chắn muốn đăng xuất không? Tất cả dữ liệu sẽ bị xóa.',
             [
               { text: 'Hủy', style: 'cancel' },
-              { text: 'Đăng xuất', style: 'destructive', onPress: () => logout() },
+              { 
+                text: 'Đăng xuất', 
+                style: 'destructive', 
+                onPress: async () => {
+                  try {
+                    console.log('🔄 User confirmed logout');
+                    
+                    // Thực hiện logout
+                    await logout();
+                    
+                    // Navigate về root level và chọn Auth route với Login screen
+                    navigation.reset({
+                      index: 0,
+                      routes: [{ 
+                        name: 'Auth',
+                        params: {
+                          screen: 'Login'
+                        }
+                      }],
+                    });
+                    
+                    console.log('✅ Logout completed and navigated to Login');
+                  } catch (error) {
+                    console.error('Error during logout:', error);
+                    Alert.alert('Lỗi', 'Có lỗi xảy ra khi đăng xuất');
+                  }
+                }
+              },
             ],
             { cancelable: true }
           );

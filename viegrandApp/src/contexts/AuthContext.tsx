@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
 import { storageUtils, User as ApiUser, LoginRequest, RegisterRequest, registerUser, loginUser } from '../services/api';
 import { Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface User extends ApiUser {}
 
@@ -78,6 +79,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       
+      // Clear cache cũ trước khi đăng ký
+      console.log('🔄 Clearing old cache before registration...');
+      await storageUtils.clearAuth();
+      
       // Gọi API register thật
       const result = await registerUser(userData);
       
@@ -87,6 +92,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         await storageUtils.saveToken(mockToken);
         await storageUtils.saveUser(result.user);
+        
+        // Clear và lưu email mới
+        await AsyncStorage.removeItem('user_email');
+        await AsyncStorage.setItem('user_email', userData.email);
         
         setUser(result.user);
         Alert.alert('Thành công', result.message || 'Đăng ký thành công');
@@ -106,8 +115,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = useCallback(async (): Promise<void> => {
     try {
+      console.log('🔄 Starting logout process...');
+      
+      // Xóa tất cả dữ liệu từ AsyncStorage
       await storageUtils.clearAuth();
+      
+      // Reset user state
       setUser(null);
+      
+      console.log('✅ Logout completed successfully');
     } catch (error) {
       console.error('Logout error:', error);
     }

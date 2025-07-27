@@ -14,9 +14,10 @@ interface HeaderProps {
   notifications: any[];
   unreadNotificationCount: number;
   onNotificationsUpdate: (notifications: any[]) => void;
+  onConversationsRefresh?: () => void; // Optional callback to refresh conversations
 }
 
-const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, onNotificationsUpdate }: HeaderProps) => {
+const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, onNotificationsUpdate, onConversationsRefresh }: HeaderProps) => {
   const navigation = useNavigation<any>();
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationButtonRef = useRef<any>(null);
@@ -133,7 +134,7 @@ const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, 
   return (
     <>
       <View style={styles.container}>
-        <View style={styles.userInfo}>
+          <View style={styles.userInfo}>
           <Image
             source={{ uri: 'https://i.pravatar.cc/150?img=3' }}
             style={styles.avatar}
@@ -142,14 +143,14 @@ const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, 
             <Text style={styles.greeting}>Chào buổi sáng</Text>
             <Text style={styles.userName}>{user?.fullName || 'Bác'}</Text>
           </View>
-        </View>
+            </View>
         <View style={styles.rightIcons}>
           {!isPremium && (
             <TouchableOpacity style={styles.premiumButton} onPress={handleNavigateToPremium}>
               <Feather name="shield" size={16} color="#FFC700" />
               <Text style={styles.premiumText}>Nâng cấp</Text>
-            </TouchableOpacity>
-          )}
+                  </TouchableOpacity>
+                )}
           <TouchableOpacity ref={notificationButtonRef} style={styles.notificationButton} onPress={handleToggleNotifications}>
             <Feather name="bell" size={24} color="#007AFF" />
             {unreadNotificationCount > 0 && (
@@ -161,16 +162,17 @@ const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, 
         </View>
       </View>
       {showNotifications && (
-        <NotificationDropdown
-          visible={showNotifications}
-          notifications={notifications}
-          onClose={handleCloseNotifications}
-          onMarkAllAsRead={handleMarkAllAsRead}
-          onPressNotification={handlePressNotification}
-          onViewAll={handleViewAllNotifications}
-          position={notificationPosition}
-          userPhone={userPhone}
-        />
+      <NotificationDropdown 
+        visible={showNotifications} 
+        notifications={notifications} 
+        onClose={handleCloseNotifications} 
+        onMarkAllAsRead={handleMarkAllAsRead} 
+        onPressNotification={handlePressNotification} 
+        onViewAll={handleViewAllNotifications} 
+        position={notificationPosition} 
+        userPhone={userPhone}
+        onConversationsRefresh={onConversationsRefresh}
+      />
       )}
     </>
   );

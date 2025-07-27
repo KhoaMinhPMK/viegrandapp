@@ -26,7 +26,7 @@ const CustomBackButton = ({ onPress }: { onPress: () => void }) => (
         blurAmount={10}
         reducedTransparencyFallbackColor="white"
       />
-      <Feather name="chevron-left" size={24} color="#000" />
+      <Feather name="chevron-left" size={24} color="#007AFF" />
     </TouchableOpacity>
 );
 

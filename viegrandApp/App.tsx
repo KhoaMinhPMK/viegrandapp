@@ -38,17 +38,17 @@ const App = () => {
   return (
     <AuthProvider>
       <SocketProvider>
-        <SafeAreaProvider>
-          <PremiumProvider>
-            <SettingsProvider>
-              <VoiceProvider>
-                <NavigationContainer>
-                  <AppContent />
-                </NavigationContainer>
-              </VoiceProvider>
-            </SettingsProvider>
-          </PremiumProvider>
-        </SafeAreaProvider>
+    <SafeAreaProvider>
+      <PremiumProvider>
+          <SettingsProvider>
+            <VoiceProvider>
+              <NavigationContainer>
+                <AppContent />
+              </NavigationContainer>
+            </VoiceProvider>
+          </SettingsProvider>
+      </PremiumProvider>
+    </SafeAreaProvider>
       </SocketProvider>
     </AuthProvider>
   );
