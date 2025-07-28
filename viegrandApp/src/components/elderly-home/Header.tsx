@@ -170,7 +170,7 @@ const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, 
         onPressNotification={handlePressNotification} 
         onViewAll={handleViewAllNotifications} 
         position={notificationPosition} 
-        userPhone={userPhone}
+          userPhone={userPhone}
         onConversationsRefresh={onConversationsRefresh}
       />
       )}

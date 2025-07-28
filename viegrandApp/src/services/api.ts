@@ -722,8 +722,8 @@ export const getUserPhone = async (email: string): Promise<{ success: boolean; p
       console.log('✅ getUserPhone - Success response data:', response.data);
       return {
         success: true,
-        phone: response.data.phone,
-        userName: response.data.userName,
+        phone: response.data.data?.phone,
+        userName: response.data.data?.userName,
         message: response.data.message
       };
     }
@@ -937,6 +937,119 @@ export const getConversationsList = async (userPhone: string): Promise<{ success
       success: false,
       conversations: [],
       total: 0,
+      message: error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Send message API
+export const sendMessage = async (conversationId: string, senderPhone: string, receiverPhone: string, messageText: string): Promise<{ success: boolean; messageId?: number; data?: any; message?: string }> => {
+  try {
+    console.log('🔄 sendMessage - Sending request:', { conversationId, senderPhone, receiverPhone, messageText });
+    
+    // Log request details
+    const requestData = {
+      sender_phone: senderPhone.trim(),
+      receiver_phone: receiverPhone.trim(),
+      message_text: messageText.trim()
+    };
+    console.log('🔍 sendMessage - Request data:', requestData);
+    console.log('🔍 sendMessage - Request URL:', apiClient.defaults.baseURL + 'send_message_v2.php');
+    
+    const response = await apiClient.post('/send_message_v2.php', requestData);
+    
+    console.log('✅ sendMessage API - Full response:', {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data
+    });
+
+    console.log('🔍 sendMessage - Full response data:', response.data);
+    
+    if (response.data.success) {
+      console.log('✅ sendMessage - Success response data:', response.data.data);
+      return {
+        success: true,
+        messageId: response.data.data?.message_id,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } else {
+      console.log('❌ sendMessage - API returned success=false:', response.data);
+      return {
+        success: false,
+        message: response.data.message || response.data.error?.message || 'Không thể gửi tin nhắn'
+      };
+    }
+  } catch (error: any) {
+    console.error('❌ sendMessage API - Detailed error:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data
+    });
+    
+    // Log response headers và body chi tiết
+    if (error.response) {
+      console.log('🔍 sendMessage API - Response headers:', error.response.headers);
+      console.log('🔍 sendMessage API - Response status:', error.response.status);
+      console.log('🔍 sendMessage API - Response statusText:', error.response.statusText);
+      console.log('🔍 sendMessage API - Response data:', error.response.data);
+      console.log('🔍 sendMessage API - Response data type:', typeof error.response.data);
+      console.log('🔍 sendMessage API - Response data length:', error.response.data?.length);
+      
+      // Nếu response.data là string, log chi tiết
+      if (typeof error.response.data === 'string') {
+        console.log('🔍 sendMessage API - Response data (string):', error.response.data);
+        console.log('🔍 sendMessage API - Response data (first 500 chars):', error.response.data.substring(0, 500));
+      }
+    }
+    
+    return {
+      success: false,
+      message: error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Mark message as read API
+export const markMessageAsRead = async (messageId: number, userPhone: string): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    console.log('🔄 markMessageAsRead - Sending request:', { messageId, userPhone });
+    const response = await apiClient.post('/mark_message_read.php', {
+      message_id: messageId,
+      user_phone: userPhone.trim()
+    });
+    
+    console.log('✅ markMessageAsRead API - Full response:', {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data
+    });
+
+    if (response.data.success) {
+      console.log('✅ markMessageAsRead - Success response data:', response.data.data);
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } else {
+      console.log('❌ markMessageAsRead - API returned success=false:', response.data.message);
+      return {
+        success: false,
+        message: response.data.message || 'Không thể đánh dấu tin nhắn đã đọc'
+      };
+    }
+  } catch (error: any) {
+    console.error('❌ markMessageAsRead API - Detailed error:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data
+    });
+    return {
+      success: false,
       message: error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Lỗi kết nối'
     };
   }

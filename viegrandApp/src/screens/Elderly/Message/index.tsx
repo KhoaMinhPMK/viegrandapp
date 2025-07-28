@@ -31,6 +31,7 @@ interface Conversation {
   lastMessage: string;
   time: string;
   unreadCount: number;
+  otherParticipantPhone?: string; // Thêm phone của người tham gia khác
 }
 
 interface SearchResult {
@@ -234,7 +235,8 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
           avatar: conv.avatar,
           lastMessage: conv.lastMessage,
           time: formatTime(conv.lastMessageTime),
-          unreadCount: 0 // TODO: Implement unread count
+          unreadCount: 0, // TODO: Implement unread count
+          otherParticipantPhone: conv.otherParticipantPhone
         }));
         
         setConversations(conversationsAsUI);
@@ -308,6 +310,7 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
       conversationId: item.id,
       name: item.name,
       avatar: item.avatar,
+      receiverPhone: item.otherParticipantPhone || '', // Thêm receiver phone
     });
   };
 
@@ -478,6 +481,7 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
       conversationId: friend.phone, // Use phone as ID
       name: friend.userName,
       avatar: friend.avatar,
+      receiverPhone: friend.phone, // Thêm receiver phone
     });
   };
 
@@ -614,19 +618,19 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
           <Text style={styles.loadingText}>Đang tải danh sách cuộc trò chuyện...</Text>
         </View>
       ) : (
-        <FlatList<ListItem>
-          data={showSearchResults ? searchResults : filteredConversations}
-          renderItem={renderListItem}
-          keyExtractor={(item, index) => {
-            if ('userId' in item) {
-              return `search-${item.userId}`;
-            } else {
-              return item.id;
-            }
-          }}
-          style={styles.list}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
+      <FlatList<ListItem>
+        data={showSearchResults ? searchResults : filteredConversations}
+        renderItem={renderListItem}
+        keyExtractor={(item, index) => {
+          if ('userId' in item) {
+            return `search-${item.userId}`;
+          } else {
+            return item.id;
+          }
+        }}
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             !showSearchResults && !isLoadingConversations ? (
               <View style={styles.emptyContainer}>

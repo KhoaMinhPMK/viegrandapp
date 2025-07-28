@@ -13,7 +13,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Feather from 'react-native-vector-icons/Feather';
 import io from 'socket.io-client';
-import { getMessages } from '../../../services/api';
+import { getMessages, sendMessage, markMessageAsRead, getUserPhone } from '../../../services/api';
 import { useAuth } from '../../../contexts/AuthContext';
 
 // Type definitions
@@ -40,20 +40,30 @@ export type MessageStackParamList = {
     conversationId: string;
     name: string;
     avatar: string;
+    receiverPhone: string; // Thêm receiver phone
   };
 };
 
 type ChatScreenProps = NativeStackScreenProps<MessageStackParamList, 'Chat'>;
 
 const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
-  const { conversationId, name, avatar } = route.params;
+  const { conversationId, name, avatar, receiverPhone } = route.params;
   const { user } = useAuth();
+  
+  // Debug user data
+  console.log('🔍 ChatScreen - User data:', {
+    user: user,
+    userPhone: user?.phone,
+    conversationId,
+    receiverPhone
+  });
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [socket, setSocket] = useState<any>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [userPhone, setUserPhone] = useState<string>('');
   
   // Sử dụng ref để tránh multiple connections
   const socketRef = useRef<any>(null);
@@ -78,7 +88,18 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
     newSocket.on('connect', () => {
       console.log('✅ Đã kết nối socket:', newSocket.id);
       setIsConnected(true);
-      Alert.alert('Thành công', `Đã kết nối socket!\nID: ${newSocket.id}`);
+      
+      // Không join conversation room để tránh duplicate
+      // Chỉ đăng ký với phone number
+      console.log('🔗 Direct messaging mode - no room joining');
+      
+      // Đăng ký với server
+      if (userPhone) {
+        newSocket.emit('register', userPhone);
+        console.log('📞 App registered with phone:', userPhone);
+      } else {
+        console.log('⚠️ No userPhone available for registration');
+      }
     });
 
     newSocket.on('disconnect', (reason) => {
@@ -86,23 +107,98 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       setIsConnected(false);
     });
 
+    // Nhận tin nhắn mới từ server (chỉ tin nhắn trực tiếp, không phải từ conversation room)
     newSocket.on('chat message', (msg: any) => {
-      console.log('📨 Nhận tin nhắn:', msg);
-      const newMessage: Message = {
-        id: Date.now(),
-        conversationId: conversationId,
-        senderPhone: msg.senderPhone || user?.phone || '',
-        receiverPhone: msg.receiverPhone || '',
-        messageText: msg.messageText || msg.text || '',
-        messageType: 'text',
-        isRead: false,
-        sentAt: new Date().toISOString(),
-        requiresFriendship: true,
-        friendshipStatus: 'accepted',
-        senderName: msg.senderName || 'Bạn',
-        isOwnMessage: false
-      };
-      setMessages(prev => [newMessage, ...prev]);
+      console.log('📨 App received direct chat message:', msg);
+      console.log('📨 Message type:', typeof msg);
+      console.log('📨 Current userPhone:', userPhone);
+      
+      let messageText = '';
+      let senderName = 'Người dùng';
+      let isOwnMessage = false;
+      
+      if (typeof msg === 'string') {
+        // Tin nhắn đơn giản
+        messageText = msg;
+        senderName = 'Người dùng';
+        isOwnMessage = false;
+        console.log('📨 Processing string message:', { messageText, senderName, isOwnMessage });
+      } else {
+        // Tin nhắn có cấu trúc
+        messageText = msg.message || msg.message_text || '';
+        senderName = msg.sender || msg.senderName || 'Người dùng';
+        isOwnMessage = msg.sender === userPhone || msg.sender_phone === userPhone;
+        console.log('📨 Processing object message:', { 
+          messageText, 
+          senderName, 
+          isOwnMessage, 
+          msgSender: msg.sender,
+          msgSenderPhone: msg.sender_phone,
+          userPhone 
+        });
+      }
+      
+      if (messageText) {
+        console.log('📨 App processing message:', {
+          messageText,
+          senderName,
+          isOwnMessage,
+          msg,
+          timestamp: msg.timestamp,
+          sentAt: msg.sent_at
+        });
+        
+        // Kiểm tra xem có phải tin nhắn tự gửi không
+        if (isOwnMessage) {
+          console.log('🚫 Bỏ qua tin nhắn tự gửi trong app');
+          return;
+        }
+        
+        // Xử lý timestamp
+        let sentAt = new Date().toISOString();
+        if (msg.timestamp || msg.sent_at) {
+          try {
+            const timestamp = msg.timestamp || msg.sent_at;
+            if (typeof timestamp === 'string') {
+              // Thử parse ISO string
+              const date = new Date(timestamp);
+              if (!isNaN(date.getTime())) {
+                sentAt = date.toISOString();
+              }
+            }
+          } catch (error) {
+            console.log('⚠️ Invalid timestamp, using current time:', msg.timestamp);
+          }
+        }
+        
+        const newMessage: Message = {
+          id: msg.id || Date.now(),
+          conversationId: msg.conversationId || msg.conversation_id || conversationId,
+          senderPhone: msg.sender || msg.sender_phone || '',
+          receiverPhone: msg.receiver || msg.receiver_phone || '',
+          messageText: messageText,
+          messageType: 'text',
+          isRead: false,
+          sentAt: sentAt,
+          requiresFriendship: true,
+          friendshipStatus: 'friends',
+          senderName: senderName,
+          isOwnMessage: isOwnMessage
+        };
+        
+        console.log('📨 Adding new message to app:', newMessage);
+        setMessages(prev => [...prev, newMessage]);
+      }
+    });
+
+    // Nhận thông báo tin nhắn đã đọc
+    newSocket.on('message read', (data: any) => {
+      console.log('👁️ Tin nhắn đã đọc:', data);
+      setMessages(prev => prev.map(msg => 
+        msg.id === data.message_id 
+          ? { ...msg, isRead: true, readAt: data.read_at }
+          : msg
+      ));
     });
 
     newSocket.on('connect_error', (error: any) => {
@@ -126,20 +222,52 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
     };
   }, []); // Chỉ chạy 1 lần khi mount
 
-  // Load messages from API
+  // Load user phone and messages
   useEffect(() => {
-    if (conversationId && user?.phone) {
-      loadMessages();
-    }
-  }, [conversationId, user?.phone]);
+    const loadUserPhoneAndMessages = async () => {
+      if (!conversationId || !user?.email) return;
+      
+      try {
+        console.log('🔍 ChatScreen: Loading user phone for email:', user.email);
+        const phoneResult = await getUserPhone(user.email);
+        
+        if (phoneResult.success && phoneResult.phone) {
+          console.log('✅ ChatScreen: Got user phone:', phoneResult.phone);
+          setUserPhone(phoneResult.phone);
+          console.log('🔍 ChatScreen: userPhone state set to:', phoneResult.phone);
+          
+          // Load messages after getting phone
+          await loadMessages(phoneResult.phone);
+        } else {
+          console.log('❌ ChatScreen: Failed to get user phone:', phoneResult.message);
+          Alert.alert('Lỗi', 'Không thể lấy số điện thoại người dùng');
+        }
+      } catch (error) {
+        console.error('❌ ChatScreen: Error loading user phone:', error);
+        Alert.alert('Lỗi', 'Không thể lấy thông tin người dùng');
+      }
+    };
+    
+    loadUserPhoneAndMessages();
+  }, [conversationId, user?.email]);
 
-  const loadMessages = async () => {
-    if (!conversationId || !user?.phone) return;
+  // Monitor userPhone state changes
+  useEffect(() => {
+    console.log('🔍 ChatScreen - userPhone state changed:', userPhone);
+    if (userPhone && socket && isConnected) {
+      socket.emit('register', userPhone);
+      console.log('📞 Re-registered with new phone:', userPhone);
+    }
+  }, [userPhone, socket, isConnected]);
+
+  const loadMessages = async (phone?: string) => {
+    const userPhoneToUse = phone || userPhone;
+    if (!conversationId || !userPhoneToUse) return;
     
     setIsLoadingMessages(true);
     try {
       console.log('🔄 ChatScreen: Loading messages for conversation:', conversationId);
-      const result = await getMessages(conversationId, user.phone);
+      const result = await getMessages(conversationId, userPhoneToUse);
       
       if (result.success && result.messages) {
         console.log('✅ ChatScreen: Messages loaded successfully:', result.messages.length, 'messages');
@@ -169,13 +297,81 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
     return unsubscribe;
   }, [navigation]);
 
-  const handleSend = () => {
-    if (inputText.trim() && socket && isConnected) {
-      console.log('📤 Gửi tin nhắn:', inputText.trim());
-      socket.emit('chat message', inputText.trim());
-      setInputText('');
-    } else if (!isConnected) {
+  const handleSend = async () => {
+    console.log('🔍 handleSend - Debug info:', {
+      inputText: inputText,
+      inputTextTrim: inputText.trim(),
+      inputTextLength: inputText.trim().length,
+      userPhone: userPhone,
+      userPhoneType: typeof userPhone,
+      userPhoneLength: userPhone?.length,
+      isConnected: isConnected,
+      conversationId: conversationId,
+      receiverPhone: receiverPhone,
+      routeParams: route.params
+    });
+
+    if (!inputText.trim()) {
+      console.log('❌ handleSend - Input text is empty');
+      Alert.alert('Lỗi', 'Vui lòng nhập tin nhắn!');
+      return;
+    }
+
+    if (!userPhone) {
+      console.log('❌ handleSend - User phone is missing');
+      Alert.alert('Lỗi', 'Không tìm thấy số điện thoại người dùng!');
+      return;
+    }
+
+    if (!isConnected) {
+      console.log('❌ handleSend - Socket not connected');
       Alert.alert('Lỗi', 'Socket chưa kết nối!');
+      return;
+    }
+
+    try {
+      console.log('📤 Gửi tin nhắn qua socket:', {
+        conversationId,
+        senderPhone: userPhone,
+        receiverPhone,
+        messageText: inputText.trim()
+      });
+
+      // Tạo tin nhắn mới để hiển thị ngay lập tức
+      const newMessage: Message = {
+        id: Date.now(),
+        conversationId,
+        senderPhone: userPhone,
+        receiverPhone,
+        messageText: inputText.trim(),
+        messageType: 'text',
+        isRead: false,
+        sentAt: new Date().toISOString(),
+        requiresFriendship: true,
+        friendshipStatus: 'friends',
+        senderName: 'Bạn',
+        isOwnMessage: true
+      };
+
+      setMessages(prev => [...prev, newMessage]);
+      setInputText('');
+      
+      // Gửi qua socket để real-time (bỏ qua API)
+      const messageData = {
+        conversationId,
+        senderPhone: userPhone,
+        receiverPhone,
+        messageText: inputText.trim(),
+        timestamp: new Date().toISOString()
+      };
+      
+      console.log('📤 Socket emit data:', messageData);
+      socket?.emit('send message', messageData);
+      
+      console.log('✅ Tin nhắn đã gửi qua socket');
+    } catch (error) {
+      console.error('❌ Lỗi gửi tin nhắn:', error);
+      Alert.alert('Lỗi', 'Không thể gửi tin nhắn');
     }
   };
 
@@ -222,15 +418,21 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
         <View style={styles.inputContainer}>
             <TextInput
               style={styles.textInput}
-          placeholder="Nhập tin nhắn..."
+              placeholder="Nhập tin nhắn..."
               placeholderTextColor="#8A8A8E"
               value={inputText}
-              onChangeText={setInputText}
-          onSubmitEditing={handleSend}
+              onChangeText={(text) => {
+                console.log('🔍 TextInput onChangeText:', { text, length: text.length });
+                setInputText(text);
+              }}
+              onSubmitEditing={handleSend}
               returnKeyType="send"
             />
         <TouchableOpacity 
-          onPress={handleSend} 
+          onPress={() => {
+            console.log('🔍 Send button pressed');
+            handleSend();
+          }} 
           style={[styles.sendButton, { opacity: inputText.trim() ? 1 : 0.5 }]}
           disabled={!inputText.trim()}>
           <Text style={styles.sendButtonText}>Gửi</Text>
