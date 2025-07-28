@@ -24,6 +24,7 @@ class GroqApiService {
 
   async analyzeHealthImage(base64Image: string): Promise<GroqResponse> {
     try {
+      // Sử dụng endpoint JSON
       const response = await fetch(`${this.baseUrl}/api/groq-image-chat-json`, {
         method: 'POST',
         headers: {
@@ -34,6 +35,16 @@ class GroqApiService {
           image: base64Image,
         }),
       });
+
+      // Kiểm tra response type để tránh lỗi JSON parse
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('Non-JSON response received');
+        return {
+          success: false,
+          error: 'Server trả về dữ liệu không hợp lệ.',
+        };
+      }
 
       const data = await response.json();
 
