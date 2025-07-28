@@ -3,12 +3,20 @@ import { View, StyleSheet, FlatList, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import FunctionButton from './FunctionButton';
 
+interface FunctionItem {
+  id: string;
+  icon?: string;
+  text?: string;
+  action?: () => void;
+  isPlus?: boolean;
+}
+
 const FunctionGrid = memo(() => {
   const navigation = useNavigation<any>();
 
   // Define data for the grid
-  const functions = [
-    { id: 'health', icon: 'heart', text: 'Sức khỏe', action: () => console.log('Sức khỏe') },
+  const functions: FunctionItem[] = [
+    { id: 'health', icon: 'heart', text: 'Sức khỏe', action: () => navigation.navigate('HealthCheck') },
     { id: 'entertainment', icon: 'compass', text: 'Giải trí', action: () => navigation.navigate('EntertainmentHub') },
     { id: 'appointments', icon: 'calendar', text: 'Lịch khám', action: () => console.log('Lịch khám') },
     { id: 'family', icon: 'users', text: 'Gia đình', action: () => console.log('Gia đình') },
@@ -19,11 +27,11 @@ const FunctionGrid = memo(() => {
     { id: 'empty' }, // Placeholder for alignment
   ];
 
-  const renderItem = useCallback(({ item }) => (
+  const renderItem = useCallback(({ item }: { item: FunctionItem }) => (
     <FunctionButton
-      icon={item.icon}
-      text={item.text}
-      onPress={item.action}
+      icon={item.icon || ''}
+      text={item.text || ''}
+      onPress={item.action || (() => {})}
       isPlus={item.isPlus}
     />
   ), []);

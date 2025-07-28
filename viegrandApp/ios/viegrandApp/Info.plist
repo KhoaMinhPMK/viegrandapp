@@ -52,6 +52,10 @@
 	<string>This app needs access to the microphone for voice recognition.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>This app needs access to speech recognition for converting your voice to text.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs access to the camera for taking photos of medical devices to analyze health readings.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to the photo library for selecting images of medical devices.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>AntDesign.ttf</string>

@@ -5,6 +5,7 @@ import { BlurView } from '@react-native-community/blur';
 import Feather from 'react-native-vector-icons/Feather';
 
 import ElderlyBottomTabNavigator from './ElderlyBottomTabNavigator';
+import HealthCheckScreen from '../screens/Elderly/Health/HealthCheckScreen';
 
 const Stack = createStackNavigator();
 
@@ -14,6 +15,11 @@ const ElderlyNavigator = () => {
       <Stack.Screen 
         name="Main" 
         component={ElderlyBottomTabNavigator} 
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="HealthCheck" 
+        component={HealthCheckScreen} 
         options={{ headerShown: false }}
       />
       {/* 
