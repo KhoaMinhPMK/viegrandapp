@@ -11,17 +11,20 @@ import {
   Dimensions,
   PermissionsAndroid,
   Platform,
+  StatusBar,
 } from 'react-native';
 import { launchCamera } from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import groqApiService, { HealthReadings } from '../../../services/groqApi';
+import { updateUserData } from '../../../services/api';
 
 const { width, height } = Dimensions.get('window');
 
 const HealthCheckScreen = () => {
   const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [readings, setReadings] = useState<HealthReadings | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -138,67 +141,200 @@ const HealthCheckScreen = () => {
     setError(null);
   };
 
+  const updateHealthData = async () => {
+    if (!readings) {
+      Alert.alert('Lỗi', 'Không có dữ liệu để cập nhật.');
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      setError(null);
+
+      // Lấy email từ AsyncStorage
+      const userEmail = await AsyncStorage.getItem('user_email');
+      console.log('🔍 Retrieved user email:', userEmail);
+      
+      if (!userEmail) {
+        console.log('❌ No user email found in AsyncStorage');
+        Alert.alert('Lỗi', 'Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+        return;
+      }
+
+      // Chuẩn bị dữ liệu để gửi lên server
+      const updateData = {
+        blood_pressure_systolic: parseInt(readings.huyet_ap_tam_thu),
+        blood_pressure_diastolic: parseInt(readings.huyet_ap_tam_truong),
+        heart_rate: parseInt(readings.nhip_tim),
+        last_health_check: new Date().toISOString()
+      };
+
+      console.log('📤 Sending health data to server:', updateData);
+      console.log('📧 User email:', userEmail);
+
+      // Gọi API cập nhật thông tin user
+      const response = await updateUserData(userEmail, updateData);
+
+      if (response.success) {
+        Alert.alert(
+          'Thành công', 
+          'Thông tin huyết áp đã được cập nhật thành công!',
+          [{ text: 'OK', onPress: () => navigation.goBack() }]
+        );
+      } else {
+        setError('Không thể cập nhật thông tin. Vui lòng thử lại.');
+      }
+    } catch (error) {
+      console.error('Update health data error:', error);
+      setError('Lỗi kết nối. Vui lòng thử lại.');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const getBloodPressureStatus = (systolic: number, diastolic: number) => {
+    if (systolic < 120 && diastolic < 80) return { status: 'normal', color: '#34C759', text: 'Bình thường' };
+    if (systolic < 130 && diastolic < 80) return { status: 'elevated', color: '#FF9500', text: 'Cao hơn bình thường' };
+    if (systolic >= 130 || diastolic >= 80) return { status: 'high', color: '#FF3B30', text: 'Cao' };
+    return { status: 'normal', color: '#34C759', text: 'Bình thường' };
+  };
+
+  const getHeartRateStatus = (rate: number) => {
+    if (rate >= 60 && rate <= 100) return { status: 'normal', color: '#34C759', text: 'Bình thường' };
+    if (rate < 60) return { status: 'low', color: '#FF9500', text: 'Chậm' };
+    return { status: 'high', color: '#FF3B30', text: 'Nhanh' };
+  };
+
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Quay lại</Text>
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()} 
+          style={styles.backButton}
+        >
+          <Text style={styles.backButtonText}>Quay lại</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>🏥 Kiểm tra sức khỏe</Text>
+        <Text style={styles.title}>Kiểm tra sức khỏe</Text>
+        <View style={styles.headerSpacer} />
       </View>
 
       <View style={styles.content}>
         {!capturedImage ? (
           <View style={styles.cameraContainer}>
             <View style={styles.cameraPlaceholder}>
-              <Text style={styles.cameraPlaceholderText}>📷</Text>
-              <Text style={styles.cameraPlaceholderText}>Chụp ảnh máy đo</Text>
+              <Text style={styles.cameraIcon}>📷</Text>
+              <Text style={styles.cameraTitle}>Chụp ảnh máy đo</Text>
+              <Text style={styles.cameraSubtitle}>
+                Đặt máy đo huyết áp trong khung hình và chụp ảnh rõ nét
+              </Text>
             </View>
-            <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-              <Text style={styles.captureButtonText}>📸 Chụp ảnh</Text>
+            
+            <TouchableOpacity 
+              style={styles.captureButton} 
+              onPress={takePicture}
+            >
+              <Text style={styles.captureButtonText}>Chụp ảnh</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.resultContainer}>
-            <Image source={{ uri: capturedImage }} style={styles.capturedImage} />
+            <View style={styles.imageContainer}>
+              <Image source={{ uri: capturedImage }} style={styles.capturedImage} />
+              {isLoading && (
+                <View style={styles.loadingOverlay}>
+                  <ActivityIndicator size="large" color="#007AFF" />
+                  <Text style={styles.loadingText}>Đang phân tích ảnh...</Text>
+                </View>
+              )}
+            </View>
             
-            {isLoading && (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007AFF" />
-                <Text style={styles.loadingText}>Đang phân tích ảnh...</Text>
-              </View>
-            )}
-
             {error && (
               <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>❌ {error}</Text>
+                <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
 
             {readings && (
               <View style={styles.readingsContainer}>
-                <Text style={styles.readingsTitle}>📊 Kết quả đo</Text>
+                <Text style={styles.readingsTitle}>Kết quả đo</Text>
                 
                 <View style={styles.readingItem}>
-                  <Text style={styles.readingLabel}>💓 Huyết áp tâm thu</Text>
+                  <View style={styles.readingInfo}>
+                    <Text style={styles.readingLabel}>Huyết áp tâm thu</Text>
+                    <Text style={styles.readingUnit}>mmHg</Text>
+                  </View>
                   <Text style={styles.readingValue}>{readings.huyet_ap_tam_thu}</Text>
                 </View>
                 
                 <View style={styles.readingItem}>
-                  <Text style={styles.readingLabel}>💔 Huyết áp tâm trương</Text>
+                  <View style={styles.readingInfo}>
+                    <Text style={styles.readingLabel}>Huyết áp tâm trương</Text>
+                    <Text style={styles.readingUnit}>mmHg</Text>
+                  </View>
                   <Text style={styles.readingValue}>{readings.huyet_ap_tam_truong}</Text>
                 </View>
                 
                 <View style={styles.readingItem}>
-                  <Text style={styles.readingLabel}>❤️ Nhịp tim</Text>
+                  <View style={styles.readingInfo}>
+                    <Text style={styles.readingLabel}>Nhịp tim</Text>
+                    <Text style={styles.readingUnit}>bpm</Text>
+                  </View>
                   <Text style={styles.readingValue}>{readings.nhip_tim}</Text>
+                </View>
+
+                {/* Health Status Summary */}
+                <View style={styles.statusContainer}>
+                  {(() => {
+                    const bpStatus = getBloodPressureStatus(
+                      parseInt(readings.huyet_ap_tam_thu), 
+                      parseInt(readings.huyet_ap_tam_truong)
+                    );
+                    const hrStatus = getHeartRateStatus(parseInt(readings.nhip_tim));
+                    
+                    return (
+                      <>
+                        <View style={styles.statusItem}>
+                          <Text style={styles.statusLabel}>Huyết áp</Text>
+                          <Text style={[styles.statusValue, { color: bpStatus.color }]}>
+                            {bpStatus.text}
+                          </Text>
+                        </View>
+                        <View style={styles.statusItem}>
+                          <Text style={styles.statusLabel}>Nhịp tim</Text>
+                          <Text style={[styles.statusValue, { color: hrStatus.color }]}>
+                            {hrStatus.text}
+                          </Text>
+                        </View>
+                      </>
+                    );
+                  })()}
                 </View>
               </View>
             )}
 
             <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.retakeButton} onPress={retakePicture}>
-                <Text style={styles.retakeButtonText}>🔄 Chụp lại</Text>
+              {readings && (
+                <TouchableOpacity 
+                  style={[styles.updateButton, isUpdating && styles.disabledButton]} 
+                  onPress={updateHealthData}
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={styles.updateButtonText}>Cập nhật thông tin</Text>
+                  )}
+                </TouchableOpacity>
+              )}
+              
+              <TouchableOpacity 
+                style={styles.retakeButton} 
+                onPress={retakePicture}
+              >
+                <Text style={styles.retakeButtonText}>Chụp lại</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -211,31 +347,37 @@ const HealthCheckScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#C7C7CC',
   },
   backButton: {
-    marginRight: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
   },
   backButtonText: {
-    fontSize: 16,
+    fontSize: 17,
     color: '#007AFF',
+    fontWeight: '400',
   },
   title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  headerSpacer: {
+    width: 60,
   },
   content: {
     flex: 1,
-    padding: 16,
+    padding: 20,
   },
   cameraContainer: {
     flex: 1,
@@ -244,68 +386,99 @@ const styles = StyleSheet.create({
   },
   cameraPlaceholder: {
     width: width * 0.8,
-    height: height * 0.4,
-    backgroundColor: '#e0e0e0',
+    height: height * 0.3,
+    backgroundColor: '#F2F2F7',
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 32,
   },
-  cameraPlaceholderText: {
-    fontSize: 24,
-    color: '#666',
+  cameraIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  cameraTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000000',
     marginBottom: 8,
+    textAlign: 'center',
+  },
+  cameraSubtitle: {
+    fontSize: 16,
+    color: '#8E8E93',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+    lineHeight: 22,
   },
   captureButton: {
     backgroundColor: '#007AFF',
     paddingHorizontal: 32,
-    paddingVertical: 16,
+    paddingVertical: 12,
     borderRadius: 8,
+    minWidth: 120,
+    alignItems: 'center',
   },
   captureButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600',
   },
   resultContainer: {
     flex: 1,
   },
+  imageContainer: {
+    position: 'relative',
+    marginBottom: 20,
+  },
   capturedImage: {
     width: '100%',
-    height: height * 0.3,
+    height: height * 0.25,
     borderRadius: 12,
-    marginBottom: 16,
   },
-  loadingContainer: {
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
   loadingText: {
-    marginTop: 8,
+    marginTop: 12,
     fontSize: 16,
-    color: '#666',
+    color: '#8E8E93',
+    fontWeight: '400',
   },
   errorContainer: {
-    backgroundColor: '#ffebee',
+    backgroundColor: '#FFE5E5',
     padding: 16,
     borderRadius: 8,
-    marginBottom: 16,
+    marginBottom: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF3B30',
   },
   errorText: {
-    color: '#c62828',
-    fontSize: 14,
+    color: '#FF3B30',
+    fontSize: 16,
+    fontWeight: '400',
   },
   readingsContainer: {
-    backgroundColor: '#fff',
-    padding: 16,
+    backgroundColor: '#FFFFFF',
+    padding: 20,
     borderRadius: 12,
-    marginBottom: 16,
+    marginBottom: 20,
+    borderWidth: 0.5,
+    borderColor: '#C7C7CC',
   },
   readingsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 20,
     textAlign: 'center',
   },
   readingItem: {
@@ -313,31 +486,82 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#C7C7CC',
+  },
+  readingInfo: {
+    flex: 1,
   },
   readingLabel: {
     fontSize: 16,
-    color: '#333',
+    fontWeight: '400',
+    color: '#000000',
+    marginBottom: 2,
+  },
+  readingUnit: {
+    fontSize: 14,
+    color: '#8E8E93',
+    fontWeight: '400',
   },
   readingValue: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#007AFF',
+  },
+  statusContainer: {
+    marginTop: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  statusItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    backgroundColor: '#F2F2F7',
+    borderRadius: 8,
+    marginHorizontal: 4,
+  },
+  statusLabel: {
+    fontSize: 14,
+    color: '#8E8E93',
+    fontWeight: '400',
+    marginBottom: 4,
+  },
+  statusValue: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   buttonContainer: {
     alignItems: 'center',
   },
-  retakeButton: {
-    backgroundColor: '#ff9800',
+  updateButton: {
+    backgroundColor: '#007AFF',
     paddingHorizontal: 32,
-    paddingVertical: 16,
+    paddingVertical: 12,
     borderRadius: 8,
+    marginBottom: 16,
+    minWidth: 200,
+    alignItems: 'center',
+  },
+  updateButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  retakeButton: {
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#C7C7CC',
   },
   retakeButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#007AFF',
+    fontSize: 17,
+    fontWeight: '400',
   },
 });
 
