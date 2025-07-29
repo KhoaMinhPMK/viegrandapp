@@ -13,6 +13,7 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { launchCamera } from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
@@ -215,7 +216,7 @@ const HealthCheckScreen = () => {
           onPress={() => navigation.goBack()} 
           style={styles.backButton}
         >
-          <Text style={styles.backButtonText}>Quay lại</Text>
+          <Icon name="chevron-back" size={24} color="#007AFF" />
         </TouchableOpacity>
         <Text style={styles.title}>Kiểm tra sức khỏe</Text>
         <View style={styles.headerSpacer} />
@@ -225,7 +226,9 @@ const HealthCheckScreen = () => {
         {!capturedImage ? (
           <View style={styles.cameraContainer}>
             <View style={styles.cameraPlaceholder}>
-              <Text style={styles.cameraIcon}>📷</Text>
+              <View style={styles.iconContainer}>
+                <Icon name="camera-outline" size={48} color="#8E8E93" />
+              </View>
               <Text style={styles.cameraTitle}>Chụp ảnh máy đo</Text>
               <Text style={styles.cameraSubtitle}>
                 Đặt máy đo huyết áp trong khung hình và chụp ảnh rõ nét
@@ -236,6 +239,7 @@ const HealthCheckScreen = () => {
               style={styles.captureButton} 
               onPress={takePicture}
             >
+              <Icon name="camera" size={20} color="#FFFFFF" style={styles.buttonIcon} />
               <Text style={styles.captureButtonText}>Chụp ảnh</Text>
             </TouchableOpacity>
           </View>
@@ -259,7 +263,10 @@ const HealthCheckScreen = () => {
 
             {readings && (
               <View style={styles.readingsContainer}>
-                <Text style={styles.readingsTitle}>Kết quả đo</Text>
+                <View style={styles.readingsHeader}>
+                  <Icon name="checkmark-circle" size={24} color="#34C759" />
+                  <Text style={styles.readingsTitle}>Kết quả đo</Text>
+                </View>
                 
                 <View style={styles.readingItem}>
                   <View style={styles.readingInfo}>
@@ -325,7 +332,10 @@ const HealthCheckScreen = () => {
                   {isUpdating ? (
                     <ActivityIndicator size="small" color="#fff" />
                   ) : (
-                    <Text style={styles.updateButtonText}>Cập nhật thông tin</Text>
+                    <>
+                      <Icon name="cloud-upload" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+                      <Text style={styles.updateButtonText}>Cập nhật thông tin</Text>
+                    </>
                   )}
                 </TouchableOpacity>
               )}
@@ -334,6 +344,7 @@ const HealthCheckScreen = () => {
                 style={styles.retakeButton} 
                 onPress={retakePicture}
               >
+                <Icon name="refresh" size={18} color="#007AFF" style={styles.buttonIcon} />
                 <Text style={styles.retakeButtonText}>Chụp lại</Text>
               </TouchableOpacity>
             </View>
@@ -354,26 +365,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#C7C7CC',
+    paddingTop: 35,
+    paddingBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   backButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 4,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F2F2F7',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  backButtonText: {
-    fontSize: 17,
-    color: '#007AFF',
-    fontWeight: '400',
-  },
+
   title: {
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     color: '#000000',
+    letterSpacing: -0.5,
   },
   headerSpacer: {
-    width: 60,
+    width: 44,
   },
   content: {
     flex: 1,
@@ -385,39 +407,68 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cameraPlaceholder: {
-    width: width * 0.8,
-    height: height * 0.3,
-    backgroundColor: '#F2F2F7',
-    borderRadius: 12,
+    width: width * 0.85,
+    height: height * 0.35,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 40,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
   },
-  cameraIcon: {
-    fontSize: 48,
-    marginBottom: 16,
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   cameraTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 8,
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 12,
     textAlign: 'center',
+    letterSpacing: -0.5,
   },
   cameraSubtitle: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: '#6C757D',
     textAlign: 'center',
-    paddingHorizontal: 20,
-    lineHeight: 22,
+    paddingHorizontal: 32,
+    lineHeight: 24,
+    fontWeight: '400',
   },
   captureButton: {
     backgroundColor: '#007AFF',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 8,
-    minWidth: 120,
+    paddingHorizontal: 40,
+    paddingVertical: 16,
+    borderRadius: 12,
+    minWidth: 160,
     alignItems: 'center',
+    flexDirection: 'row',
+    shadowColor: '#007AFF',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
   captureButtonText: {
     color: '#FFFFFF',
@@ -468,18 +519,32 @@ const styles = StyleSheet.create({
   },
   readingsContainer: {
     backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 20,
-    borderWidth: 0.5,
-    borderColor: '#C7C7CC',
+    padding: 24,
+    borderRadius: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  readingsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
   },
   readingsTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 20,
-    textAlign: 'center',
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginLeft: 8,
+    letterSpacing: -0.5,
   },
   readingItem: {
     flexDirection: 'row',
@@ -536,12 +601,21 @@ const styles = StyleSheet.create({
   },
   updateButton: {
     backgroundColor: '#007AFF',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingHorizontal: 40,
+    paddingVertical: 16,
+    borderRadius: 12,
     marginBottom: 16,
     minWidth: 200,
     alignItems: 'center',
+    flexDirection: 'row',
+    shadowColor: '#007AFF',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   updateButtonText: {
     color: '#FFFFFF',
@@ -553,15 +627,26 @@ const styles = StyleSheet.create({
   },
   retakeButton: {
     paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#C7C7CC',
+    borderColor: '#E9ECEF',
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   retakeButtonText: {
     color: '#007AFF',
     fontSize: 17,
-    fontWeight: '400',
+    fontWeight: '600',
   },
 });
 
