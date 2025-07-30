@@ -18,7 +18,7 @@ const FunctionGrid = memo(() => {
   const functions: FunctionItem[] = [
     { id: 'health', icon: 'heart', text: 'Sức khỏe', action: () => navigation.navigate('HealthCheck') },
     { id: 'entertainment', icon: 'compass', text: 'Giải trí', action: () => navigation.navigate('EntertainmentHub') },
-    { id: 'appointments', icon: 'calendar', text: 'Lịch khám', action: () => console.log('Lịch khám') },
+    { id: 'appointments', icon: 'calendar', text: 'Nhắc nhở', action: () => navigation.navigate('Reminders') },
     { id: 'family', icon: 'users', text: 'Gia đình', action: () => console.log('Gia đình') },
     { id: 'messages', icon: 'message-circle', text: 'Tin nhắn', action: () => navigation.navigate('Message') },
     { id: 'settings', icon: 'settings', text: 'Cài đặt', action: () => navigation.navigate('Settings') },

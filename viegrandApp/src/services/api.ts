@@ -1132,4 +1132,103 @@ export const getMessages = async (conversationId: string, userPhone: string): Pr
   }
 };
 
+// Reminder API functions
+export interface Reminder {
+  id: string;
+  type: 'medicine' | 'exercise' | 'appointment' | 'call' | 'other';
+  title: string;
+  time: string;
+  date: string;
+  content: string;
+  isCompleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const getReminders = async (email: string): Promise<{ success: boolean; data?: Reminder[]; message?: string }> => {
+  try {
+    console.log('🔄 getReminders - Sending request:', { email });
+    const response = await apiClient.get(`/get_reminders.php?email=${encodeURIComponent(email)}`);
+    
+    console.log('✅ getReminders API - Full response:', {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data
+    });
+
+    if (response.data.success) {
+      console.log('✅ getReminders - Success response data:', response.data.data);
+      return {
+        success: true,
+        data: response.data.data || [],
+        message: response.data.message
+      };
+    } else {
+      console.log('❌ getReminders - API returned success=false:', response.data.message);
+      return {
+        success: false,
+        message: response.data.message || 'Failed to get reminders'
+      };
+    }
+  } catch (error: any) {
+    console.error('❌ getReminders API - Detailed error:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data
+    });
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Network error occurred'
+    };
+  }
+};
+
+export const updateReminderStatus = async (
+  reminderId: string, 
+  status: 'completed' | 'pending', 
+  email: string
+): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    console.log('🔄 updateReminderStatus - Sending request:', { reminderId, status, email });
+    const response = await apiClient.post('/update_reminder_status.php', {
+      reminder_id: reminderId,
+      status: status,
+      email: email
+    });
+    
+    console.log('✅ updateReminderStatus API - Full response:', {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data
+    });
+
+    if (response.data.success) {
+      console.log('✅ updateReminderStatus - Success response data:', response.data.data);
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } else {
+      console.log('❌ updateReminderStatus - API returned success=false:', response.data.message);
+      return {
+        success: false,
+        message: response.data.message || 'Failed to update reminder status'
+      };
+    }
+  } catch (error: any) {
+    console.error('❌ updateReminderStatus API - Detailed error:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data
+    });
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Network error occurred'
+    };
+  }
+};
+
 export default apiClient;

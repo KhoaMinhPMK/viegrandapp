@@ -6,6 +6,7 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import ElderlyBottomTabNavigator from './ElderlyBottomTabNavigator';
 import HealthCheckScreen from '../screens/Elderly/Health/HealthCheckScreen';
+import RemindersScreen from '../screens/Elderly/Reminders';
 
 const Stack = createStackNavigator();
 
@@ -20,6 +21,11 @@ const ElderlyNavigator = () => {
       <Stack.Screen 
         name="HealthCheck" 
         component={HealthCheckScreen} 
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="Reminders" 
+        component={RemindersScreen} 
         options={{ headerShown: false }}
       />
       {/* 
