@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import config from '../config/env';
 
 // API Configuration
-const API_BASE_URL = 'https://viegrand.site/backend/';
+const API_BASE_URL = config.BACKEND_API_URL;
 
 // Tạo axios instance
 const apiClient = axios.create({
