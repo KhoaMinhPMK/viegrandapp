@@ -26,7 +26,7 @@ const VoiceRecognitionModal: React.FC<VoiceRecognitionModalProps> = ({
   onClose,
   onResult,
 }) => {
-  const { isListening, startListening, stopListening, results, error } = useVoice();
+  const { isListening, startListening, stopListening, results, error, clearResults } = useVoice();
   const pulseAnim = React.useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -38,9 +38,9 @@ const VoiceRecognitionModal: React.FC<VoiceRecognitionModalProps> = ({
   }, [visible]);
 
   useEffect(() => {
-    if (results.length > 0 && onResult) {
-      onResult(results[0]);
-    }
+    // if (results.length > 0 && onResult) {
+    //   onResult(results[0]);
+    // }
   }, [results, onResult]);
 
   useEffect(() => {
@@ -127,6 +127,19 @@ const VoiceRecognitionModal: React.FC<VoiceRecognitionModalProps> = ({
               </Text>
             )}
           </View>
+
+          {results.length > 0 && (
+            <TouchableOpacity
+              style={styles.clearButton}
+              onPress={() => {
+                if (results.length > 0) {
+                  clearResults(); // Hàm này đã có trong context
+                }
+              }}
+            >
+              <Text style={styles.clearButtonText}>Xóa</Text>
+            </TouchableOpacity>
+          )}
 
           {results.length > 0 && (
             <TouchableOpacity
@@ -243,6 +256,18 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  clearButton: {
+    backgroundColor: '#E2E8F0',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  clearButtonText: {
+    color: '#475569',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 

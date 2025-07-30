@@ -955,9 +955,9 @@ export const sendMessage = async (conversationId: string, senderPhone: string, r
       message_text: messageText.trim()
     };
     console.log('🔍 sendMessage - Request data:', requestData);
-    console.log('🔍 sendMessage - Request URL:', apiClient.defaults.baseURL + 'send_message_v2.php');
+    console.log('🔍 sendMessage - Request URL:', apiClient.defaults.baseURL + 'send_message_complete.php');
     
-    const response = await apiClient.post('/send_message_v2.php', requestData);
+    const response = await apiClient.post('/send_message_complete.php', requestData);
     
     console.log('✅ sendMessage API - Full response:', {
       status: response.status,

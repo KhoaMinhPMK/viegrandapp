@@ -9,12 +9,20 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Feather from 'react-native-vector-icons/Feather';
 import io from 'socket.io-client';
 import { getMessages, sendMessage, markMessageAsRead, getUserPhone } from '../../../services/api';
 import { useAuth } from '../../../contexts/AuthContext';
+
+// Import new components
+import ChatHeader from './ChatHeader';
+import MessageBubble from './MessageBubble';
+import InputBar from './InputBar';
+import TypingIndicator from './TypingIndicator';
 
 // Type definitions
 interface Message {
@@ -112,6 +120,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       console.log('📨 App received direct chat message:', msg);
       console.log('📨 Message type:', typeof msg);
       console.log('📨 Current userPhone:', userPhone);
+      console.log('📨 Current conversationId:', conversationId);
       
       let messageText = '';
       let senderName = 'Người dùng';
@@ -148,7 +157,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
           sentAt: msg.sent_at
         });
         
-        // Kiểm tra xem có phải tin nhắn tự gửi không
+        // Chỉ bỏ qua tin nhắn tự gửi nếu sender là chính mình
         if (isOwnMessage) {
           console.log('🚫 Bỏ qua tin nhắn tự gửi trong app');
           return;
@@ -260,24 +269,24 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
     }
   }, [userPhone, socket, isConnected]);
 
+  // Sửa loadMessages: KHÔNG reverse nữa
   const loadMessages = async (phone?: string) => {
     const userPhoneToUse = phone || userPhone;
     if (!conversationId || !userPhoneToUse) return;
-    
+
     setIsLoadingMessages(true);
     try {
-      console.log('🔄 ChatScreen: Loading messages for conversation:', conversationId);
       const result = await getMessages(conversationId, userPhoneToUse);
-      
       if (result.success && result.messages) {
-        console.log('✅ ChatScreen: Messages loaded successfully:', result.messages.length, 'messages');
-        setMessages(result.messages.reverse()); // Reverse để hiển thị tin nhắn cũ ở trên
+        // Sắp xếp tin nhắn từ cũ đến mới (cũ ở trên, mới ở dưới)
+        const sortedMessages = result.messages.sort((a, b) => 
+          new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
+        );
+        setMessages(sortedMessages);
       } else {
-        console.log('⚠️ ChatScreen: No messages found or API error:', result.message);
         setMessages([]);
       }
     } catch (error) {
-      console.error('❌ ChatScreen: Error loading messages:', error);
       setMessages([]);
     } finally {
       setIsLoadingMessages(false);
@@ -323,14 +332,8 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       return;
     }
 
-    if (!isConnected) {
-      console.log('❌ handleSend - Socket not connected');
-      Alert.alert('Lỗi', 'Socket chưa kết nối!');
-      return;
-    }
-
     try {
-      console.log('📤 Gửi tin nhắn qua socket:', {
+      console.log('📤 Gửi tin nhắn:', {
         conversationId,
         senderPhone: userPhone,
         receiverPhone,
@@ -349,188 +352,184 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
         sentAt: new Date().toISOString(),
         requiresFriendship: true,
         friendshipStatus: 'friends',
-        senderName: 'Bạn',
+        senderName: user?.fullName || 'Bạn', // SỬA LẠI DÒNG NÀY
         isOwnMessage: true
       };
 
       setMessages(prev => [...prev, newMessage]);
       setInputText('');
       
-      // Gửi qua socket để real-time (bỏ qua API)
-      const messageData = {
+      // Gửi tin nhắn vào database và socket server
+      const messageResult = await sendMessage(
         conversationId,
-        senderPhone: userPhone,
+        userPhone,
         receiverPhone,
-        messageText: inputText.trim(),
-        timestamp: new Date().toISOString()
-      };
+        inputText.trim()
+      );
       
-      console.log('📤 Socket emit data:', messageData);
-      socket?.emit('send message', messageData);
-      
-      console.log('✅ Tin nhắn đã gửi qua socket');
+      if (messageResult.success) {
+        console.log('✅ Tin nhắn đã gửi thành công:', messageResult.messageId);
+        console.log('📤 Socket delivered:', messageResult.data?.socket_delivered);
+        
+        // Cập nhật ID thực từ database
+        setMessages(prev => 
+          prev.map(msg => 
+            msg.id === Date.now() 
+              ? { ...msg, id: messageResult.messageId || msg.id }
+              : msg
+          )
+        );
+      } else {
+        console.log('❌ Lỗi gửi tin nhắn:', messageResult.message);
+        Alert.alert('Lỗi', 'Không thể gửi tin nhắn: ' + messageResult.message);
+        
+        // Xóa tin nhắn khỏi UI nếu gửi thất bại
+        setMessages(prev => prev.filter(msg => msg.id !== Date.now()));
+      }
     } catch (error) {
       console.error('❌ Lỗi gửi tin nhắn:', error);
       Alert.alert('Lỗi', 'Không thể gửi tin nhắn');
+      
+      // Xóa tin nhắn khỏi UI nếu có lỗi
+      setMessages(prev => prev.filter(msg => msg.id !== Date.now()));
     }
   };
 
-  const renderMessage = ({ item }: { item: Message }) => (
-    <View style={[
-      styles.messageItem,
-      item.isOwnMessage ? styles.ownMessage : styles.otherMessage
-    ]}>
-      <Text style={styles.messageText}>{item.messageText}</Text>
-      <Text style={styles.messageTime}>
-        {new Date(item.sentAt).toLocaleTimeString()}
-      </Text>
-    </View>
-  );
+  const renderMessage = ({ item, index }: { item: Message; index: number }) => {
+    const prev = messages[index - 1];
+    const showAvatar = !item.isOwnMessage && (
+      index === 0 ||
+      !prev ||
+      prev.isOwnMessage ||
+      prev.senderPhone !== item.senderPhone
+    );
+
+    return (
+      <MessageBubble
+        message={item}
+        showAvatar={showAvatar}
+      />
+    );
+  };
+
+  const flatListRef = useRef<FlatList>(null);
+
+  // Thêm useEffect để auto scroll khi có tin nhắn mới
+  useEffect(() => {
+    if (messages.length > 0) {
+      // Delay một chút để đảm bảo render xong
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages.length]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}>
-          <Feather name="chevron-left" size={24} color="#007AFF" />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>{name}</Text>
-          <Text style={[styles.headerStatus, { color: isConnected ? '#34C759' : '#FF3B30' }]}>
-            {isConnected ? 'Đã kết nối' : 'Chưa kết nối'}
-          </Text>
-        </View>
-      </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    >
+      <SafeAreaView style={styles.container}>
+        {/* New Chat Header */}
+        <ChatHeader
+          name={name}
+          avatar={avatar}
+          isOnline={isConnected}
+          onBack={() => navigation.goBack()}
+          onCall={() => Alert.alert('Gọi điện', 'Tính năng gọi điện sẽ được thêm sau')}
+          onVideoCall={() => Alert.alert('Video call', 'Tính năng video call sẽ được thêm sau')}
+          onMenu={() => Alert.alert('Menu', 'Tính năng menu sẽ được thêm sau')}
+        />
 
-      {/* Messages List */}
+        {/* Messages List */}
         <FlatList
+          ref={flatListRef}
           data={messages}
           renderItem={renderMessage}
           keyExtractor={item => item.id.toString()}
           style={styles.messagesList}
-          inverted
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.messagesContent}
+          onContentSizeChange={() => {
+            // Tự động cuộn xuống cuối khi có tin nhắn mới
+          }}
+          ListEmptyComponent={
+            isLoadingMessages ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#007AFF" />
+                <Text style={styles.loadingText}>Đang tải tin nhắn...</Text>
+              </View>
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>Chưa có tin nhắn nào</Text>
+                <Text style={styles.emptySubtext}>Bắt đầu trò chuyện với {name}</Text>
+              </View>
+            )
+          }
         />
 
-      {/* Input */}
-        <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Nhập tin nhắn..."
-              placeholderTextColor="#8A8A8E"
-              value={inputText}
-              onChangeText={(text) => {
-                console.log('🔍 TextInput onChangeText:', { text, length: text.length });
-                setInputText(text);
-              }}
-              onSubmitEditing={handleSend}
-              returnKeyType="send"
-            />
-        <TouchableOpacity 
-          onPress={() => {
-            console.log('🔍 Send button pressed');
-            handleSend();
-          }} 
-          style={[styles.sendButton, { opacity: inputText.trim() ? 1 : 0.5 }]}
-          disabled={!inputText.trim()}>
-          <Text style={styles.sendButtonText}>Gửi</Text>
-            </TouchableOpacity>
-          </View>
-    </SafeAreaView>
+        {/* Typing Indicator */}
+        <TypingIndicator isTyping={false} userName={name} />
+
+        {/* New Input Bar */}
+        <InputBar
+          value={inputText}
+          onChangeText={setInputText}
+          onSend={handleSend}
+          onEmoji={() => Alert.alert('Emoji', 'Tính năng emoji sẽ được thêm sau')}
+          onAttachment={() => Alert.alert('File', 'Tính năng gửi file sẽ được thêm sau')}
+          onVoice={() => {}} // Voice recognition sẽ được xử lý trong InputBar
+          placeholder="Nhập tin nhắn..."
+          disabled={!isConnected}
+        />
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E7',
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1C1C1E',
-  },
-  headerStatus: {
-    fontSize: 12,
-    fontWeight: '400',
-    marginTop: 2,
+    backgroundColor: '#F2F2F7',
   },
   messagesList: {
     flex: 1,
-    paddingHorizontal: 16,
   },
-  messageItem: {
-    padding: 12,
-    marginVertical: 4,
-    borderRadius: 12,
-    maxWidth: '80%',
+  messagesContent: {
+    paddingVertical: 16,
   },
-  ownMessage: {
-    backgroundColor: '#007AFF',
-    alignSelf: 'flex-end',
-  },
-  otherMessage: {
-    backgroundColor: '#F2F2F7',
-    alignSelf: 'flex-start',
-  },
-  messageText: {
-    fontSize: 16,
-    color: '#1C1C1E',
-    lineHeight: 20,
-  },
-  messageTime: {
-    fontSize: 11,
-    color: '#8A8A8E',
-    marginTop: 4,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E5E7',
-  },
-  textInput: {
+  loadingContainer: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: '#1C1C1E',
-    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
   },
-  sendButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  sendButtonText: {
-    color: 'white',
+  loadingText: {
     fontSize: 16,
+    color: '#8E8E93',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 40,
+  },
+  emptyText: {
+    fontSize: 18,
     fontWeight: '600',
+    color: '#1C1C1E',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#8E8E93',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 
