@@ -8,6 +8,12 @@ import Feather from 'react-native-vector-icons/Feather';
 import HomeScreen from '../screens/Elderly/Home';
 import EntertainmentHubScreen from '../screens/Elderly/Entertainment/EntertainmentHubScreen';
 import GameHubScreen from '../screens/Elderly/Entertainment/GameHubScreen';
+import BookLibraryScreen from '../screens/Elderly/Entertainment/BookLibraryScreen';
+import BookReaderScreen from '../screens/Elderly/Entertainment/BookReaderScreen';
+import BookDetailScreen from '../screens/Elderly/Entertainment/BookDetailScreen';
+import BookSettingsScreen from '../screens/Elderly/Entertainment/BookSettingsScreen';
+import BookBookmarkScreen from '../screens/Elderly/Entertainment/BookBookmarkScreen';
+import BookStatsScreen from '../screens/Elderly/Entertainment/BookStatsScreen';
 import SudokuScreen from '../screens/Games/Sudoku';
 import MinesweeperScreen from '../screens/Games/Minesweeper';
 import MemoryMatchScreen from '../screens/Games/MemoryMatch';
@@ -49,6 +55,12 @@ const HomeNavigator = () => {
       />
       <Stack.Screen name="EntertainmentHub" component={EntertainmentHubScreen} />
       <Stack.Screen name="GameHub" component={GameHubScreen} options={{ headerShown: false }}/>
+      <Stack.Screen name="BookLibrary" component={BookLibraryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="BookDetail" component={BookDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="BookReader" component={BookReaderScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="BookSettings" component={BookSettingsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="BookBookmark" component={BookBookmarkScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="BookStats" component={BookStatsScreen} options={{ headerShown: false }} />
       <Stack.Screen 
         name="Sudoku" 
         component={SudokuScreen}

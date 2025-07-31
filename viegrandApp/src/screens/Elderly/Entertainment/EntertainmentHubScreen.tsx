@@ -22,10 +22,10 @@ const entertainmentItems = [
     screen: 'GameHub',
   },
   {
-    title: 'Đọc báo',
-    subtitle: 'Cập nhật tin tức',
+    title: 'Đọc sách',
+    subtitle: 'Thư viện sách hay',
     icon: 'book-open',
-    screen: 'NewsReader', // Placeholder
+    screen: 'BookLibrary',
   },
   {
     title: 'Xem Video',

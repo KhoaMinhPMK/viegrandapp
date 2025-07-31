@@ -78,9 +78,29 @@ const TabBarItem = memo(({
 });
 
 const CustomTabBar = memo(({ state, descriptors, navigation }: any) => {
-  // Ẩn tab bar khi đang ở trong Message tab
+  // Ẩn tab bar khi đang ở trong Message tab hoặc các màn hình đọc sách/game
+  // để có trải nghiệm full-screen tốt hơn
   const currentRouteName = state.routes[state.index].name;
-  if (currentRouteName === 'Message') {
+  
+  // Lấy route hiện tại từ HomeStack để kiểm tra các màn hình con
+  const currentRoute = state.routes.find((route: any) => route.name === 'HomeStack');
+  const currentScreen = currentRoute?.state?.routes?.[currentRoute.state.index]?.name;
+  
+  // Danh sách các màn hình cần ẩn tab bar
+  const hideTabBarScreens = [
+    'Message',
+    'BookLibrary',
+    'BookDetail', 
+    'BookReader',
+    'BookSettings',
+    'BookBookmark',
+    'BookStats',
+    'EntertainmentHub', // Ẩn tab bar khi ở EntertainmentHub để có trải nghiệm tốt hơn
+    'GameHub' // Ẩn tab bar khi ở GameHub
+  ];
+  
+  // Kiểm tra nếu đang ở Message tab hoặc các màn hình cần ẩn tab bar
+  if (currentRouteName === 'Message' || hideTabBarScreens.includes(currentScreen)) {
     return null;
   }
 
