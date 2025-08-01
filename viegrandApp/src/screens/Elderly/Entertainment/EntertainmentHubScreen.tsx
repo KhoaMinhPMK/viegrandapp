@@ -27,12 +27,12 @@ const entertainmentItems = [
     icon: 'book-open',
     screen: 'BookLibrary',
   },
-  {
-    title: 'Xem Video',
-    subtitle: 'Chương trình yêu thích',
-    icon: 'youtube',
-    screen: 'VideoPlayer', // Placeholder
-  },
+          {
+          title: 'Xem Video',
+          subtitle: 'Video nấu ăn hay',
+          icon: 'youtube',
+          screen: 'VideoPlayer',
+        },
   {
     title: 'Bài tập',
     subtitle: 'Nâng cao sức khỏe',

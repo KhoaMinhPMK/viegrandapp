@@ -7,6 +7,16 @@ import Feather from 'react-native-vector-icons/Feather';
 import ElderlyBottomTabNavigator from './ElderlyBottomTabNavigator';
 import HealthCheckScreen from '../screens/Elderly/Health/HealthCheckScreen';
 import RemindersScreen from '../screens/Elderly/Reminders';
+import VideoPlayerScreen from '../screens/Elderly/Entertainment/VideoPlayerScreen';
+import VideoDetailScreen from '../screens/Elderly/Entertainment/VideoDetailScreen';
+import EntertainmentHubScreen from '../screens/Elderly/Entertainment/EntertainmentHubScreen';
+import GameHubScreen from '../screens/Elderly/Entertainment/GameHubScreen';
+import BookLibraryScreen from '../screens/Elderly/Entertainment/BookLibraryScreen';
+import BookDetailScreen from '../screens/Elderly/Entertainment/BookDetailScreen';
+import BookReaderScreen from '../screens/Elderly/Entertainment/BookReaderScreen';
+import BookSettingsScreen from '../screens/Elderly/Entertainment/BookSettingsScreen';
+import BookStatsScreen from '../screens/Elderly/Entertainment/BookStatsScreen';
+import BookBookmarkScreen from '../screens/Elderly/Entertainment/BookBookmarkScreen';
 
 const Stack = createStackNavigator();
 
@@ -26,6 +36,56 @@ const ElderlyNavigator = () => {
       <Stack.Screen 
         name="Reminders" 
         component={RemindersScreen} 
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="VideoPlayer" 
+        component={VideoPlayerScreen} 
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="VideoDetail" 
+        component={VideoDetailScreen} 
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="EntertainmentHub" 
+        component={EntertainmentHubScreen} 
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="GameHub" 
+        component={GameHubScreen} 
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="BookLibrary" 
+        component={BookLibraryScreen} 
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="BookDetail" 
+        component={BookDetailScreen} 
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="BookReader" 
+        component={BookReaderScreen} 
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="BookSettings" 
+        component={BookSettingsScreen} 
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="BookStats" 
+        component={BookStatsScreen} 
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="BookBookmark" 
+        component={BookBookmarkScreen} 
         options={{ headerShown: false }}
       />
       {/* 

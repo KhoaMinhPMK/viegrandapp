@@ -56,7 +56,7 @@ const LoginScreen = ({ navigation }: any) => {
       } catch (error) {
         console.error('Error saving email to cache:', error);
       }
-      navigation.dispatch(StackActions.replace('SelectRole'));
+      navigation.dispatch(StackActions.replace('Elderly'));
     }
   };
 

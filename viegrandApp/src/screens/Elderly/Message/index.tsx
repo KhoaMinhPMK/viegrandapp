@@ -22,6 +22,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useSocket } from '../../../contexts/SocketContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
+import { lastMessageStorage, LastMessage } from '../../../utils/lastMessageStorage';
 
 // --- TYPE DEFINITIONS ---
 interface Conversation {
@@ -32,6 +33,7 @@ interface Conversation {
   time: string;
   unreadCount: number;
   otherParticipantPhone?: string; // Thêm phone của người tham gia khác
+  cachedLastMessage?: LastMessage; // Tin nhắn cuối cùng từ cache
 }
 
 interface SearchResult {
@@ -92,7 +94,7 @@ type MessageScreenProps = NativeStackScreenProps<MessageStackParamList, 'Message
 
 const MessageScreen = ({ navigation }: MessageScreenProps) => {
   const { user } = useAuth();
-  const { notifications } = useSocket(); // Get notifications from SocketContext
+  const { notifications, socket } = useSocket(); // Get notifications from SocketContext
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [searchText, setSearchText] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -206,6 +208,63 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
     }, [userPhone])
   );
 
+  // Lắng nghe tin nhắn mới để cập nhật danh sách
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewMessage = async (msg: any) => {
+      console.log('📨 MessageScreen: Received new message, updating conversation list:', msg);
+      
+      try {
+        // Lấy conversationId từ tin nhắn
+        const conversationId = msg.conversationId || msg.conversation_id;
+        if (!conversationId) return;
+
+        // Tìm conversation trong danh sách hiện tại
+        const existingConversation = conversations.find(conv => conv.id === conversationId);
+        if (!existingConversation) return;
+
+        // Tạo lastMessage object
+        const lastMessage: LastMessage = {
+          conversationId,
+          messageText: msg.message || msg.message_text || '',
+          senderPhone: msg.sender || msg.sender_phone || '',
+          receiverPhone: msg.receiver || msg.receiver_phone || '',
+          sentAt: msg.timestamp || msg.sent_at || new Date().toISOString(),
+          senderName: msg.senderName || 'Người dùng',
+          isOwnMessage: msg.sender === userPhone || msg.sender_phone === userPhone
+        };
+
+        // Lưu vào cache
+        await lastMessageStorage.saveLastMessage(lastMessage);
+
+        // Cập nhật danh sách conversations
+        setConversations(prev => 
+          prev.map(conv => 
+            conv.id === conversationId 
+              ? {
+                  ...conv,
+                  lastMessage: lastMessage.isOwnMessage 
+                    ? `Bạn: ${lastMessage.messageText}` 
+                    : lastMessage.messageText,
+                  time: formatTime(lastMessage.sentAt),
+                  cachedLastMessage: lastMessage
+                }
+              : conv
+          )
+        );
+      } catch (error) {
+        console.error('❌ MessageScreen: Error updating conversation list:', error);
+      }
+    };
+
+    socket.on('chat message', handleNewMessage);
+
+    return () => {
+      socket.off('chat message', handleNewMessage);
+    };
+  }, [socket, conversations, userPhone]);
+
   // Function to load conversations list from API
   const loadConversationsList = async () => {
     if (!userPhone) return;
@@ -228,16 +287,25 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
       if (result.success && result.conversations) {
         console.log('✅ MessageScreen: Conversations loaded successfully:', result.conversations.length, 'conversations');
         
+        // Lấy tất cả tin nhắn cuối cùng từ cache
+        const cachedLastMessages = await lastMessageStorage.getAllLastMessages();
+        console.log('📖 MessageScreen: Loaded cached last messages:', Object.keys(cachedLastMessages).length);
+        
         // Convert conversations to UI format
-        const conversationsAsUI: Conversation[] = result.conversations.map(conv => ({
-          id: conv.id,
-          name: conv.otherParticipantName,
-          avatar: conv.avatar,
-          lastMessage: conv.lastMessage,
-          time: formatTime(conv.lastMessageTime),
-          unreadCount: 0, // TODO: Implement unread count
-          otherParticipantPhone: conv.otherParticipantPhone
-        }));
+        const conversationsAsUI: Conversation[] = result.conversations.map(conv => {
+          const cachedMessage = cachedLastMessages[conv.id];
+          
+          return {
+            id: conv.id,
+            name: conv.otherParticipantName,
+            avatar: conv.avatar,
+            lastMessage: cachedMessage ? cachedMessage.messageText : conv.lastMessage,
+            time: cachedMessage ? formatTime(cachedMessage.sentAt) : formatTime(conv.lastMessageTime),
+            unreadCount: 0, // TODO: Implement unread count
+            otherParticipantPhone: conv.otherParticipantPhone,
+            cachedLastMessage: cachedMessage
+          };
+        });
         
         setConversations(conversationsAsUI);
       } else {
@@ -510,7 +578,11 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
         </View>
         <View style={styles.messagePreview}>
           <Text style={item.unreadCount > 0 ? styles.lastMessageUnread : styles.lastMessage} numberOfLines={1}>
-            {item.lastMessage}
+            {item.cachedLastMessage ? (
+              item.cachedLastMessage.isOwnMessage ? `Bạn: ${item.cachedLastMessage.messageText}` : item.cachedLastMessage.messageText
+            ) : (
+              item.lastMessage || 'Chưa có tin nhắn nào'
+            )}
           </Text>
           {item.unreadCount > 0 && (
             <View style={styles.unreadBadge}>

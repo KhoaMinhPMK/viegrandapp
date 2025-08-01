@@ -60,7 +60,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         await storageUtils.saveUser(result.user);
         
         setUser(result.user);
-        Alert.alert('Thành công', result.message || 'Đăng nhập thành công');
         return true;
       } else {
         Alert.alert('Lỗi', result.message || 'Đăng nhập thất bại');

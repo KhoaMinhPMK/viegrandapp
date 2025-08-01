@@ -272,7 +272,7 @@ const HealthCheckScreen = () => {
                   <View style={styles.readingInfo}>
                     <Text style={styles.readingLabel}>Huyết áp tâm thu</Text>
                     <Text style={styles.readingUnit}>mmHg</Text>
-                  </View>
+                  </View> 
                   <Text style={styles.readingValue}>{readings.huyet_ap_tam_thu}</Text>
                 </View>
                 

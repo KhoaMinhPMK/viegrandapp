@@ -1,5 +1,5 @@
 import React, { useCallback, memo } from 'react';
-import { View, StyleSheet, FlatList, Text } from 'react-native';
+import { View, StyleSheet, FlatList, Text, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import FunctionButton from './FunctionButton';
 
@@ -19,7 +19,7 @@ const FunctionGrid = memo(() => {
     { id: 'health', icon: 'heart', text: 'Sức khỏe', action: () => navigation.navigate('HealthCheck') },
     { id: 'entertainment', icon: 'compass', text: 'Giải trí', action: () => navigation.navigate('EntertainmentHub') },
     { id: 'appointments', icon: 'calendar', text: 'Nhắc nhở', action: () => navigation.navigate('Reminders') },
-    { id: 'family', icon: 'users', text: 'Gia đình', action: () => console.log('Gia đình') },
+    { id: 'family', icon: 'users', text: 'Gia đình', action: () => Alert.alert('Thông báo', 'Chức năng đang phát triển') },
     { id: 'messages', icon: 'message-circle', text: 'Tin nhắn', action: () => navigation.navigate('Message') },
     { id: 'settings', icon: 'settings', text: 'Cài đặt', action: () => navigation.navigate('Settings') },
     { id: 'emergency', icon: 'phone', text: 'Gọi khẩn cấp', action: () => console.log('Gọi khẩn cấp') },

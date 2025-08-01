@@ -17,6 +17,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import io from 'socket.io-client';
 import { getMessages, sendMessage, markMessageAsRead, getUserPhone } from '../../../services/api';
 import { useAuth } from '../../../contexts/AuthContext';
+import { lastMessageStorage, LastMessage } from '../../../utils/lastMessageStorage';
 
 // Import new components
 import ChatHeader from './ChatHeader';
@@ -197,6 +198,21 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
         
         console.log('📨 Adding new message to app:', newMessage);
         setMessages(prev => [...prev, newMessage]);
+
+        // Lưu tin nhắn cuối cùng vào bộ nhớ đệm
+        const saveLastMessage = async () => {
+          const lastMessage: LastMessage = {
+            conversationId: newMessage.conversationId,
+            messageText: newMessage.messageText,
+            senderPhone: newMessage.senderPhone,
+            receiverPhone: newMessage.receiverPhone,
+            sentAt: newMessage.sentAt,
+            senderName: newMessage.senderName,
+            isOwnMessage: newMessage.isOwnMessage
+          };
+          await lastMessageStorage.saveLastMessage(lastMessage);
+        };
+        saveLastMessage();
       }
     });
 
@@ -379,6 +395,18 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
               : msg
           )
         );
+
+        // Lưu tin nhắn cuối cùng vào bộ nhớ đệm
+        const lastMessage: LastMessage = {
+          conversationId,
+          messageText: inputText.trim(),
+          senderPhone: userPhone,
+          receiverPhone,
+          sentAt: new Date().toISOString(),
+          senderName: user?.fullName || 'Bạn',
+          isOwnMessage: true
+        };
+        await lastMessageStorage.saveLastMessage(lastMessage);
       } else {
         console.log('❌ Lỗi gửi tin nhắn:', messageResult.message);
         Alert.alert('Lỗi', 'Không thể gửi tin nhắn: ' + messageResult.message);
