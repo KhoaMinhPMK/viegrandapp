@@ -5,6 +5,8 @@ import {
   ScrollView,
   Image,
   StyleSheet,
+  Platform,
+  Linking,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePremium } from '../../../contexts/PremiumContext';
@@ -17,7 +19,9 @@ import WeatherCard from '../../../components/elderly-home/WeatherCard';
 import FunctionGrid from '../../../components/elderly-home/FunctionGrid';
 import PremiumUpgradeCard from '../../../components/elderly-home/PremiumUpgradeCard';
 import VoiceTranscript from '../../../components/elderly-home/VoiceTranscript';
+import PermissionGuideModal from '../../../components/elderly-home/PermissionGuideModal';
 import { useSocket } from '../../../contexts/SocketContext';
+import emergencyCallService, { setPermissionGuideCallback } from '../../../services/emergencyCall';
 
 // --- Memoized Components for Performance Optimization ---
 const MemoizedHeader = memo(Header);
@@ -31,6 +35,9 @@ const ElderlyHomeScreen = () => {
   const { premiumStatus, fetchPremiumStatus, refreshTrigger } = usePremium();
   const navigation = useNavigation();
   const { unreadCount } = useSocket(); // Lấy số thông báo chưa đọc
+  
+  // State cho modal hướng dẫn quyền
+  const [showPermissionGuide, setShowPermissionGuide] = useState(false);
   
   // State cho premium status từ cache và API
   const [isPremium, setIsPremium] = useState(false);
@@ -140,6 +147,11 @@ const ElderlyHomeScreen = () => {
   useEffect(() => {
     loadPremiumDataFromCache();
     fetchUserDataAndUpdatePremium();
+    // Khởi tạo emergency call service
+    emergencyCallService.initialize();
+    
+    // Set callback cho permission guide
+    setPermissionGuideCallback(() => setShowPermissionGuide(true));
   }, []);
 
   // Refresh user data khi có thay đổi premium status từ context
@@ -196,6 +208,16 @@ const ElderlyHomeScreen = () => {
     (navigation as any).navigate('Message', { screen: 'MessageList' });
   }, [navigation]);
 
+  const handleOpenSettings = useCallback(() => {
+    setShowPermissionGuide(false);
+    // Mở cài đặt app cụ thể
+    if (Platform.OS === 'android') {
+      Linking.openURL('package:com.viegrandapp');
+    } else {
+      Linking.openSettings();
+    }
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <Image source={BackgroundImages.secondary} style={styles.backgroundImage} resizeMode="cover" />
@@ -217,6 +239,12 @@ const ElderlyHomeScreen = () => {
       </ScrollView>
 
       <MemoizedVoiceTranscript />
+      
+      <PermissionGuideModal
+        visible={showPermissionGuide}
+        onClose={() => setShowPermissionGuide(false)}
+        onOpenSettings={handleOpenSettings}
+      />
     </SafeAreaView>
   );
 };

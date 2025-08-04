@@ -5022,7 +5022,7 @@ internal-slot@^1.1.0:
     hasown "^2.0.2"
     side-channel "^1.1.0"
 
-invariant@^2.2.4:
+invariant@2.2.4, invariant@^2.2.4:
   version "2.2.4"
   resolved "https://registry.yarnpkg.com/invariant/-/invariant-2.2.4.tgz#610f3c92c9359ce1db616e538008d23ff35158e6"
   integrity sha512-phJfQVBuaJM5raOpJjSfkiD6BpbCE4Ns//LaXl6wGYtUBY83nWS6Rf9tXm2e8VaK60JEjYldbPif/A2B1C2gNA==
@@ -6987,6 +6987,11 @@ react-is@^19.1.0:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.1.1.tgz#038ebe313cf18e1fd1235d51c87360eb87f7c36a"
   integrity sha512-tr41fA15Vn8p4X9ntI+yCyeGSf1TlYaY5vlTZfQmeLBrFo3psOPX6HhTDnFNL9uj3EhP0KAQ80cugCl4b4BERA==
 
+react-native-call-log@^2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/react-native-call-log/-/react-native-call-log-2.1.2.tgz#f80d2fcb45f72118eb8048d5bfdef191fd4a3df3"
+  integrity sha512-nWHmb+QMN/AbbZFEuUGiQePssPgjQr5dibNAURDlqO4S5wuLk1XzxxsLUAVHZnB0FdJoMlajD7tUAXtaoxYwUQ==
+
 react-native-device-info@^14.0.4:
   version "14.0.4"
   resolved "https://registry.yarnpkg.com/react-native-device-info/-/react-native-device-info-14.0.4.tgz#56b24ace9ff29a66bdfc667209086421ed6cfdce"
@@ -7020,6 +7025,11 @@ react-native-linear-gradient@^2.8.3:
   version "2.8.3"
   resolved "https://registry.yarnpkg.com/react-native-linear-gradient/-/react-native-linear-gradient-2.8.3.tgz#9a116649f86d74747304ee13db325e20b21e564f"
   integrity sha512-KflAXZcEg54PXkLyflaSZQ3PJp4uC4whM7nT/Uot9m0e/qxFV3p6uor1983D1YOBJbJN7rrWdqIjq0T42jOJyA==
+
+react-native-phone-call@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/react-native-phone-call/-/react-native-phone-call-1.2.0.tgz#11c28120f9528647167b58742ebb7225f52d28c1"
+  integrity sha512-M1CiocX8w7YNsh3Cwcnwc3eUkIJOPaBIQji3P9Uv/ZWAwb6XGI2NtV2UBSAa4Prvn6ooXeFPZs/YXmeTHmVHKg==
 
 react-native-safe-area-context@^5.5.1:
   version "5.5.2"
@@ -7056,6 +7066,14 @@ react-native-video@^6.16.1:
   version "6.16.1"
   resolved "https://registry.yarnpkg.com/react-native-video/-/react-native-video-6.16.1.tgz#c4f5f71eac930a4ae4e2faadb22fc05d78b9b7fe"
   integrity sha512-+G6tVVGbwFqNTyPivqb+PhQzWr5OudDQ1dgvBNyBRAgcS8rOcbwuS6oX+m8cxOsXHn1UT9ofQnjQEwkGOsvomg==
+
+react-native-webview@^13.15.0:
+  version "13.15.0"
+  resolved "https://registry.yarnpkg.com/react-native-webview/-/react-native-webview-13.15.0.tgz#b6d2f8d8dd65897db76659ddd8198d2c74ec5a79"
+  integrity sha512-Vzjgy8mmxa/JO6l5KZrsTC7YemSdq+qB01diA0FqjUTaWGAGwuykpJ73MDj3+mzBSlaDxAEugHzTtkUQkQEQeQ==
+  dependencies:
+    escape-string-regexp "^4.0.0"
+    invariant "2.2.4"
 
 react-native@0.80.1:
   version "0.80.1"

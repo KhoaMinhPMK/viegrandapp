@@ -9,9 +9,12 @@ import {
   Alert,
   StatusBar,
   Image,
+  Linking,
+  Animated,
 } from 'react-native';
 import Video from 'react-native-video';
 import Feather from 'react-native-vector-icons/Feather';
+import YouTubePlayer from './YouTubePlayer';
 
 const { width, height } = Dimensions.get('window');
 
@@ -39,17 +42,75 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [position, setPosition] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isYouTubeVideo, setIsYouTubeVideo] = useState(false);
+  const [youtubeVideoId, setYoutubeVideoId] = useState<string | null>(null);
+  
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Kiểm tra xem có phải YouTube video không
+    const isYouTube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
+    setIsYouTubeVideo(isYouTube);
+    
+    // Extract YouTube video ID
+    if (isYouTube) {
+      const videoId = extractYouTubeVideoId(videoUrl);
+      setYoutubeVideoId(videoId);
+    }
+    
     const timer = setTimeout(() => {
-      setShowControls(false);
+      hideControls();
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [showControls]);
+  }, [showControls, videoUrl]);
+
+  const extractYouTubeVideoId = (url: string): string | null => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
+  const hideControls = () => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: -50,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setShowControls(false);
+    });
+  };
+
+  const showControlsUI = () => {
+    setShowControls(true);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
+    if (!isPlaying) {
+      showControlsUI();
+    }
   };
 
   const handleSeek = (seekTime: number) => {
@@ -83,15 +144,128 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   };
 
   const handleVideoError = (error: any) => {
-    console.error('Video error:', error);
-    Alert.alert('Lỗi', 'Không thể phát video. Vui lòng thử lại.');
+    console.error('Video error details:', {
+      errorCode: error.error?.errorCode,
+      errorString: error.error?.errorString,
+      videoUrl: videoUrl,
+      isYouTube: isYouTubeVideo
+    });
+    
+    if (isYouTubeVideo) {
+      Alert.alert(
+        'Video YouTube',
+        'Video YouTube không thể phát trực tiếp trong ứng dụng. Bạn có muốn mở trong YouTube không?',
+        [
+          { text: 'Hủy', style: 'cancel' },
+          { 
+            text: 'Mở YouTube', 
+            onPress: () => {
+              Linking.openURL(videoUrl);
+              onClose();
+            }
+          }
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Lỗi Video', 
+        'Không thể phát video này. Có thể do format không hỗ trợ hoặc file bị hỏng.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const toggleControls = () => {
-    setShowControls(!showControls);
+    if (showControls) {
+      hideControls();
+    } else {
+      showControlsUI();
+    }
   };
 
+  // Nếu là YouTube video và có video ID, sử dụng YouTubePlayer
+  if (isYouTubeVideo && youtubeVideoId) {
+    return (
+      <YouTubePlayer
+        videoId={youtubeVideoId}
+        title={title}
+        onClose={onClose}
+      />
+    );
+  }
 
+  // Nếu là YouTube video nhưng không có video ID, hiển thị placeholder
+  if (isYouTubeVideo) {
+    const openYouTubeApp = () => {
+      const videoId = youtubeVideoId;
+      if (videoId) {
+        const youtubeAppUrl = `youtube://watch?v=${videoId}`;
+        const youtubeWebUrl = `https://www.youtube.com/watch?v=${videoId}`;
+        
+        Linking.canOpenURL(youtubeAppUrl).then(supported => {
+          if (supported) {
+            Linking.openURL(youtubeAppUrl);
+          } else {
+            Linking.openURL(youtubeWebUrl);
+          }
+          onClose();
+        });
+      } else {
+        Linking.openURL(videoUrl);
+        onClose();
+      }
+    };
+
+    return (
+      <View style={styles.container}>
+        <StatusBar hidden />
+        
+        {/* YouTube Video Placeholder */}
+        <View style={styles.videoContainer}>
+          <View style={styles.youtubePlaceholder}>
+            <View style={styles.youtubeIconContainer}>
+              <Feather name="youtube" size={60} color="#FF0000" />
+            </View>
+            <Text style={styles.youtubeTitle}>{title}</Text>
+            <Text style={styles.youtubeMessage}>
+              Video YouTube sẽ được mở trong ứng dụng YouTube
+            </Text>
+            
+            <TouchableOpacity
+              style={styles.youtubeButton}
+              onPress={openYouTubeApp}
+            >
+              <Feather name="play" size={20} color="#FFFFFF" />
+              <Text style={styles.youtubeButtonText}>Phát trong YouTube</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {/* Controls Overlay */}
+          <Animated.View 
+            style={[
+              styles.controlsOverlay,
+              { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+            ]}
+          >
+            <View style={styles.topControls}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={onClose}
+              >
+                <Feather name="x" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+              
+              <Text style={styles.videoTitle} numberOfLines={1}>
+                {title}
+              </Text>
+              
+              <View style={styles.placeholderButton} />
+            </View>
+          </Animated.View>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -119,21 +293,28 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         {/* Loading Overlay */}
         {isLoading && (
           <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#FFFFFF" />
-            <Text style={styles.loadingText}>Đang tải video...</Text>
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#FFFFFF" />
+              <Text style={styles.loadingText}>Đang tải video...</Text>
+            </View>
           </View>
         )}
 
         {/* Controls Overlay */}
         {showControls && (
-          <View style={styles.controlsOverlay}>
+          <Animated.View 
+            style={[
+              styles.controlsOverlay,
+              { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+            ]}
+          >
             {/* Top Controls */}
             <View style={styles.topControls}>
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={onClose}
               >
-                <Feather name="x" size={24} color="#FFFFFF" />
+                <Feather name="x" size={20} color="#FFFFFF" />
               </TouchableOpacity>
               
               <Text style={styles.videoTitle} numberOfLines={1}>
@@ -146,7 +327,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
               >
                 <Feather 
                   name={isFullscreen ? "minimize" : "maximize"} 
-                  size={20} 
+                  size={18} 
                   color="#FFFFFF" 
                 />
               </TouchableOpacity>
@@ -159,7 +340,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 onPress={handleBackward}
                 disabled={!onBackward}
               >
-                <Feather name="skip-back" size={32} color="#FFFFFF" />
+                <Feather name="skip-back" size={24} color="#FFFFFF" />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -168,7 +349,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
               >
                 <Feather
                   name={isPlaying ? "pause" : "play"}
-                  size={40}
+                  size={32}
                   color="#FFFFFF"
                 />
               </TouchableOpacity>
@@ -178,7 +359,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 onPress={handleForward}
                 disabled={!onForward}
               >
-                <Feather name="skip-forward" size={32} color="#FFFFFF" />
+                <Feather name="skip-forward" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
 
@@ -203,7 +384,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 {formatTime(duration)}
               </Text>
             </View>
-          </View>
+          </Animated.View>
         )}
 
         {/* Play Button Overlay (when paused and no controls) */}
@@ -213,7 +394,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
             onPress={handlePlayPause}
           >
             <View style={styles.playOverlayButton}>
-              <Feather name="play" size={40} color="#FFFFFF" />
+              <Feather name="play" size={32} color="#FFFFFF" />
             </View>
           </TouchableOpacity>
         )}
@@ -236,21 +417,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  videoPlaceholder: {
-    flex: 1,
-    backgroundColor: '#1F2937',
-  },
-  videoThumbnail: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
-  videoBackground: {
-    flex: 1,
-    backgroundColor: '#1F2937',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   loadingOverlay: {
     position: 'absolute',
     top: 0,
@@ -261,10 +427,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
+  loadingContainer: {
+    alignItems: 'center',
+    padding: 24,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
   loadingText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     marginTop: 12,
+    fontWeight: '500',
   },
   controlsOverlay: {
     position: 'absolute',
@@ -273,8 +446,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     justifyContent: 'space-between',
-    padding: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    padding: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
   topControls: {
     flexDirection: 'row',
@@ -283,26 +456,26 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   closeButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   videoTitle: {
     flex: 1,
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
     textAlign: 'center',
     marginHorizontal: 20,
   },
   fullscreenButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -310,21 +483,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 40,
+    gap: 32,
   },
   controlButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   playButton: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -335,23 +508,23 @@ const styles = StyleSheet.create({
   },
   timeText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '500',
-    minWidth: 60,
+    minWidth: 50,
   },
   progressContainer: {
     flex: 1,
     marginHorizontal: 20,
   },
   progressBar: {
-    height: 6,
+    height: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 3,
+    borderRadius: 2,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#0EA5E9',
-    borderRadius: 3,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 2,
   },
   playOverlay: {
     position: 'absolute',
@@ -363,12 +536,61 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   playOverlayButton: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  youtubePlaceholder: {
+    flex: 1,
+    backgroundColor: '#1F2937',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  youtubeIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  youtubeTitle: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 12,
+    lineHeight: 28,
+  },
+  youtubeMessage: {
+    color: '#9CA3AF',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 20,
+  },
+  youtubeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FF0000',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  youtubeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  placeholderButton: {
+    width: 40,
+    height: 40,
   },
 });
 

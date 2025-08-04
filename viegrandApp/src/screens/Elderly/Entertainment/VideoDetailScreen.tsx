@@ -4,15 +4,19 @@ import {
   Text,
   StyleSheet,
   SafeAreaView,
-  StatusBar,
-  TouchableOpacity,
   ScrollView,
+  TouchableOpacity,
+  StatusBar,
   Dimensions,
+  Image,
+  Linking,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import VideoPlayer from '../../../components/video/VideoPlayer';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 interface VideoDetailScreenProps {
   route: any;
@@ -22,6 +26,11 @@ interface VideoDetailScreenProps {
 const VideoDetailScreen: React.FC<VideoDetailScreenProps> = ({ route, navigation }) => {
   const { video } = route.params;
   const [showPlayer, setShowPlayer] = useState(false);
+  const [thumbnailLoading, setThumbnailLoading] = useState(true);
+  const [thumbnailError, setThumbnailError] = useState(false);
+
+  // Kiểm tra xem có phải YouTube video không
+  const isYouTubeVideo = video.videoUrl?.includes('youtube.com') || video.videoUrl?.includes('youtu.be');
 
   const handlePlayVideo = () => {
     setShowPlayer(true);
@@ -34,7 +43,7 @@ const VideoDetailScreen: React.FC<VideoDetailScreenProps> = ({ route, navigation
   if (showPlayer) {
     return (
       <VideoPlayer
-        videoUrl={video.videoUrl || 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4'}
+        videoUrl={video.videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'}
         title={video.title}
         thumbnailUrl={video.thumbnail}
         onClose={handleClosePlayer}
@@ -44,7 +53,7 @@ const VideoDetailScreen: React.FC<VideoDetailScreenProps> = ({ route, navigation
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       {/* Header */}
       <View style={styles.header}>
@@ -52,7 +61,7 @@ const VideoDetailScreen: React.FC<VideoDetailScreenProps> = ({ route, navigation
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Feather name="arrow-left" size={24} color="#FFFFFF" />
+          <Feather name="arrow-left" size={20} color="#374151" />
         </TouchableOpacity>
         
         <Text style={styles.headerTitle} numberOfLines={1}>
@@ -60,28 +69,58 @@ const VideoDetailScreen: React.FC<VideoDetailScreenProps> = ({ route, navigation
         </Text>
         
         <TouchableOpacity style={styles.shareButton}>
-          <Feather name="share-2" size={20} color="#FFFFFF" />
+          <Feather name="share-2" size={18} color="#374151" />
         </TouchableOpacity>
       </View>
 
       {/* Video Thumbnail */}
       <View style={styles.videoContainer}>
-        <TouchableOpacity
-          style={styles.thumbnailContainer}
-          onPress={handlePlayVideo}
-          activeOpacity={0.9}
-        >
-          <View style={styles.thumbnail}>
-            <Feather name="play" size={60} color="#FFFFFF" />
-          </View>
-          
-          {/* Duration Badge */}
-          <View style={styles.durationBadge}>
-            <Text style={styles.durationText}>{video.duration}</Text>
-          </View>
-          
-
-        </TouchableOpacity>
+        <View style={styles.videoWrapper}>
+          <TouchableOpacity
+            style={styles.thumbnailContainer}
+            onPress={handlePlayVideo}
+            activeOpacity={0.9}
+          >
+            {video.thumbnail && !thumbnailError ? (
+              <Image
+                source={{ uri: video.thumbnail }}
+                style={styles.thumbnailImage}
+                resizeMode="cover"
+                onLoadStart={() => setThumbnailLoading(true)}
+                onLoadEnd={() => setThumbnailLoading(false)}
+                onError={() => {
+                  setThumbnailError(true);
+                  setThumbnailLoading(false);
+                }}
+              />
+            ) : (
+              <View style={styles.thumbnail}>
+                <View style={styles.playIconContainer}>
+                  <Feather name="play" size={40} color="#FFFFFF" />
+                </View>
+              </View>
+            )}
+            
+            {/* Loading Overlay */}
+            {thumbnailLoading && video.thumbnail && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="large" color="#0EA5E9" />
+              </View>
+            )}
+            
+            {/* Play Button Overlay */}
+            <View style={styles.playButtonOverlay}>
+              <View style={styles.playIconContainer}>
+                <Feather name="play" size={32} color="#FFFFFF" />
+              </View>
+            </View>
+            
+            {/* Duration Badge */}
+            <View style={styles.durationBadge}>
+              <Text style={styles.durationText}>{video.duration}</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Content */}
@@ -92,84 +131,85 @@ const VideoDetailScreen: React.FC<VideoDetailScreenProps> = ({ route, navigation
           
           <View style={styles.videoMeta}>
             <View style={styles.metaItem}>
-              <Feather name="eye" size={16} color="#6B7280" />
+              <Feather name="eye" size={14} color="#6B7280" />
               <Text style={styles.metaText}>{video.viewCount}</Text>
             </View>
             
             <View style={styles.metaItem}>
-              <Feather name="calendar" size={16} color="#6B7280" />
+              <Feather name="calendar" size={14} color="#6B7280" />
               <Text style={styles.metaText}>{video.publishedAt}</Text>
             </View>
             
             <View style={styles.metaItem}>
-              <Feather name="clock" size={16} color="#6B7280" />
+              <Feather name="clock" size={14} color="#6B7280" />
               <Text style={styles.metaText}>{video.duration}</Text>
             </View>
           </View>
         </View>
 
+        {/* Play Button */}
+        <View style={styles.playActionContainer}>
+          <TouchableOpacity
+            style={styles.playActionButton}
+            onPress={handlePlayVideo}
+          >
+            <Feather name="play" size={18} color="#FFFFFF" />
+            <Text style={styles.playActionText}>Phát video</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
           <TouchableOpacity style={styles.actionButton}>
-            <Feather name="thumbs-up" size={20} color="#6B7280" />
+            <Feather name="thumbs-up" size={18} color="#6B7280" />
             <Text style={styles.actionText}>Thích</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
-            <Feather name="message-circle" size={20} color="#6B7280" />
+            <Feather name="message-circle" size={18} color="#6B7280" />
             <Text style={styles.actionText}>Bình luận</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
-            <Feather name="share-2" size={20} color="#6B7280" />
+            <Feather name="share-2" size={18} color="#6B7280" />
             <Text style={styles.actionText}>Chia sẻ</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
-            <Feather name="download" size={20} color="#6B7280" />
-            <Text style={styles.actionText}>Tải về</Text>
+            <Feather name="download" size={18} color="#6B7280" />
+            <Text style={styles.actionText}>Tải xuống</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Description */}
-        <View style={styles.descriptionSection}>
-          <Text style={styles.sectionTitle}>Mô tả</Text>
-          <Text style={styles.descriptionText}>
-            {video.description || 'Video hay về chủ đề nấu ăn, sức khỏe và cuộc sống. Phù hợp cho mọi lứa tuổi, đặc biệt là người cao tuổi.'}
-          </Text>
+        {/* Channel Info */}
+        <View style={styles.channelInfo}>
+          <View style={styles.channelHeader}>
+            <View style={styles.channelAvatar}>
+              <Feather name="user" size={20} color="#6B7280" />
+            </View>
+            
+            <View style={styles.channelDetails}>
+              <Text style={styles.channelTitle}>{video.channelTitle}</Text>
+              <Text style={styles.channelSubscribers}>Kênh video</Text>
+            </View>
+            
+            <TouchableOpacity style={styles.subscribeButton}>
+              <Text style={styles.subscribeText}>Theo dõi</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Related Videos */}
-        <View style={styles.relatedSection}>
-          <Text style={styles.sectionTitle}>Video liên quan</Text>
-          
-          {/* Mock related videos */}
-          {[1, 2, 3].map((item) => (
-            <TouchableOpacity key={item} style={styles.relatedVideo}>
-              <View style={styles.relatedThumbnail}>
-                <Feather name="play" size={20} color="#FFFFFF" />
-              </View>
-              
-              <View style={styles.relatedInfo}>
-                <Text style={styles.relatedTitle}>
-                  Video liên quan {item}
-                </Text>
-                <Text style={styles.relatedMeta}>
-                  1.2K lượt xem • 2 ngày trước
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+        {/* Description */}
+        <View style={styles.descriptionContainer}>
+          <Text style={styles.descriptionTitle}>Mô tả</Text>
+          <Text style={styles.descriptionText} numberOfLines={5}>
+            {video.description}
+          </Text>
+          <TouchableOpacity>
+            <Text style={styles.readMoreText}>Đọc thêm</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
-
-      {/* Floating Play Button */}
-      <TouchableOpacity
-        style={styles.floatingPlayButton}
-        onPress={handlePlayVideo}
-      >
-        <Feather name="play" size={24} color="#FFFFFF" />
-      </TouchableOpacity>
     </SafeAreaView>
   );
 };
@@ -177,56 +217,102 @@ const VideoDetailScreen: React.FC<VideoDetailScreenProps> = ({ route, navigation
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
   },
   backButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     flex: 1,
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#1F2937',
     textAlign: 'center',
     marginHorizontal: 16,
   },
   shareButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
   },
   videoContainer: {
     width: '100%',
-    height: width * 0.5625, // 16:9 aspect ratio
-    backgroundColor: '#1F2937',
+    height: height * 0.3,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  videoWrapper: {
+    flex: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F3F4F6',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   thumbnailContainer: {
     flex: 1,
     position: 'relative',
+  },
+  thumbnail: {
+    flex: 1,
+    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  thumbnail: {
+  thumbnailImage: {
+    flex: 1,
     width: '100%',
     height: '100%',
-    backgroundColor: '#374151',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  },
+  playButtonOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  playIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -237,29 +323,29 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 6,
   },
   durationText: {
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '500',
   },
-
   content: {
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
   videoInfo: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
   videoTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 16,
-    lineHeight: 28,
+    marginBottom: 12,
+    lineHeight: 24,
   },
   videoMeta: {
     flexDirection: 'row',
@@ -272,87 +358,107 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   metaText: {
-    fontSize: 18,
     color: '#6B7280',
+    fontSize: 13,
+  },
+  playActionContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  playActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0EA5E9',
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  playActionText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
   actionButton: {
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   actionText: {
-    fontSize: 16,
     color: '#6B7280',
-    fontWeight: '500',
+    fontSize: 13,
   },
-  descriptionSection: {
-    padding: 20,
+  channelInfo: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 12,
-  },
-  descriptionText: {
-    fontSize: 18,
-    color: '#374151',
-    lineHeight: 24,
-  },
-  relatedSection: {
-    padding: 20,
-  },
-  relatedVideo: {
+  channelHeader: {
     flexDirection: 'row',
-    marginBottom: 16,
-    gap: 12,
-  },
-  relatedThumbnail: {
-    width: 120,
-    height: 68,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-    justifyContent: 'center',
     alignItems: 'center',
   },
-  relatedInfo: {
-    flex: 1,
+  channelAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
-  relatedTitle: {
-    fontSize: 18,
+  channelDetails: {
+    flex: 1,
+  },
+  channelTitle: {
+    fontSize: 14,
     fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 6,
-    lineHeight: 22,
+    marginBottom: 2,
   },
-  relatedMeta: {
-    fontSize: 16,
+  channelSubscribers: {
+    fontSize: 12,
     color: '#6B7280',
   },
-  floatingPlayButton: {
-    position: 'absolute',
-    bottom: 40,
-    right: 40,
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  subscribeButton: {
     backgroundColor: '#0EA5E9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#0EA5E9',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  subscribeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  descriptionContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+  descriptionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  descriptionText: {
+    fontSize: 13,
+    color: '#6B7280',
+    lineHeight: 18,
+  },
+  readMoreText: {
+    color: '#0EA5E9',
+    fontSize: 13,
+    marginTop: 8,
   },
 });
 

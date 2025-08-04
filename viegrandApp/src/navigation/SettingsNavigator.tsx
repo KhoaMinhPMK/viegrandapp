@@ -8,12 +8,14 @@ import ElderlySettingsScreen from '../screens/Elderly/Settings';
 import RelativeSettingsScreen from '../screens/Relative/Settings';
 import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 import ElderlyProfileScreen from '../screens/Elderly/Profile';
+import EmergencyCallSettingsScreen from '../screens/Elderly/Settings/EmergencyCallSettingsScreen';
 
 export type SettingsStackParamList = {
   ElderlySettings: undefined;
   RelativeSettings: undefined;
   EditProfile: undefined;
   ElderlyProfile: undefined;
+  EmergencyCallSettings: undefined;
 };
 
 const Stack = createStackNavigator<SettingsStackParamList>();
@@ -66,6 +68,11 @@ const SettingsNavigator = ({ initialRouteName }: SettingsNavigatorProps) => {
           presentation: 'modal',
           headerShown: false,
         }}
+      />
+      <Stack.Screen
+        name="EmergencyCallSettings"
+        component={EmergencyCallSettingsScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

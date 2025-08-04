@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Platform,
+  Linking,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -20,11 +22,17 @@ import { getUserData } from '../../../services/api';
 import { SettingsSection } from '../../../components/settings/SettingsSection';
 import { SettingsRow } from '../../../components/settings/SettingsRow';
 import { SettingsContainer } from '../../../components/settings/SettingsContainer';
+import PermissionStatusIndicator from '../../../components/elderly-home/PermissionStatusIndicator';
+import PermissionGuideModal from '../../../components/elderly-home/PermissionGuideModal';
+import emergencyCallService, { setPermissionGuideCallback } from '../../../services/emergencyCall';
 
 const ElderlySettingsScreen = () => {
     const navigation = useNavigation<any>();
     const { user, logout } = useAuth();
     const { premiumStatus } = usePremium();
+    
+    // State cho modal hướng dẫn quyền
+    const [showPermissionGuide, setShowPermissionGuide] = useState(false);
     
     // State cho user data từ API
     const [userData, setUserData] = useState<any>(null);
@@ -107,6 +115,9 @@ const ElderlySettingsScreen = () => {
     // Backup: Fetch data khi component mount
     useEffect(() => {
         fetchUserDataAndUpdatePremium();
+        
+        // Set callback cho permission guide
+        setPermissionGuideCallback(() => setShowPermissionGuide(true));
     }, [fetchUserDataAndUpdatePremium]);
 
     const getAvatarText = (fullName: string | undefined) => {
@@ -266,6 +277,23 @@ const ElderlySettingsScreen = () => {
                         />
                     </SettingsSection>
 
+                    <SettingsSection title="Khẩn cấp">
+                        <SettingsRow
+                            title="Cài đặt số khẩn cấp"
+                            icon="phone"
+                            type="navigation"
+                            value={emergencyCallService.getEmergencyInfo().number}
+                            onPress={() => navigation.navigate('EmergencyCallSettings')}
+                        />
+                    </SettingsSection>
+                    
+                    {/* Permission Status Indicator */}
+                    <View style={styles.permissionContainer}>
+                        <PermissionStatusIndicator 
+                            onRequestPermission={() => setShowPermissionGuide(true)}
+                        />
+                    </View>
+
                     <SettingsSection title="Hỗ trợ">
                         <SettingsRow
                             title="Trung tâm hỗ trợ"
@@ -295,6 +323,20 @@ const ElderlySettingsScreen = () => {
                     <View style={styles.footer} />
                 </ScrollView>
             </SafeAreaView>
+            
+            <PermissionGuideModal
+                visible={showPermissionGuide}
+                onClose={() => setShowPermissionGuide(false)}
+                onOpenSettings={() => {
+                    setShowPermissionGuide(false);
+                    // Mở cài đặt app cụ thể
+                    if (Platform.OS === 'android') {
+                        Linking.openURL('package:com.viegrandapp');
+                    } else {
+                        Linking.openSettings();
+                    }
+                }}
+            />
         </SettingsContainer>
     );
 };
@@ -395,6 +437,10 @@ const styles = StyleSheet.create({
     },
     footer: {
         height: 40,
+    },
+    permissionContainer: {
+        marginHorizontal: 16,
+        marginBottom: 16,
     }
 });
 

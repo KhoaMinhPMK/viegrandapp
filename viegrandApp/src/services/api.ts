@@ -1231,4 +1231,39 @@ export const updateReminderStatus = async (
   }
 };
 
+// Emergency contact APIs
+export const saveEmergencyContact = async (userEmail: string, emergencyNumber: string, contactName?: string) => {
+  try {
+    const response = await apiClient.post('/save_emergency_contact.php', {
+      user_email: userEmail,
+      emergency_number: emergencyNumber,
+      contact_name: contactName || 'Số khẩn cấp'
+    });
+
+    console.log('✅ saveEmergencyContact API response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ saveEmergencyContact API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+export const getEmergencyContact = async (userEmail: string) => {
+  try {
+    const response = await apiClient.get(`/get_emergency_contact.php?email=${encodeURIComponent(userEmail)}`);
+    
+    console.log('✅ getEmergencyContact API response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ getEmergencyContact API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
 export default apiClient;

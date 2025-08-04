@@ -2,6 +2,8 @@ import React, { useCallback, memo } from 'react';
 import { View, StyleSheet, FlatList, Text, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import FunctionButton from './FunctionButton';
+import EmergencyCallButton from './EmergencyCallButton';
+import emergencyCallService from '../../services/emergencyCall';
 
 interface FunctionItem {
   id: string;
@@ -22,19 +24,41 @@ const FunctionGrid = memo(() => {
     { id: 'family', icon: 'users', text: 'Gia đình', action: () => Alert.alert('Thông báo', 'Chức năng đang phát triển') },
     { id: 'messages', icon: 'message-circle', text: 'Tin nhắn', action: () => navigation.navigate('Message') },
     { id: 'settings', icon: 'settings', text: 'Cài đặt', action: () => navigation.navigate('Settings') },
-    { id: 'emergency', icon: 'phone', text: 'Gọi khẩn cấp', action: () => console.log('Gọi khẩn cấp') },
+    { 
+      id: 'emergency', 
+      icon: 'phone', 
+      text: 'Gọi khẩn cấp', 
+      action: async () => {
+        try {
+          // Refresh emergency number from server before making call
+          await emergencyCallService.initialize();
+          await emergencyCallService.makeEmergencyCall();
+        } catch (error) {
+          console.error('Error refreshing emergency number:', error);
+          // Fallback to cached number
+          await emergencyCallService.makeEmergencyCall();
+        }
+      }
+    },
     { id: 'add', icon: 'plus', text: 'Thêm', action: () => console.log('Thêm'), isPlus: true },
     { id: 'empty' }, // Placeholder for alignment
   ];
 
-  const renderItem = useCallback(({ item }: { item: FunctionItem }) => (
-    <FunctionButton
-      icon={item.icon || ''}
-      text={item.text || ''}
-      onPress={item.action || (() => {})}
-      isPlus={item.isPlus}
-    />
-  ), []);
+  const renderItem = useCallback(({ item }: { item: FunctionItem }) => {
+    // Sử dụng EmergencyCallButton cho nút gọi khẩn cấp
+    if (item.id === 'emergency') {
+      return <EmergencyCallButton />;
+    }
+    
+    return (
+      <FunctionButton
+        icon={item.icon || ''}
+        text={item.text || ''}
+        onPress={item.action || (() => {})}
+        isPlus={item.isPlus}
+      />
+    );
+  }, []);
 
   return (
     <View style={styles.container}>
