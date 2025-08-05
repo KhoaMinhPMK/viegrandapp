@@ -29,8 +29,8 @@ const AuthNavigator = () => {
       <Stack.Screen name="Verification" component={VerificationScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="SelectRole" component={SelectRoleScreen} />
-      <Stack.Screen name="ElderlyApp" component={ElderlyNavigator} />
-      <Stack.Screen name="RelativeApp" component={RelativeNavigator} />
+      <Stack.Screen name="Elderly" component={ElderlyNavigator} />
+      <Stack.Screen name="Relative" component={RelativeNavigator} />
     </Stack.Navigator>
   );
 };

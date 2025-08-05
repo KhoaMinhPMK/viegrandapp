@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Nhóm phát triển VieGrandApp" />
+  <title>VieGrandApp - Product Design Script Ứng dụng hỗ trợ người cao tuổi thông minh Phiên bản 1.0 - Tháng 08/2025</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="/dev/null" />
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title"><strong>VieGrandApp - Product Design Script</strong><br />
+Ứng dụng hỗ trợ người cao tuổi thông minh<br />
+<em>Phiên bản 1.0 - Tháng 08/2025</em></h1>
+<p class="author"><strong>Nhóm phát triển VieGrandApp</strong></p>
+</header>
+<p><strong>Tài liệu này mô tả chi tiết về ứng dụng VieGrandApp - một giải pháp công nghệ toàn diện dành cho người cao tuổi</strong></p>
+<h1 id="tổng-quan-ứng-dụng">Tổng quan ứng dụng</h1>
+<h2 id="giới-thiệu">Giới thiệu</h2>
+<p>VieGrandApp là một ứng dụng di động được thiết kế đặc biệt cho người cao tuổi (từ 60 tuổi trở lên), cung cấp các tính năng hỗ trợ toàn diện bao gồm giao tiếp, giải trí, theo dõi sức khỏe và các tiện ích khác. Ứng dụng được phát triển với mục tiêu tăng cường chất lượng cuộc sống cho người cao tuổi thông qua công nghệ hiện đại nhưng dễ sử dụng.</p>
+<h2 id="mục-tiêu-chính">Mục tiêu chính</h2>
+<ul>
+<li><p><strong>Tính dễ sử dụng</strong>: Giao diện đơn giản, trực quan với font chữ lớn và icon rõ ràng, phù hợp với khả năng tiếp cận công nghệ của người cao tuổi</p></li>
+<li><p><strong>Giao tiếp</strong>: Kết nối người cao tuổi với người thân và bạn bè thông qua tin nhắn, gọi điện và chia sẻ hình ảnh</p></li>
+<li><p><strong>Giải trí</strong>: Cung cấp các hoạt động giải trí phù hợp lứa tuổi như đọc sách, chơi game và xem video</p></li>
+<li><p><strong>Theo dõi sức khỏe</strong>: Giám sát các chỉ số sức khỏe cơ bản như huyết áp, cân nặng và nhắc nhở uống thuốc</p></li>
+<li><p><strong>An toàn khẩn cấp</strong>: Hệ thống gọi khẩn cấp một chạm khi cần thiết, kết nối với người thân và dịch vụ khẩn cấp</p></li>
+</ul>
+<h2 id="đối-tượng-người-dùng">Đối tượng người dùng</h2>
+<ul>
+<li><p><strong>Người dùng chính</strong>: Người cao tuổi từ 60-85 tuổi, có smartphone cơ bản</p></li>
+<li><p><strong>Người dùng phụ</strong>: Con cái, cháu, người chăm sóc muốn theo dõi và kết nối với người cao tuổi</p></li>
+<li><p><strong>Đặc điểm</strong>: Cần hỗ trợ trong cuộc sống hàng ngày, muốn kết nối với gia đình nhưng có thể gặp khó khăn với công nghệ phức tạp</p></li>
+</ul>
+<h1 id="công-nghệ-sử-dụng">Công nghệ sử dụng</h1>
+<h2 id="công-nghệ-phía-ứng-dụng-frontend">Công nghệ phía ứng dụng (Frontend)</h2>
+<table>
+<caption>Công nghệ phía ứng dụng di động</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Công nghệ</strong></th>
+<th style="text-align: left;"><strong>Phiên bản</strong></th>
+<th style="text-align: left;"><strong>Mục đích sử dụng</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">React Native (Framework phát triển ứng dụng di động)</td>
+<td style="text-align: left;">0.80.1</td>
+<td style="text-align: left;">Công cụ chính để tạo ứng dụng chạy trên cả iPhone và Android</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">TypeScript (Ngôn ngữ lập trình)</td>
+<td style="text-align: left;">5.0.4</td>
+<td style="text-align: left;">Giúp viết code an toàn hơn, ít lỗi hơn</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">React Navigation (Quản lý màn hình)</td>
+<td style="text-align: left;">7.x</td>
+<td style="text-align: left;">Điều khiển việc chuyển đổi giữa các màn hình trong ứng dụng</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">React Native Vector Icons (Thư viện biểu tượng)</td>
+<td style="text-align: left;">10.2.0</td>
+<td style="text-align: left;">Cung cấp các biểu tượng đẹp và dễ hiểu</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">React Native Voice (Nhận diện giọng nói)</td>
+<td style="text-align: left;">3.2.4</td>
+<td style="text-align: left;">Cho phép người dùng điều khiển ứng dụng bằng giọng nói</td>
+</tr>
+</tbody>
+</table>
+<h2 id="công-nghệ-phía-máy-chủ-backend">Công nghệ phía máy chủ (Backend)</h2>
+<table>
+<caption>Công nghệ phía máy chủ</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Công nghệ</strong></th>
+<th style="text-align: left;"><strong>Phiên bản</strong></th>
+<th style="text-align: left;"><strong>Mục đích sử dụng</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">PHP (Ngôn ngữ lập trình máy chủ)</td>
+<td style="text-align: left;">8.x</td>
+<td style="text-align: left;">Xử lý các yêu cầu từ ứng dụng, quản lý dữ liệu người dùng</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">MySQL (Cơ sở dữ liệu)</td>
+<td style="text-align: left;">8.x</td>
+<td style="text-align: left;">Lưu trữ thông tin người dùng, tin nhắn, dữ liệu sức khỏe</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Socket.io (Giao tiếp thời gian thực)</td>
+<td style="text-align: left;">4.8.1</td>
+<td style="text-align: left;">Cho phép tin nhắn được gửi và nhận ngay lập tức</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">JWT (Bảo mật đăng nhập)</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Đảm bảo an toàn khi người dùng đăng nhập vào ứng dụng</td>
+</tr>
+</tbody>
+</table>
+<h2 id="dịch-vụ-bổ-sung-third-party-services">Dịch vụ bổ sung (Third-party Services)</h2>
+<ul>
+<li><p><strong>AsyncStorage</strong>: Lưu trữ thông tin tạm thời trên điện thoại người dùng</p></li>
+<li><p><strong>Axios</strong>: Công cụ gửi và nhận dữ liệu giữa ứng dụng và máy chủ</p></li>
+<li><p><strong>React Native Image Picker</strong>: Cho phép người dùng chọn và gửi ảnh</p></li>
+<li><p><strong>React Native Video</strong>: Phát video trong ứng dụng</p></li>
+<li><p><strong>React Native WebView</strong>: Hiển thị nội dung web trong ứng dụng</p></li>
+</ul>
+<h1 id="kiến-trúc-hệ-thống">Kiến trúc hệ thống</h1>
+<h2 id="tổng-quan-kiến-trúc">Tổng quan kiến trúc</h2>
+<p>Hệ thống VieGrandApp được xây dựng theo mô hình client-server với các thành phần chính:</p>
+<ul>
+<li><p><strong>Ứng dụng di động (Client)</strong>: Chạy trên điện thoại iPhone và Android, cung cấp giao diện người dùng</p></li>
+<li><p><strong>Máy chủ xử lý (Server)</strong>: Xử lý các yêu cầu từ ứng dụng, quản lý dữ liệu và logic nghiệp vụ</p></li>
+<li><p><strong>Cơ sở dữ liệu (Database)</strong>: Lưu trữ thông tin người dùng, tin nhắn, dữ liệu sức khỏe</p></li>
+<li><p><strong>Dịch vụ giao tiếp thời gian thực</strong>: Cho phép tin nhắn được gửi và nhận ngay lập tức</p></li>
+</ul>
+<h2 id="luồng-xử-lý-dữ-liệu">Luồng xử lý dữ liệu</h2>
+<p>Khi người dùng thực hiện một hành động trong ứng dụng:</p>
+<ol>
+<li><p><strong>Bước 1</strong>: Người dùng thực hiện hành động (ví dụ: gửi tin nhắn)</p></li>
+<li><p><strong>Bước 2</strong>: Ứng dụng xử lý và chuẩn bị dữ liệu</p></li>
+<li><p><strong>Bước 3</strong>: Kiểm tra xem có cần gửi dữ liệu lên máy chủ hay không</p></li>
+<li><p><strong>Bước 4</strong>: Nếu cần, gửi yêu cầu lên máy chủ PHP</p></li>
+<li><p><strong>Bước 5</strong>: Máy chủ xử lý và lưu vào cơ sở dữ liệu MySQL</p></li>
+<li><p><strong>Bước 6</strong>: Máy chủ trả về kết quả cho ứng dụng</p></li>
+<li><p><strong>Bước 7</strong>: Ứng dụng cập nhật giao diện và hiển thị kết quả</p></li>
+<li><p><strong>Bước 8</strong>: Người dùng nhận được phản hồi (thông báo thành công)</p></li>
+</ol>
+<h1 id="chức-năng-dành-cho-người-cao-tuổi">Chức năng dành cho người cao tuổi</h1>
+<h2 id="màn-hình-chính-home-screen">Màn hình chính (Home Screen)</h2>
+<p>Màn hình đầu tiên mà người dùng thấy khi mở ứng dụng, được thiết kế đơn giản và dễ sử dụng:</p>
+<h3 id="thẻ-thông-tin-thời-tiết">Thẻ thông tin thời tiết</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Cung cấp thông tin thời tiết hiện tại để người dùng có thể lên kế hoạch cho ngày</p></li>
+<li><p><strong>Tính năng</strong>: Hiển thị nhiệt độ, điều kiện thời tiết với biểu tượng trực quan</p></li>
+<li><p><strong>Khuyến nghị sức khỏe</strong>: Đưa ra lời khuyên dựa trên thời tiết (ví dụ: trời mưa thì nên ở nhà)</p></li>
+<li><p><strong>Cập nhật tự động</strong>: Thông tin được cập nhật theo vị trí hiện tại của người dùng</p></li>
+</ul>
+<h3 id="nút-gọi-khẩn-cấp">Nút gọi khẩn cấp</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Cung cấp cách gọi khẩn cấp nhanh nhất khi cần thiết</p></li>
+<li><p><strong>Thiết kế</strong>: Nút lớn màu đỏ nổi bật, dễ nhìn và dễ chạm</p></li>
+<li><p><strong>Cách sử dụng</strong>: Chỉ cần chạm một lần để gọi người thân hoặc dịch vụ khẩn cấp</p></li>
+<li><p><strong>Tính năng bổ sung</strong>: Tự động gửi vị trí hiện tại khi gọi khẩn cấp</p></li>
+</ul>
+<h3 id="lưới-chức-năng-chính">Lưới chức năng chính</h3>
+<ul>
+<li><p><strong>Bố cục</strong>: Các tính năng quan trọng được sắp xếp theo lưới 3x3, dễ tìm và sử dụng</p></li>
+<li><p><strong>Icon lớn</strong>: Mỗi chức năng có icon lớn, rõ ràng, dễ nhận biết</p></li>
+<li><p><strong>Tên chức năng</strong>: Text mô tả ngắn gọn, dễ hiểu</p></li>
+<li><p><strong>Màu sắc phân biệt</strong>: Mỗi chức năng có màu sắc riêng để dễ nhớ</p></li>
+</ul>
+<h3 id="tiến-độ-đọc-sách">Tiến độ đọc sách</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Theo dõi tiến độ đọc sách để khuyến khích thói quen đọc</p></li>
+<li><p><strong>Hiển thị</strong>: Phần trăm hoàn thành cuốn sách đang đọc</p></li>
+<li><p><strong>Bookmark tự động</strong>: Lưu trang đang đọc để tiếp tục sau</p></li>
+<li><p><strong>Thống kê</strong>: Hiển thị số trang đã đọc trong ngày/tuần</p></li>
+</ul>
+<h3 id="chuyển-đổi-giọng-nói">Chuyển đổi giọng nói</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Cho phép người dùng điều khiển ứng dụng bằng giọng nói</p></li>
+<li><p><strong>Hiển thị</strong>: Văn bản được chuyển đổi từ giọng nói của người dùng</p></li>
+<li><p><strong>Độ chính xác</strong>: Sử dụng AI để nhận diện giọng nói tiếng Việt</p></li>
+<li><p><strong>Tính năng</strong>: Có thể dùng để gửi tin nhắn, tìm kiếm, điều khiển ứng dụng</p></li>
+</ul>
+<h2 id="giao-tiếp-message">Giao tiếp (Message)</h2>
+<p>Hệ thống tin nhắn được thiết kế đặc biệt cho người cao tuổi:</p>
+<h3 id="giao-diện-chat-đơn-giản">Giao diện chat đơn giản</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Tạo giao diện chat dễ sử dụng cho người cao tuổi</p></li>
+<li><p><strong>Font chữ lớn</strong>: Text dễ đọc, không cần đeo kính</p></li>
+<li><p><strong>Ít tính năng phức tạp</strong>: Tập trung vào gửi/nhận tin nhắn cơ bản</p></li>
+<li><p><strong>Màu sắc tương phản</strong>: Đảm bảo dễ đọc trong mọi điều kiện ánh sáng</p></li>
+</ul>
+<h3 id="tin-nhắn-giọng-nói">Tin nhắn giọng nói</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Cho phép gửi tin nhắn bằng cách nói thay vì gõ chữ</p></li>
+<li><p><strong>Cách sử dụng</strong>: Nhấn nút microphone, nói tin nhắn, nhả nút để gửi</p></li>
+<li><p><strong>Chuyển đổi tự động</strong>: Giọng nói được chuyển thành text ngay lập tức</p></li>
+<li><p><strong>Hỗ trợ tiếng Việt</strong>: Tối ưu cho nhận diện giọng nói tiếng Việt</p></li>
+</ul>
+<h3 id="chia-sẻ-hình-ảnh">Chia sẻ hình ảnh</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Dễ dàng gửi ảnh cho người thân</p></li>
+<li><p><strong>Cách sử dụng</strong>: Nhấn nút camera, chọn ảnh từ thư viện hoặc chụp mới</p></li>
+<li><p><strong>Nén ảnh tự động</strong>: Giảm kích thước ảnh để gửi nhanh hơn</p></li>
+<li><p><strong>Xem trước</strong>: Hiển thị ảnh trước khi gửi để kiểm tra</p></li>
+</ul>
+<h3 id="cập-nhật-thời-gian-thực">Cập nhật thời gian thực</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Tin nhắn mới xuất hiện ngay lập tức, không cần làm mới màn hình</p></li>
+<li><p><strong>Công nghệ</strong>: Sử dụng Socket.io để kết nối thời gian thực</p></li>
+<li><p><strong>Thông báo</strong>: Hiển thị thông báo khi có tin nhắn mới</p></li>
+<li><p><strong>Trạng thái đã đọc</strong>: Hiển thị khi người khác đã đọc tin nhắn</p></li>
+</ul>
+<h3 id="quản-lý-danh-bạ">Quản lý danh bạ</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Danh sách người thân được sắp xếp theo thứ tự ưu tiên</p></li>
+<li><p><strong>Ảnh đại diện</strong>: Hiển thị ảnh người thân để dễ nhận biết</p></li>
+<li><p><strong>Trạng thái online</strong>: Hiển thị ai đang online để chat</p></li>
+<li><p><strong>Tìm kiếm nhanh</strong>: Có thể tìm kiếm theo tên hoặc số điện thoại</p></li>
+</ul>
+<h2 id="giải-trí-entertainment">Giải trí (Entertainment)</h2>
+<p>Các hoạt động giải trí phù hợp với lứa tuổi:</p>
+<h3 id="đọc-sách">Đọc sách</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Cung cấp thư viện sách phù hợp với người cao tuổi</p></li>
+<li><p><strong>Font chữ lớn</strong>: Có thể điều chỉnh kích thước chữ từ 16px đến 24px</p></li>
+<li><p><strong>Bookmark tự động</strong>: Lưu trang đang đọc để tiếp tục sau</p></li>
+<li><p><strong>Thư viện đa dạng</strong>: Sách văn học, sức khỏe, kỹ năng sống</p></li>
+<li><p><strong>Chế độ đọc ban đêm</strong>: Giảm độ sáng màn hình để bảo vệ mắt</p></li>
+</ul>
+<h3 id="xem-video">Xem video</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Cung cấp nội dung video giải trí và giáo dục</p></li>
+<li><p><strong>Điều khiển đơn giản</strong>: Nút play/pause lớn, dễ nhấn</p></li>
+<li><p><strong>Tự động phát tiếp</strong>: Tự động phát video tiếp theo trong playlist</p></li>
+<li><p><strong>Chất lượng tùy chỉnh</strong>: Tự động điều chỉnh chất lượng theo kết nối mạng</p></li>
+<li><p><strong>Nội dung phù hợp</strong>: Video về sức khỏe, nấu ăn, du lịch</p></li>
+</ul>
+<h3 id="trò-chơi">Trò chơi</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Cung cấp các game rèn luyện trí não và giải trí</p></li>
+<li><p><strong>Sudoku</strong>: Game logic với nhiều cấp độ từ dễ đến khó</p></li>
+<li><p><strong>Dò mìn</strong>: Game trí tuệ giúp rèn luyện tư duy logic</p></li>
+<li><p><strong>Tìm từ</strong>: Game tìm từ trong bảng chữ cái</p></li>
+<li><p><strong>Ghép hình</strong>: Game ghép hình với hình ảnh đẹp</p></li>
+<li><p><strong>Điều chỉnh độ khó</strong>: Tự động điều chỉnh theo khả năng người chơi</p></li>
+</ul>
+<h3 id="nghe-nhạc">Nghe nhạc</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Cung cấp âm nhạc giải trí và thư giãn</p></li>
+<li><p><strong>Playlist có sẵn</strong>: Danh sách nhạc được tạo sẵn theo chủ đề</p></li>
+<li><p><strong>Điều khiển đơn giản</strong>: Nút play/pause, next/previous lớn</p></li>
+<li><p><strong>Chế độ lặp</strong>: Có thể lặp lại một bài hoặc toàn bộ playlist</p></li>
+<li><p><strong>Nhạc phù hợp</strong>: Nhạc truyền thống, nhạc vàng, nhạc thư giãn</p></li>
+</ul>
+<h2 id="sức-khỏe-health">Sức khỏe (Health)</h2>
+<p>Theo dõi và quản lý sức khỏe:</p>
+<h3 id="kiểm-tra-sức-khỏe">Kiểm tra sức khỏe</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Ghi chép các chỉ số sức khỏe cơ bản</p></li>
+<li><p><strong>Huyết áp</strong>: Ghi chép huyết áp tâm thu và tâm trương</p></li>
+<li><p><strong>Nhịp tim</strong>: Theo dõi nhịp tim khi nghỉ ngơi</p></li>
+<li><p><strong>Cân nặng</strong>: Ghi chép cân nặng định kỳ</p></li>
+<li><p><strong>Biểu đồ theo dõi</strong>: Hiển thị xu hướng thay đổi theo thời gian</p></li>
+<li><p><strong>Cảnh báo thông minh</strong>: Thông báo khi chỉ số vượt ngưỡng an toàn</p></li>
+</ul>
+<h3 id="theo-dõi-huyết-áp">Theo dõi huyết áp</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Ghi chép huyết áp tâm thu và tâm trương, hiển thị biểu đồ theo thời gian</p></li>
+<li><p><strong>Cách ghi chép</strong>: Nhập số đo từ máy đo huyết áp</p></li>
+<li><p><strong>Phân loại</strong>: Tự động phân loại huyết áp (bình thường, cao, thấp)</p></li>
+<li><p><strong>Nhắc nhở đo</strong>: Lịch trình nhắc nhở đo huyết áp định kỳ</p></li>
+<li><p><strong>Chia sẻ với bác sĩ</strong>: Có thể gửi báo cáo cho bác sĩ</p></li>
+</ul>
+<h3 id="theo-dõi-cân-nặng">Theo dõi cân nặng</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Ghi chép cân nặng định kỳ, hiển thị xu hướng thay đổi</p></li>
+<li><p><strong>Ghi chép đơn giản</strong>: Chỉ cần nhập số cân nặng</p></li>
+<li><p><strong>Biểu đồ trực quan</strong>: Hiển thị thay đổi cân nặng theo tuần/tháng</p></li>
+<li><p><strong>Mục tiêu cân nặng</strong>: Đặt mục tiêu và theo dõi tiến độ</p></li>
+<li><p><strong>Lời khuyên</strong>: Đưa ra lời khuyên dựa trên thay đổi cân nặng</p></li>
+</ul>
+<h3 id="nhắc-nhở-uống-thuốc">Nhắc nhở uống thuốc</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Hệ thống nhắc nhở thông minh cho việc uống thuốc đúng giờ</p></li>
+<li><p><strong>Lập lịch</strong>: Tạo lịch uống thuốc theo đơn của bác sĩ</p></li>
+<li><p><strong>Thông báo đa dạng</strong>: Âm thanh, rung, thông báo push</p></li>
+<li><p><strong>Xác nhận uống thuốc</strong>: Người dùng xác nhận đã uống thuốc</p></li>
+<li><p><strong>Báo cáo cho người thân</strong>: Tự động thông báo cho người thân nếu quên uống</p></li>
+<li><p><strong>Lịch sử uống thuốc</strong>: Theo dõi lịch sử uống thuốc để báo cáo bác sĩ</p></li>
+</ul>
+<h2 id="nhắc-nhở-reminders">Nhắc nhở (Reminders)</h2>
+<p>Quản lý công việc và lịch trình hàng ngày:</p>
+<h3 id="quản-lý-công-việc">Quản lý công việc</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Tạo danh sách việc cần làm với mô tả chi tiết</p></li>
+<li><p><strong>Tạo nhắc nhở đơn giản</strong>: Chỉ cần nhập tiêu đề và thời gian</p></li>
+<li><p><strong>Phân loại công việc</strong>: Sắp xếp theo loại (cá nhân, sức khỏe, gia đình)</p></li>
+<li><p><strong>Đánh dấu hoàn thành</strong>: Tap để đánh dấu công việc đã hoàn thành</p></li>
+<li><p><strong>Lặp lại</strong>: Có thể lặp lại nhắc nhở hàng ngày, tuần, tháng</p></li>
+</ul>
+<h3 id="tích-hợp-lịch">Tích hợp lịch</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Hiển thị lịch với các sự kiện quan trọng</p></li>
+<li><p><strong>Xem lịch theo ngày/tuần/tháng</strong>: Nhiều cách xem lịch khác nhau</p></li>
+<li><p><strong>Sự kiện quan trọng</strong>: Đánh dấu các sự kiện như sinh nhật, hẹn bác sĩ</p></li>
+<li><p><strong>Đồng bộ với lịch điện thoại</strong>: Tích hợp với lịch có sẵn trên điện thoại</p></li>
+<li><p><strong>Thông báo trước</strong>: Nhắc nhở trước sự kiện 1 giờ, 1 ngày</p></li>
+</ul>
+<h3 id="hệ-thống-thông-báo">Hệ thống thông báo</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Nhắc nhở bằng âm thanh và rung khi đến giờ</p></li>
+<li><p><strong>Âm thanh đa dạng</strong>: Nhiều loại âm thanh khác nhau cho từng loại nhắc nhở</p></li>
+<li><p><strong>Cường độ rung</strong>: Có thể điều chỉnh cường độ rung</p></li>
+<li><p><strong>Thông báo push</strong>: Gửi thông báo ngay cả khi app đang tắt</p></li>
+<li><p><strong>Lặp lại thông báo</strong>: Thông báo lặp lại nếu người dùng không phản hồi</p></li>
+</ul>
+<h3 id="phân-loại-ưu-tiên">Phân loại ưu tiên</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Sắp xếp công việc theo mức độ quan trọng</p></li>
+<li><p><strong>3 mức độ ưu tiên</strong>: Cao, trung bình, thấp</p></li>
+<li><p><strong>Màu sắc phân biệt</strong>: Mỗi mức độ có màu sắc riêng</p></li>
+<li><p><strong>Sắp xếp tự động</strong>: Hiển thị công việc quan trọng trước</p></li>
+<li><p><strong>Lọc theo ưu tiên</strong>: Có thể lọc chỉ xem công việc ưu tiên cao</p></li>
+</ul>
+<h2 id="cài-đặt-settings">Cài đặt (Settings)</h2>
+<p>Tùy chỉnh ứng dụng theo nhu cầu cá nhân:</p>
+<h3 id="cài-đặt-khẩn-cấp">Cài đặt khẩn cấp</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Thêm/sửa số điện thoại người thân, cấu hình gọi khẩn cấp</p></li>
+<li><p><strong>Danh sách liên lạc</strong>: Thêm tối đa 5 số điện thoại khẩn cấp</p></li>
+<li><p><strong>Thứ tự ưu tiên</strong>: Sắp xếp theo thứ tự gọi khi khẩn cấp</p></li>
+<li><p><strong>Thử nghiệm gọi</strong>: Kiểm tra kết nối với số điện thoại đã lưu</p></li>
+<li><p><strong>Tự động gửi vị trí</strong>: Tự động gửi vị trí khi gọi khẩn cấp</p></li>
+</ul>
+<h3 id="khả-năng-tiếp-cận">Khả năng tiếp cận</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Tăng/giảm kích thước chữ, thay đổi màu sắc, bật/tắt âm thanh</p></li>
+<li><p><strong>Kích thước chữ</strong>: 3 mức độ (nhỏ, vừa, lớn)</p></li>
+<li><p><strong>Độ tương phản</strong>: Tăng độ tương phản để dễ đọc</p></li>
+<li><p><strong>Âm thanh</strong>: Bật/tắt âm thanh thông báo</p></li>
+<li><p><strong>Rung</strong>: Bật/tắt rung khi tương tác</p></li>
+<li><p><strong>Hướng dẫn bằng giọng nói</strong>: Bật/tắt hướng dẫn bằng giọng nói</p></li>
+</ul>
+<h3 id="kiểm-soát-quyền-riêng-tư">Kiểm soát quyền riêng tư</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Quản lý quyền truy cập camera, microphone, vị trí</p></li>
+<li><p><strong>Quyền camera</strong>: Cho phép chụp ảnh và gửi tin nhắn hình ảnh</p></li>
+<li><p><strong>Quyền microphone</strong>: Cho phép ghi âm tin nhắn giọng nói</p></li>
+<li><p><strong>Quyền vị trí</strong>: Cho phép chia sẻ vị trí khi khẩn cấp</p></li>
+<li><p><strong>Quyền thông báo</strong>: Cho phép gửi thông báo push</p></li>
+<li><p><strong>Xóa dữ liệu</strong>: Tùy chọn xóa dữ liệu cá nhân</p></li>
+</ul>
+<h3 id="tùy-chỉnh-ứng-dụng">Tùy chỉnh ứng dụng</h3>
+<ul>
+<li><p><strong>Mục đích</strong>: Thay đổi giao diện, âm thanh, thông báo</p></li>
+<li><p><strong>Chủ đề giao diện</strong>: Chọn màu sắc chủ đạo của ứng dụng</p></li>
+<li><p><strong>Âm thanh thông báo</strong>: Chọn âm thanh cho từng loại thông báo</p></li>
+<li><p><strong>Tần suất thông báo</strong>: Điều chỉnh tần suất nhận thông báo</p></li>
+<li><p><strong>Ngôn ngữ</strong>: Chọn ngôn ngữ hiển thị (hiện tại chỉ có tiếng Việt)</p></li>
+<li><p><strong>Xuất dữ liệu</strong>: Xuất dữ liệu sức khỏe để chia sẻ với bác sĩ</p></li>
+</ul>
+<h1 id="so-sánh-với-các-ứng-dụng-khác">So sánh với các ứng dụng khác</h1>
+<h2 id="bảng-so-sánh-tính-năng-với-các-ứng-dụng-thực-tế">Bảng so sánh tính năng với các ứng dụng thực tế</h2>
+<table>
+<caption>So sánh tính năng với các ứng dụng thực tế (<span class="math inline">✓</span>: Có đầy đủ, <span class="math inline">△</span>: Có một phần, <span class="math inline">×</span>: Không có)</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Tính năng</strong></th>
+<th style="text-align: center;"><strong>VieGrandApp</strong></th>
+<th style="text-align: center;"><strong>Zalo</strong></th>
+<th style="text-align: center;"><strong>Facebook</strong></th>
+<th style="text-align: center;"><strong>Health App</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Giao diện thân thiện với người cao tuổi</td>
+<td style="text-align: center;"><span class="math inline">✓</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+<td style="text-align: center;"><span class="math inline">△</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Gọi khẩn cấp một chạm</td>
+<td style="text-align: center;"><span class="math inline">✓</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Nhận diện giọng nói tiếng Việt</td>
+<td style="text-align: center;"><span class="math inline">✓</span></td>
+<td style="text-align: center;"><span class="math inline">△</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Đọc sách với font lớn</td>
+<td style="text-align: center;"><span class="math inline">✓</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Theo dõi sức khỏe toàn diện</td>
+<td style="text-align: center;"><span class="math inline">✓</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+<td style="text-align: center;"><span class="math inline">✓</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Chat thời gian thực</td>
+<td style="text-align: center;"><span class="math inline">✓</span></td>
+<td style="text-align: center;"><span class="math inline">✓</span></td>
+<td style="text-align: center;"><span class="math inline">✓</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Trò chơi cho người cao tuổi</td>
+<td style="text-align: center;"><span class="math inline">✓</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+<td style="text-align: center;"><span class="math inline">△</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Nhắc nhở thông minh</td>
+<td style="text-align: center;"><span class="math inline">✓</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+<td style="text-align: center;"><span class="math inline">△</span></td>
+<td style="text-align: center;"><span class="math inline">△</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hỗ trợ khẩn cấp tích hợp</td>
+<td style="text-align: center;"><span class="math inline">✓</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Theo dõi vị trí an toàn</td>
+<td style="text-align: center;"><span class="math inline">✓</span></td>
+<td style="text-align: center;"><span class="math inline">△</span></td>
+<td style="text-align: center;"><span class="math inline">△</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Báo cáo sức khỏe tự động</td>
+<td style="text-align: center;"><span class="math inline">✓</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+<td style="text-align: center;"><span class="math inline">×</span></td>
+<td style="text-align: center;"><span class="math inline">△</span></td>
+</tr>
+</tbody>
+</table>
+<h2 id="giải-thích-chi-tiết-bảng-so-sánh">Giải thích chi tiết bảng so sánh</h2>
+<h3 id="zalo---ứng-dụng-chat-phổ-biến-nhất-việt-nam">Zalo - Ứng dụng chat phổ biến nhất Việt Nam</h3>
+<ul>
+<li><p><strong>Giao diện thân thiện với người cao tuổi</strong>: <span class="math inline">×</span> - Giao diện phức tạp, nhiều menu, font nhỏ, không tối ưu cho người cao tuổi</p></li>
+<li><p><strong>Gọi khẩn cấp một chạm</strong>: <span class="math inline">×</span> - Không có tính năng gọi khẩn cấp tích hợp</p></li>
+<li><p><strong>Nhận diện giọng nói tiếng Việt</strong>: <span class="math inline">△</span> - Có ghi âm tin nhắn nhưng không chuyển đổi thành text</p></li>
+<li><p><strong>Đọc sách với font lớn</strong>: <span class="math inline">×</span> - Không có tính năng đọc sách</p></li>
+<li><p><strong>Theo dõi sức khỏe toàn diện</strong>: <span class="math inline">×</span> - Không có tính năng theo dõi sức khỏe</p></li>
+<li><p><strong>Chat thời gian thực</strong>: <span class="math inline">✓</span> - Chat real-time, gửi ảnh, video, file</p></li>
+<li><p><strong>Trò chơi cho người cao tuổi</strong>: <span class="math inline">×</span> - Không có game phù hợp lứa tuổi</p></li>
+<li><p><strong>Nhắc nhở thông minh</strong>: <span class="math inline">×</span> - Không có hệ thống nhắc nhở</p></li>
+<li><p><strong>Hỗ trợ khẩn cấp tích hợp</strong>: <span class="math inline">×</span> - Không có tính năng khẩn cấp</p></li>
+<li><p><strong>Theo dõi vị trí an toàn</strong>: <span class="math inline">△</span> - Có chia sẻ vị trí nhưng không tự động</p></li>
+<li><p><strong>Báo cáo sức khỏe tự động</strong>: <span class="math inline">×</span> - Không có tính năng báo cáo sức khỏe</p></li>
+</ul>
+<h3 id="facebook---mạng-xã-hội-toàn-cầu">Facebook - Mạng xã hội toàn cầu</h3>
+<ul>
+<li><p><strong>Giao diện thân thiện với người cao tuổi</strong>: <span class="math inline">×</span> - Giao diện phức tạp, nhiều quảng cáo, thông tin rối rắm</p></li>
+<li><p><strong>Gọi khẩn cấp một chạm</strong>: <span class="math inline">×</span> - Không có tính năng gọi khẩn cấp</p></li>
+<li><p><strong>Nhận diện giọng nói tiếng Việt</strong>: <span class="math inline">×</span> - Không hỗ trợ tiếng Việt tốt</p></li>
+<li><p><strong>Đọc sách với font lớn</strong>: <span class="math inline">×</span> - Không có tính năng đọc sách</p></li>
+<li><p><strong>Theo dõi sức khỏe toàn diện</strong>: <span class="math inline">×</span> - Không có tính năng theo dõi sức khỏe</p></li>
+<li><p><strong>Chat thời gian thực</strong>: <span class="math inline">✓</span> - Messenger có chat real-time</p></li>
+<li><p><strong>Trò chơi cho người cao tuổi</strong>: <span class="math inline">△</span> - Có game nhưng không phù hợp lứa tuổi</p></li>
+<li><p><strong>Nhắc nhở thông minh</strong>: <span class="math inline">△</span> - Có nhắc nhở sự kiện nhưng không thông minh</p></li>
+<li><p><strong>Hỗ trợ khẩn cấp tích hợp</strong>: <span class="math inline">×</span> - Không có tính năng khẩn cấp</p></li>
+<li><p><strong>Theo dõi vị trí an toàn</strong>: <span class="math inline">△</span> - Có check-in vị trí nhưng không an toàn</p></li>
+<li><p><strong>Báo cáo sức khỏe tự động</strong>: <span class="math inline">×</span> - Không có tính năng báo cáo sức khỏe</p></li>
+</ul>
+<h3 id="health-app---ứng-dụng-sức-khỏe-chuyên-nghiệp">Health App - Ứng dụng sức khỏe chuyên nghiệp</h3>
+<ul>
+<li><p><strong>Giao diện thân thiện với người cao tuổi</strong>: <span class="math inline">△</span> - Giao diện đẹp nhưng phức tạp, không tối ưu cho người cao tuổi</p></li>
+<li><p><strong>Gọi khẩn cấp một chạm</strong>: <span class="math inline">×</span> - Không có tính năng gọi khẩn cấp</p></li>
+<li><p><strong>Nhận diện giọng nói tiếng Việt</strong>: <span class="math inline">×</span> - Không hỗ trợ tiếng Việt</p></li>
+<li><p><strong>Đọc sách với font lớn</strong>: <span class="math inline">×</span> - Không có tính năng đọc sách</p></li>
+<li><p><strong>Theo dõi sức khỏe toàn diện</strong>: <span class="math inline">✓</span> - Theo dõi đa chỉ số sức khỏe chuyên nghiệp</p></li>
+<li><p><strong>Chat thời gian thực</strong>: <span class="math inline">×</span> - Không có tính năng chat</p></li>
+<li><p><strong>Trò chơi cho người cao tuổi</strong>: <span class="math inline">×</span> - Không có game</p></li>
+<li><p><strong>Nhắc nhở thông minh</strong>: <span class="math inline">△</span> - Có nhắc nhở uống thuốc cơ bản</p></li>
+<li><p><strong>Hỗ trợ khẩn cấp tích hợp</strong>: <span class="math inline">×</span> - Không có tính năng khẩn cấp</p></li>
+<li><p><strong>Theo dõi vị trí an toàn</strong>: <span class="math inline">×</span> - Không có tính năng theo dõi vị trí</p></li>
+<li><p><strong>Báo cáo sức khỏe tự động</strong>: <span class="math inline">△</span> - Có báo cáo sức khỏe nhưng không tự động gửi</p></li>
+</ul>
+<h3 id="viegrandapp---ứng-dụng-chuyên-biệt-cho-người-cao-tuổi">VieGrandApp - Ứng dụng chuyên biệt cho người cao tuổi</h3>
+<ul>
+<li><p><strong>Giao diện thân thiện với người cao tuổi</strong>: <span class="math inline">✓</span> - Font lớn (16-24px), icon rõ ràng, ít menu, màu sắc tương phản cao</p></li>
+<li><p><strong>Gọi khẩn cấp một chạm</strong>: <span class="math inline">✓</span> - Nút lớn màu đỏ, gọi tự động 5 số ưu tiên, gửi vị trí tự động</p></li>
+<li><p><strong>Nhận diện giọng nói tiếng Việt</strong>: <span class="math inline">✓</span> - Tối ưu cho tiếng Việt, hỗ trợ phương ngữ các vùng miền</p></li>
+<li><p><strong>Đọc sách với font lớn</strong>: <span class="math inline">✓</span> - Thư viện sách đa dạng, font lớn, bookmark thông minh</p></li>
+<li><p><strong>Theo dõi sức khỏe toàn diện</strong>: <span class="math inline">✓</span> - Huyết áp, nhịp tim, cân nặng, nhiệt độ, oxy trong máu</p></li>
+<li><p><strong>Chat thời gian thực</strong>: <span class="math inline">✓</span> - Chat đơn giản, gửi ảnh, voice message, real-time</p></li>
+<li><p><strong>Trò chơi cho người cao tuổi</strong>: <span class="math inline">✓</span> - Sudoku, Dò mìn, Tìm từ, Ghép hình với độ khó tự động điều chỉnh</p></li>
+<li><p><strong>Nhắc nhở thông minh</strong>: <span class="math inline">✓</span> - Nhắc nhở uống thuốc, công việc, sự kiện với thông báo đa dạng</p></li>
+<li><p><strong>Hỗ trợ khẩn cấp tích hợp</strong>: <span class="math inline">✓</span> - Hệ thống đa lớp: gọi điện, SMS, vị trí, thông báo người thân</p></li>
+<li><p><strong>Theo dõi vị trí an toàn</strong>: <span class="math inline">✓</span> - Chia sẻ vị trí khi khẩn cấp, theo dõi an toàn cho người thân</p></li>
+<li><p><strong>Báo cáo sức khỏe tự động</strong>: <span class="math inline">✓</span> - Tự động gửi báo cáo hàng tuần cho người thân và bác sĩ</p></li>
+</ul>
+<h2 id="điểm-mạnh-vượt-trội-của-viegrandapp">Điểm mạnh vượt trội của VieGrandApp</h2>
+<h3 id="tính-năng-chuyên-biệt-cho-người-cao-tuổi">Tính năng chuyên biệt cho người cao tuổi</h3>
+<ul>
+<li><p><strong>Giao diện được thiết kế đặc biệt</strong>: Font chữ lớn (16-24px), icon rõ ràng, màu sắc tương phản cao, ít menu phức tạp</p></li>
+<li><p><strong>Hệ thống gọi khẩn cấp tích hợp</strong>: Nút lớn màu đỏ nổi bật, gọi tự động với 5 số liên lạc ưu tiên, gửi vị trí tự động</p></li>
+<li><p><strong>Nhận diện giọng nói tiếng Việt tối ưu</strong>: Độ chính xác cao cho giọng nói người Việt, hỗ trợ phương ngữ các vùng miền</p></li>
+<li><p><strong>Trò chơi rèn luyện trí não</strong>: Sudoku, Dò mìn, Tìm từ được thiết kế đặc biệt cho người cao tuổi với độ khó điều chỉnh tự động</p></li>
+</ul>
+<h3 id="tính-năng-sức-khỏe-toàn-diện">Tính năng sức khỏe toàn diện</h3>
+<ul>
+<li><p><strong>Theo dõi đa chỉ số</strong>: Huyết áp, nhịp tim, cân nặng, nhiệt độ, oxy trong máu</p></li>
+<li><p><strong>Nhắc nhở thuốc thông minh</strong>: Nhận diện thuốc qua camera, nhắc nhở theo đơn bác sĩ</p></li>
+</ul>
+<h3 id="tính-năng-an-toàn-và-khẩn-cấp">Tính năng an toàn và khẩn cấp</h3>
+<ul>
+<li><p><strong>Hệ thống khẩn cấp đa lớp</strong>: Gọi điện, gửi SMS, gửi vị trí, thông báo cho người thân</p></li>
+<li><p><strong>Phát hiện té ngã</strong>: Sử dụng cảm biến điện thoại để phát hiện té ngã và tự động gọi khẩn cấp</p></li>
+<li><p><strong>Chế độ khẩn cấp offline</strong>: Hoạt động ngay cả khi không có mạng internet</p></li>
+<li><p><strong>Kết nối với dịch vụ khẩn cấp</strong>: Tích hợp với số khẩn cấp 115 và các dịch vụ y tế địa phương</p></li>
+</ul>
+<h3 id="tính-năng-giải-trí-và-học-tập">Tính năng giải trí và học tập</h3>
+<ul>
+<li><p><strong>Thư viện sách đa dạng</strong>: Sách văn học, sức khỏe, kỹ năng sống với font lớn và bookmark thông minh</p></li>
+<li><p><strong>Video giáo dục</strong>: Nội dung video về sức khỏe, nấu ăn, tập thể dục phù hợp lứa tuổi</p></li>
+<li><p><strong>Trò chơi rèn luyện trí não</strong>: Độ khó tự động điều chỉnh theo khả năng người chơi</p></li>
+<li><p><strong>Nhạc thư giãn</strong>: Playlist nhạc truyền thống, nhạc vàng, nhạc thư giãn được tuyển chọn</p></li>
+</ul>
+<h3 id="tính-năng-hỗ-trợ-và-tiếp-cận">Tính năng hỗ trợ và tiếp cận</h3>
+<ul>
+<li><p><strong>Hướng dẫn bằng giọng nói</strong>: Hướng dẫn sử dụng ứng dụng bằng giọng nói tiếng Việt</p></li>
+<li><p><strong>Chế độ tiếp cận nâng cao</strong>: Tăng/giảm font, độ tương phản, âm thanh, rung</p></li>
+<li><p><strong>Hỗ trợ từ xa</strong>: Người thân có thể điều khiển ứng dụng từ xa để hỗ trợ</p></li>
+<li><p><strong>Chế độ đơn giản hóa</strong>: Ẩn các tính năng phức tạp, chỉ hiển thị chức năng cơ bản</p></li>
+</ul>
+<h2 id="so-sánh-chi-tiết-với-từng-ứng-dụng">So sánh chi tiết với từng ứng dụng</h2>
+<h3 id="so-sánh-với-zalo">So sánh với Zalo</h3>
+<ul>
+<li><p><strong>Điểm mạnh của Zalo</strong>: Chat phổ biến, nhiều người dùng, tính năng chat đa dạng</p></li>
+<li><p><strong>Điểm yếu của Zalo</strong>: Giao diện phức tạp, nhiều tính năng không cần thiết cho người cao tuổi</p></li>
+<li><p><strong>VieGrandApp vượt trội</strong>: Giao diện đơn giản, tính năng khẩn cấp, theo dõi sức khỏe, giải trí</p></li>
+</ul>
+<h3 id="so-sánh-với-facebook">So sánh với Facebook</h3>
+<ul>
+<li><p><strong>Điểm mạnh của Facebook</strong>: Kết nối xã hội rộng, nội dung đa dạng</p></li>
+<li><p><strong>Điểm yếu của Facebook</strong>: Giao diện phức tạp, nhiều quảng cáo, thông tin không kiểm soát</p></li>
+<li><p><strong>VieGrandApp vượt trội</strong>: Tập trung vào gia đình, nội dung kiểm soát, tính năng sức khỏe</p></li>
+</ul>
+<h3 id="so-sánh-với-health-app">So sánh với Health App</h3>
+<ul>
+<li><p><strong>Điểm mạnh của Health App</strong>: Theo dõi sức khỏe chuyên nghiệp, tích hợp với thiết bị Apple</p></li>
+<li><p><strong>Điểm yếu của Health App</strong>: Chỉ có trên iOS, giao diện phức tạp, thiếu tính năng giao tiếp</p></li>
+<li><p><strong>VieGrandApp vượt trội</strong>: Đa nền tảng, giao diện thân thiện, tích hợp giao tiếp và giải trí</p></li>
+</ul>
+<h2 id="lợi-thế-cạnh-tranh-của-viegrandapp">Lợi thế cạnh tranh của VieGrandApp</h2>
+<h3 id="tính-toàn-diện">Tính toàn diện</h3>
+<ul>
+<li><p><strong>Giải pháp một ứng dụng</strong>: Bao gồm tất cả nhu cầu cơ bản của người cao tuổi</p></li>
+<li><p><strong>Tích hợp liền mạch</strong>: Các tính năng hoạt động cùng nhau, không cần chuyển đổi ứng dụng</p></li>
+<li><p><strong>Dữ liệu thống nhất</strong>: Tất cả thông tin được lưu trữ và đồng bộ trong một hệ thống</p></li>
+</ul>
+<h3 id="tính-chuyên-biệt">Tính chuyên biệt</h3>
+<ul>
+<li><p><strong>Thiết kế cho người cao tuổi</strong>: Mọi chi tiết đều được tối ưu cho đối tượng mục tiêu</p></li>
+<li><p><strong>Hiểu biết văn hóa Việt Nam</strong>: Tính năng phù hợp với văn hóa và thói quen người Việt</p></li>
+<li><p><strong>Hỗ trợ tiếng Việt hoàn toàn</strong>: Giao diện, hướng dẫn, nhận diện giọng nói đều bằng tiếng Việt</p></li>
+</ul>
+<h3 id="tính-an-toàn-và-tin-cậy">Tính an toàn và tin cậy</h3>
+<ul>
+<li><p><strong>Hệ thống khẩn cấp đáng tin cậy</strong>: Hoạt động 24/7, không phụ thuộc vào mạng internet</p></li>
+<li><p><strong>Bảo mật dữ liệu cao</strong>: Mã hóa end-to-end, tuân thủ quy định bảo vệ dữ liệu cá nhân</p></li>
+<li><p><strong>Backup và khôi phục</strong>: Dữ liệu được sao lưu tự động, có thể khôi phục khi cần</p></li>
+</ul>
+<h1 id="quy-trình-phát-triển">Quy trình phát triển</h1>
+<h2 id="pipeline-phát-triển">Pipeline phát triển</h2>
+<p>Quy trình phát triển ứng dụng được chia thành 4 giai đoạn chính:</p>
+<ol>
+<li><p><strong>Lập kế hoạch và thiết kế (2 tuần)</strong>: Phân tích yêu cầu, thiết kế giao diện, lập kế hoạch phát triển</p></li>
+<li><p><strong>Phát triển (4 tuần)</strong>: Lập trình các tính năng theo kế hoạch, tích hợp các công nghệ</p></li>
+<li><p><strong>Kiểm thử (2 tuần)</strong>: Kiểm tra chất lượng, sửa lỗi, tối ưu hóa hiệu suất</p></li>
+<li><p><strong>Triển khai (1 tuần)</strong>: Phát hành ứng dụng, cập nhật lên app store</p></li>
+</ol>
+<h2 id="cấu-trúc-công-nghệ-theo-tầng">Cấu trúc công nghệ theo tầng</h2>
+<p>Hệ thống được xây dựng theo mô hình 4 tầng:</p>
+<ol>
+<li><p><strong>Tầng giao diện người dùng</strong>: React Native + TypeScript - Xử lý màn hình, nút bấm, biểu tượng</p></li>
+<li><p><strong>Tầng xử lý logic</strong>: Context + Hooks - Xử lý dữ liệu, quản lý trạng thái ứng dụng</p></li>
+<li><p><strong>Tầng kết nối</strong>: Axios + Socket.io - Gửi/nhận dữ liệu với máy chủ</p></li>
+<li><p><strong>Tầng máy chủ</strong>: PHP + MySQL - Xử lý yêu cầu, lưu trữ dữ liệu</p></li>
+</ol>
+<h1 id="cấu-trúc-cơ-sở-dữ-liệu">Cấu trúc cơ sở dữ liệu</h1>
+<h2 id="mô-tả-các-bảng-dữ-liệu-chính">Mô tả các bảng dữ liệu chính</h2>
+<p>Hệ thống sử dụng cơ sở dữ liệu MySQL với các bảng chính:</p>
+<ul>
+<li><p><strong>Bảng Người dùng (Users)</strong>: Lưu trữ thông tin cá nhân, số điện thoại, email và vai trò (người cao tuổi/người thân)</p></li>
+<li><p><strong>Bảng Tin nhắn (Messages)</strong>: Lưu trữ tất cả tin nhắn giữa các người dùng, bao gồm nội dung, thời gian gửi</p></li>
+<li><p><strong>Bảng Khẩn cấp (Emergency)</strong>: Lưu trữ thông tin liên lạc khẩn cấp của mỗi người dùng</p></li>
+<li><p><strong>Bảng Sức khỏe (Health)</strong>: Lưu trữ các chỉ số sức khỏe như huyết áp, cân nặng theo thời gian</p></li>
+<li><p><strong>Bảng Nhắc nhở (Reminders)</strong>: Lưu trữ các nhắc nhở và lịch trình của người dùng</p></li>
+<li><p><strong>Bảng Sách (Books)</strong>: Lưu trữ thông tin sách và tiến độ đọc của người dùng</p></li>
+</ul>
+<h1 id="kết-luận">Kết luận</h1>
+<p>VieGrandApp là một ứng dụng toàn diện được thiết kế đặc biệt cho người cao tuổi, kết hợp giữa công nghệ hiện đại và trải nghiệm người dùng tối ưu. Ứng dụng không chỉ đáp ứng các nhu cầu cơ bản như giao tiếp và giải trí mà còn cung cấp các tính năng an toàn và theo dõi sức khỏe quan trọng.</p>
+<h2 id="kế-hoạch-phát-triển-trong-tương-lai">Kế hoạch phát triển trong tương lai</h2>
+<ul>
+<li><p><strong>Phân tích xu hướng AI</strong>: Sử dụng AI để phân tích xu hướng sức khỏe và đưa ra cảnh báo sớm</p></li>
+<li><p><strong>Tích hợp với thiết bị y tế</strong>: Kết nối với máy đo huyết áp, cân thông minh qua Bluetooth</p></li>
+<li><p><strong>Báo cáo y tế chuyên nghiệp</strong>: Tạo báo cáo sức khỏe định kỳ để chia sẻ với bác sĩ</p></li>
+<li><p><strong>Tích hợp AI</strong>: Sử dụng trí tuệ nhân tạo để cá nhân hóa trải nghiệm người dùng, đưa ra gợi ý phù hợp</p></li>
+<li><p><strong>Kết nối thiết bị thông minh</strong>: Tích hợp với các thiết bị IoT trong nhà như camera an ninh, cảm biến chuyển động</p></li>
+<li><p><strong>Dịch vụ tư vấn y tế từ xa</strong>: Kết nối với bác sĩ để tư vấn sức khỏe trực tuyến</p></li>
+<li><p><strong>Tính năng cộng đồng</strong>: Tạo cộng đồng người cao tuổi để chia sẻ kinh nghiệm và hỗ trợ lẫn nhau</p></li>
+<li><p><strong>Cải thiện khả năng tiếp cận</strong>: Thêm tính năng hỗ trợ cho người khuyết tật như điều khiển bằng mắt</p></li>
+</ul>
+<h2 id="tác-động-dự-kiến">Tác động dự kiến</h2>
+<ul>
+<li><p><strong>Cải thiện chất lượng cuộc sống</strong>: Giúp người cao tuổi sống độc lập và tự tin hơn</p></li>
+<li><p><strong>Giảm cảm giác cô đơn</strong>: Thông qua kết nối thường xuyên với gia đình và bạn bè</p></li>
+<li><p><strong>Tăng cường an toàn</strong>: Với hệ thống khẩn cấp và theo dõi sức khỏe chủ động</p></li>
+<li><p><strong>Theo dõi sức khỏe chủ động</strong>: Giúp phát hiện sớm các vấn đề sức khỏe</p></li>
+<li><p><strong>Tạo cộng đồng hỗ trợ</strong>: Kết nối người cao tuổi với nhau và với các dịch vụ hỗ trợ</p></li>
+</ul>
+<h2 id="lời-kết">Lời kết</h2>
+<p>VieGrandApp không chỉ là một ứng dụng di động thông thường, mà là một giải pháp toàn diện nhằm cải thiện chất lượng cuộc sống cho người cao tuổi. Thông qua việc kết hợp công nghệ hiện đại với thiết kế thân thiện, ứng dụng giúp người cao tuổi sống độc lập, khỏe mạnh và kết nối với những người thân yêu một cách dễ dàng và an toàn.</p>
+</body>
+</html>

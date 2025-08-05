@@ -26,7 +26,7 @@ const SelectRoleScreen = ({ navigation }: any) => {
     if (selectedRole === 'elderly') {
       navigation.replace('Elderly');
     } else if (selectedRole === 'relative') {
-      navigation.replace('Auth');
+      navigation.replace('Relative');
     }
   };
 

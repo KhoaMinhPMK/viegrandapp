@@ -40,7 +40,7 @@ const LoginScreen = ({ navigation }: any) => {
       return;
     }
 
-    // Validate password length (UX consistency - backend chỉ cần email để đơn giản hóa cho người già)
+    // Validate password length
     if (password.length < 6) {
       Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự.');
       return;
@@ -56,7 +56,8 @@ const LoginScreen = ({ navigation }: any) => {
       } catch (error) {
         console.error('Error saving email to cache:', error);
       }
-      navigation.dispatch(StackActions.replace('Elderly'));
+      // Chuyển đến màn hình chọn vai trò sau khi đăng nhập thành công
+      navigation.dispatch(StackActions.replace('SelectRole'));
     }
   };
 

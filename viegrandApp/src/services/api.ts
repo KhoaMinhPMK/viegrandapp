@@ -138,7 +138,7 @@ export const registerUser = async (userData: RegisterRequest): Promise<{ success
       userName: userData.fullName,
       email: userData.email,
       phone: userData.phone, // Map phone vào field phone thay vì relative_phone
-      // password field doesn't exist in backend, will be ignored
+      password: userData.password, // Gửi password lên backend
     });
 
     console.log('Register API response:', response.data);
@@ -205,7 +205,7 @@ export const loginUser = async (credentials: LoginRequest): Promise<{ success: b
   try {
     const response = await apiClient.post('/login.php', {
       email: credentials.email,
-      // Note: Password không cần thiết vì API chỉ cần email để đơn giản hóa cho người già
+      password: credentials.password, // Gửi password để check
     });
 
     console.log('Login API response:', response.data);
