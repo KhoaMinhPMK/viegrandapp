@@ -191,7 +191,7 @@ export const registerUser = async (userData: RegisterRequest): Promise<{ success
       console.log('Register failed:', response.data);
       return {
         success: false,
-        message: response.data.message || 'Đăng ký thất bại'
+        message: response.data.message || response.data.error?.message || 'Đăng ký thất bại'
       };
     }
   } catch (error: any) {
