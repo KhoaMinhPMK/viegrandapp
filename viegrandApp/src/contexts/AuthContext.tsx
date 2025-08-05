@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
-import { storageUtils, User as ApiUser, LoginRequest, RegisterRequest, registerUser, loginUser } from '../services/api';
+import { storageUtils, User as ApiUser, LoginRequest, RegisterRequest, registerUser, loginUser, getUserData } from '../services/api';
 import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -14,6 +14,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   refreshUserProfile: () => Promise<void>;
   updateCurrentUser: (updatedUser: User) => void;
+  getUserDataByEmail: (email: string) => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -138,6 +139,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     storageUtils.saveUser(updatedUser);
   }, []);
 
+  const getUserDataByEmail = useCallback(async (email: string): Promise<User | null> => {
+    try {
+      const result = await getUserData(email);
+      if (result.success && result.user) {
+        return result.user;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting user data:', error);
+      return null;
+    }
+  }, []);
+
   const value = useMemo(() => ({
     user,
     isAuthenticated: !!user,
@@ -147,7 +161,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     refreshUserProfile,
     updateCurrentUser,
-  }), [user, isLoading, login, register, logout, refreshUserProfile, updateCurrentUser]);
+    getUserDataByEmail,
+  }), [user, isLoading, login, register, logout, refreshUserProfile, updateCurrentUser, getUserDataByEmail]);
 
   return (
     <AuthContext.Provider value={value}>

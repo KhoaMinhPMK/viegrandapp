@@ -69,6 +69,7 @@ export interface RegisterRequest {
   email: string;
   phone: string;
   password: string;
+  role?: string;
 }
 
 export interface AuthResponse {
@@ -139,6 +140,7 @@ export const registerUser = async (userData: RegisterRequest): Promise<{ success
       email: userData.email,
       phone: userData.phone, // Map phone vào field phone thay vì relative_phone
       password: userData.password, // Gửi password lên backend
+      role: userData.role || 'user', // Gửi role lên backend
     });
 
     console.log('Register API response:', response.data);
@@ -169,7 +171,7 @@ export const registerUser = async (userData: RegisterRequest): Promise<{ success
         id: apiUser.userId,
         fullName: apiUser.userName || userData.fullName,
         email: apiUser.email || userData.email,
-        role: 'user', // Mặc định là user
+        role: apiUser.role || 'user', // Lấy role từ API response
         phone: apiUser.phone || userData.phone, // Lấy phone từ API response
         active: true,
         age: apiUser.age,
@@ -236,7 +238,7 @@ export const loginUser = async (credentials: LoginRequest): Promise<{ success: b
         id: apiUser.userId,
         fullName: apiUser.userName || 'User',
         email: apiUser.email,
-        role: 'user', // Mặc định là user
+        role: apiUser.role || 'user', // Lấy role từ API response
         active: true,
         age: apiUser.age,
         gender: apiUser.gender,

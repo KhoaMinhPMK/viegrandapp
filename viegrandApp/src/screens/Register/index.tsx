@@ -26,7 +26,8 @@ const RegisterScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const { register, isLoading } = useAuth();
+  const [selectedRole, setSelectedRole] = useState<'elderly' | 'relative'>('elderly');
+  const { register, isLoading, getUserDataByEmail } = useAuth();
 
   const handleRegister = async () => {
     if (!fullName || !phone || !email || !password) {
@@ -53,10 +54,25 @@ const RegisterScreen = ({ navigation }: any) => {
       return;
     }
 
-    console.log('Attempting register with:', { fullName, phone, email, password: '***' });
-    const success = await register({ fullName, phone, email, password });
+    console.log('Attempting register with:', { fullName, phone, email, password: '***', role: selectedRole });
+    const success = await register({ fullName, phone, email, password, role: selectedRole });
     if (success) {
-      navigation.dispatch(StackActions.replace('SelectRole'));
+      // Lấy thông tin user từ API để có role chính xác
+      const userData = await getUserDataByEmail(email);
+      if (userData) {
+        // Tự động điều hướng dựa trên role
+        if (userData.role === 'elderly') {
+          navigation.dispatch(StackActions.replace('Elderly'));
+        } else if (userData.role === 'relative') {
+          navigation.dispatch(StackActions.replace('Relative'));
+        } else {
+          // Fallback về SelectRole nếu role không xác định
+          navigation.dispatch(StackActions.replace('SelectRole'));
+        }
+      } else {
+        // Fallback về SelectRole nếu không lấy được user data
+        navigation.dispatch(StackActions.replace('SelectRole'));
+      }
     }
   };
 
@@ -100,6 +116,7 @@ const RegisterScreen = ({ navigation }: any) => {
               autoCapitalize="none"
               placeholderTextColor="#757575"
             />
+            
             <View style={styles.passwordContainer}>
               <TextInput
                 style={styles.input}
@@ -118,6 +135,52 @@ const RegisterScreen = ({ navigation }: any) => {
                   color="#757575"
                 />
               </TouchableOpacity>
+            </View>
+            
+            {/* Role Selection */}
+            <View style={styles.roleContainer}>
+              <Text style={styles.roleLabel}>Chọn vai trò:</Text>
+              <View style={styles.roleButtons}>
+                <TouchableOpacity
+                  style={[
+                    styles.roleButton,
+                    selectedRole === 'elderly' && styles.roleButtonActive
+                  ]}
+                  onPress={() => setSelectedRole('elderly')}
+                >
+                  <Feather 
+                    name="user" 
+                    size={20} 
+                    color={selectedRole === 'elderly' ? '#FFFFFF' : '#0D4C92'} 
+                  />
+                  <Text style={[
+                    styles.roleButtonText,
+                    selectedRole === 'elderly' && styles.roleButtonTextActive
+                  ]}>
+                    Người cao tuổi
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[
+                    styles.roleButton,
+                    selectedRole === 'relative' && styles.roleButtonActive
+                  ]}
+                  onPress={() => setSelectedRole('relative')}
+                >
+                  <Feather 
+                    name="users" 
+                    size={20} 
+                    color={selectedRole === 'relative' ? '#FFFFFF' : '#0D4C92'} 
+                  />
+                  <Text style={[
+                    styles.roleButtonText,
+                    selectedRole === 'relative' && styles.roleButtonTextActive
+                  ]}>
+                    Người thân
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
             <TouchableOpacity 
               style={[styles.button, isLoading && styles.buttonDisabled]} 
@@ -249,6 +312,46 @@ const styles = StyleSheet.create({
   loginLink: {
     color: '#0D4C92',
     fontWeight: 'bold',
+  },
+  roleContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  roleLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  roleButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  roleButton: {
+    flex: 1,
+    height: 50,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#0D4C92',
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  roleButtonActive: {
+    backgroundColor: '#0D4C92',
+    borderColor: '#0D4C92',
+  },
+  roleButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0D4C92',
+  },
+  roleButtonTextActive: {
+    color: '#FFFFFF',
   },
 });
 

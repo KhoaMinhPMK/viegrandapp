@@ -25,7 +25,7 @@ const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, getUserDataByEmail } = useAuth();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -56,8 +56,23 @@ const LoginScreen = ({ navigation }: any) => {
       } catch (error) {
         console.error('Error saving email to cache:', error);
       }
-      // Chuyển đến màn hình chọn vai trò sau khi đăng nhập thành công
-      navigation.dispatch(StackActions.replace('SelectRole'));
+      
+      // Lấy thông tin user từ API để có role chính xác
+      const userData = await getUserDataByEmail(email);
+      if (userData) {
+        // Tự động điều hướng dựa trên role
+        if (userData.role === 'elderly') {
+          navigation.dispatch(StackActions.replace('Elderly'));
+        } else if (userData.role === 'relative') {
+          navigation.dispatch(StackActions.replace('Relative'));
+        } else {
+          // Fallback về SelectRole nếu role không xác định
+          navigation.dispatch(StackActions.replace('SelectRole'));
+        }
+      } else {
+        // Fallback về SelectRole nếu không lấy được user data
+        navigation.dispatch(StackActions.replace('SelectRole'));
+      }
     }
   };
 
