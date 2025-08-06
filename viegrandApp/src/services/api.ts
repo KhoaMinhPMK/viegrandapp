@@ -219,7 +219,7 @@ export const registerUser = async (userData: RegisterRequest): Promise<{ success
         email: apiUser.email || userData.email,
         role: apiUser.role || userData.role || 'user', // Prefer role from API response
         phone: apiUser.phone || userData.phone,
-        privateKey: apiUser.privateKey, // Include private key from response
+        privateKey: apiUser.privateKey || apiUser.private_key, // Include private key from response (handle both formats)
         active: true,
       };
 
@@ -287,6 +287,7 @@ export const loginUser = async (credentials: LoginRequest): Promise<{ success: b
         allergies: apiUser.allergies,
         chronicDiseases: apiUser.chronic_diseases,
         address: apiUser.home_address,
+        privateKey: apiUser.privateKey || apiUser.private_key, // Add private key mapping
       };
 
       return {
@@ -348,9 +349,17 @@ export const getUserData = async (email: string): Promise<{ success: boolean; us
         };
       }
 
+      // Map the user data to ensure privateKey is properly mapped
+      const apiUser = responseData.data.user;
+      const mappedUser = {
+        ...apiUser,
+        privateKey: apiUser.privateKey || apiUser.private_key, // Map private_key to privateKey
+        id: apiUser.userId || apiUser.id,
+      };
+
       return {
         success: true,
-        user: responseData.data.user,
+        user: mappedUser,
         message: responseData.message
       };
     } else {
