@@ -214,7 +214,7 @@ const RelativeHomeScreen = ({ navigation }: any) => {
           email: result.user.email,
           phone: result.user.phone,
           role: 'relative', // Default role for relative screen
-          active: true,
+        active: true,
           age: result.user.age,
           address: result.user.home_address,
           gender: result.user.gender,
@@ -425,7 +425,7 @@ const RelativeHomeScreen = ({ navigation }: any) => {
                         <Text style={styles.menuItemSubtitle}>{item.subtitle}</Text>
                       </View>
                     </LinearGradient>
-                  </TouchableOpacity>
+                </TouchableOpacity>
                 </Animated.View>
               ))}
             </View>

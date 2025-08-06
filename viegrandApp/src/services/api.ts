@@ -231,7 +231,7 @@ export const registerUser = async (userData: RegisterRequest): Promise<{ success
       console.log('Register failed:', response.data);
       return {
         success: false,
-        message: response.data.message || 'Registration failed'
+        message: response.data.message || response.data.error?.message || 'Registration failed'
       };
     }
   } catch (error: any) {

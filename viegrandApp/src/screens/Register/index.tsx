@@ -73,6 +73,13 @@ const RegisterScreen = ({ navigation }: any) => {
       return;
     }
 
+    // Validate phone format
+    const phoneRegex = /^[0-9]{10,}$/;
+    if (!phoneRegex.test(phone)) {
+      Alert.alert('Lỗi', 'Số điện thoại phải có ít nhất 10 chữ số.');
+      return;
+    }
+
     // Validate password length
     if (password.length < 6) {
       Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự.');
