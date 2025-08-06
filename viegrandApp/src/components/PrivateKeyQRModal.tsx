@@ -9,8 +9,7 @@ import {
   Clipboard,
   Dimensions,
 } from 'react-native';
-// TODO: Install react-native-qrcode-svg library
-// import QRCode from 'react-native-qrcode-svg';
+import QRCode from 'react-native-qrcode-svg';
 import Feather from 'react-native-vector-icons/Feather';
 
 const { width, height } = Dimensions.get('window');
@@ -42,9 +41,10 @@ const PrivateKeyQRModal = memo(({ visible, onClose, privateKey }: PrivateKeyQRMo
     }
   };
 
-  if (!privateKey) {
-    return null;
-  }
+  // Show modal even if no private key for debugging
+  console.log('🔍 PrivateKeyQRModal - privateKey:', privateKey);
+  
+  const displayKey = privateKey || 'Không tìm thấy Private Key';
 
   return (
     <Modal
@@ -70,11 +70,23 @@ const PrivateKeyQRModal = memo(({ visible, onClose, privateKey }: PrivateKeyQRMo
           {/* QR Code Section */}
           <View style={styles.qrContainer}>
             <View style={styles.qrWrapper}>
-              {/* Placeholder for QR Code - TODO: Install react-native-qrcode-svg */}
-              <View style={styles.qrPlaceholder}>
-                <Feather name="qr-code" size={120} color="#E5E5EA" />
-                <Text style={styles.qrPlaceholderText}>QR Code</Text>
-              </View>
+              {privateKey ? (
+                <QRCode
+                  value={privateKey}
+                  size={200}
+                  color="#000000"
+                  backgroundColor="#FFFFFF"
+                  logoSize={30}
+                  logoMargin={2}
+                  logoBorderRadius={15}
+                  quietZone={10}
+                />
+              ) : (
+                <View style={styles.qrPlaceholder}>
+                  <Feather name="alert-circle" size={120} color="#FF9500" />
+                  <Text style={styles.qrPlaceholderText}>Không có Private Key</Text>
+                </View>
+              )}
             </View>
             <Text style={styles.qrLabel}>Quét mã QR để lấy Private Key</Text>
           </View>
@@ -84,7 +96,7 @@ const PrivateKeyQRModal = memo(({ visible, onClose, privateKey }: PrivateKeyQRMo
             <Text style={styles.keyLabel}>Private Key:</Text>
             <View style={styles.keyTextContainer}>
               <Text style={styles.keyText} numberOfLines={3} ellipsizeMode="middle">
-                {privateKey}
+                {displayKey}
               </Text>
             </View>
             

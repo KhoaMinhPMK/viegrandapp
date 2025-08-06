@@ -137,9 +137,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const refreshUserProfile = useCallback(async (): Promise<void> => {
-    // Mock refresh - không làm gì
-    console.log('Profile refresh disabled - no backend');
-  }, []);
+    try {
+      if (!user?.email) {
+        console.log('No user email available for refresh');
+        return;
+      }
+      
+      console.log('🔄 Refreshing user profile for:', user.email);
+      const result = await getUserData(user.email);
+      
+      if (result.success && result.user) {
+        console.log('✅ User profile refreshed successfully');
+        setUser(result.user);
+        await storageUtils.saveUser(result.user);
+      } else {
+        console.log('❌ Failed to refresh user profile:', result.message);
+      }
+    } catch (error) {
+      console.error('Error refreshing user profile:', error);
+    }
+  }, [user?.email]);
 
   const updateCurrentUser = useCallback((updatedUser: User) => {
     setUser(updatedUser);

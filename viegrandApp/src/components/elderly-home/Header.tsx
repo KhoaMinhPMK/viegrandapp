@@ -5,7 +5,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 import NotificationDropdown from '../NotificationDropdown';
 import PrivateKeyQRModal from '../PrivateKeyQRModal';
-import { User } from '../../contexts/AuthContext';
+import { User, useAuth } from '../../contexts/AuthContext';
 import { useSocket } from '../../contexts/SocketContext';
 import { getUserData } from '../../services/api';
 
@@ -24,6 +24,9 @@ const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, 
   const [showQRModal, setShowQRModal] = useState(false);
   const notificationButtonRef = useRef<any>(null);
   const [notificationPosition, setNotificationPosition] = useState({ top: 0, right: 0 });
+  
+  // Get auth context for refreshing user data
+  const { refreshUserProfile } = useAuth();
   
   // Get user phone from socket context for friend request handling
   const socketContext = useSocket();
@@ -119,6 +122,19 @@ const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, 
     navigation.navigate('Premium');
   };
 
+  const handleOpenQRModal = async () => {
+    // Refresh user data to get latest private key before showing modal
+    try {
+      console.log('🔄 Refreshing user data before showing QR modal...');
+      await refreshUserProfile();
+      setShowQRModal(true);
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+      // Still show modal even if refresh fails
+      setShowQRModal(true);
+    }
+  };
+
   const handleMarkAllAsRead = () => {
     onNotificationsUpdate(notifications.map(n => ({ ...n, read: true })));
   };
@@ -157,7 +173,7 @@ const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, 
           {/* QR Code Button */}
           <TouchableOpacity 
             style={styles.qrButton} 
-            onPress={() => setShowQRModal(true)}
+            onPress={handleOpenQRModal}
             activeOpacity={0.7}
           >
             <Feather name="qr-code" size={24} color="#007AFF" />
