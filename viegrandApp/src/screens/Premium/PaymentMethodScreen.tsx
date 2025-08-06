@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { usePremium } from '../../contexts/PremiumContext';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+
 import { PremiumStackParamList } from '../../types/navigation';
 import { PaymentMethod as PaymentMethodType, PremiumPlan } from '../../types/premium';
 
@@ -31,7 +31,7 @@ const PaymentMethodScreen: React.FC<{
   const { plan } = route.params as { plan: PremiumPlan };
   const { isPurchasing, selectPaymentMethod } = usePremium();
   const [selectedMethodId, setSelectedMethodId] = useState<string | null>('credit_card');
-  const tabBarHeight = useBottomTabBarHeight();
+
 
   const { paymentMethods, fetchPaymentMethods } = usePremium();
   
@@ -95,7 +95,7 @@ const PaymentMethodScreen: React.FC<{
       <ScrollView 
         style={styles.scrollView} 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: tabBarHeight }}
+        contentContainerStyle={{ paddingBottom: 32 }}
       >
         <View style={styles.contentContainer}>
           {/* Order Summary */}
@@ -152,7 +152,7 @@ const PaymentMethodScreen: React.FC<{
       </ScrollView>
 
       {/* Footer Button */}
-      <View style={[styles.footer, { paddingBottom: tabBarHeight + 16 }]}>
+      <View style={[styles.footer, { paddingBottom: 32 }]}>
         <TouchableOpacity
           style={[styles.continueButton, (!selectedMethodId || isPurchasing) && styles.disabledButton]}
           onPress={handleProceedToPayment}

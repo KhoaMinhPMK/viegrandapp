@@ -9,7 +9,7 @@ import {
   Animated,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+
 import { PremiumStackParamList } from '../../types/navigation';
 
 // --- Icon Component ---
@@ -27,7 +27,7 @@ const PaymentFailedScreen: React.FC<{
   const { transactionId, error } = route.params;
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
-  const tabBarHeight = useBottomTabBarHeight();
+
 
   useEffect(() => {
     Animated.parallel([
@@ -93,7 +93,7 @@ const PaymentFailedScreen: React.FC<{
       </ScrollView>
       
       {/* Footer Buttons */}
-      <View style={[styles.footer, { paddingBottom: tabBarHeight > 0 ? tabBarHeight + 10 : 32 }]}>
+      <View style={[styles.footer, { paddingBottom: 32 }]}>
         <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.goBack()}>
           <Text style={styles.primaryButtonText}>Thử lại</Text>
         </TouchableOpacity>

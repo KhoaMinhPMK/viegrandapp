@@ -12,7 +12,7 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import Feather from 'react-native-vector-icons/Feather';
 import { usePremium } from '../../contexts/PremiumContext'
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+
 import { PremiumStackParamList } from '../../types/navigation';
 import { StackNavigationProp } from '@react-navigation/stack';
 // --- Icons (as simple, direct components) ---
@@ -41,7 +41,7 @@ const StarIcon = () => (
 function PlanComparisonScreen({ navigation }: any) {
   const { plans, fetchPlans, loading } = usePremium()
   const [selectedPlan, setSelectedPlan] = useState<any>(null)
-  const tabBarHeight = useBottomTabBarHeight();
+
   
   // ✅ ĐÚNG: Hook được gọi bên trong component
   const handleBack = () => {
@@ -79,7 +79,7 @@ function PlanComparisonScreen({ navigation }: any) {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         {/* Scrollable Content */}
-        <ScrollView style={styles.scrollView} contentContainerStyle={[styles.scrollContent, { paddingBottom: 250 + tabBarHeight }]}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={[styles.scrollContent, { paddingBottom: 280 }]}>
           {/* Hero Section */}
           
           <View style={styles.header}>
@@ -174,7 +174,7 @@ function PlanComparisonScreen({ navigation }: any) {
             </View>
           </View>
 
-          <View style={[styles.bottomAction, { paddingBottom: tabBarHeight > 0 ? tabBarHeight : 24}]}>
+          <View style={[styles.bottomAction, { paddingBottom: 24 }]}>
           <TouchableOpacity
             onPress={handleContinue}
             disabled={!selectedPlan}

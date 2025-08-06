@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { PremiumStackParamList } from '../../types/navigation';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+
 import Feather from 'react-native-vector-icons/Feather';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import apiClient from '../../services/api';
@@ -83,7 +83,6 @@ const CheckIcon = ({ size = 16, color = '#34C759' }) => (
 
 const PremiumScreen: React.FC = () => {
   const navigation = useNavigation<StackNavigationProp<PremiumStackParamList>>();
-  const tabBarHeight = useBottomTabBarHeight();
   
   // State cho premium plans từ API
   const [plans, setPlans] = useState<PremiumPlan[]>([]);
@@ -253,7 +252,7 @@ const PremiumScreen: React.FC = () => {
           </TouchableOpacity>
 
           {/* Footer */}
-          <View style={[styles.footer, { paddingBottom: tabBarHeight + 16 }]}>
+          <View style={[styles.footer, { paddingBottom: 32 }]}>
             <Text style={styles.footerText}>
               Dùng thử miễn phí 7 ngày • Hủy bất kỳ lúc nào
             </Text>

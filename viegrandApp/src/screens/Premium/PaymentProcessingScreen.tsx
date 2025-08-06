@@ -13,7 +13,7 @@ import {
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { usePremium } from '../../contexts/PremiumContext';
 import { PremiumStackParamList } from '../../types/navigation';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+
 
 const { width } = Dimensions.get('window');
 
@@ -28,7 +28,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
 }) => {
   const { planId, paymentMethod, amount } = route.params;
   const { plans, purchasePremium } = usePremium();
-  const tabBarHeight = useBottomTabBarHeight();
+
   
   const [statusMessage, setStatusMessage] = useState('Đang khởi tạo giao dịch...');
   const [animatedValue] = useState(new Animated.Value(0));
@@ -144,7 +144,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
 
       </View>
 
-      <View style={[styles.cancelContainer, { paddingBottom: tabBarHeight + 16 }]}>
+      <View style={[styles.cancelContainer, { paddingBottom: 32 }]}>
         <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
           <Text style={styles.cancelButtonText}>Hủy giao dịch</Text>
         </TouchableOpacity>
