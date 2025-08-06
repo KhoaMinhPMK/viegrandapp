@@ -79,6 +79,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       
+      // Debug: log the userData being passed
+      console.log('AuthContext register - userData:', {
+        ...userData,
+        password: '***',
+        privateKey: userData.privateKey || 'NULL'
+      });
+      
       // Clear cache cũ trước khi đăng ký
       console.log('🔄 Clearing old cache before registration...');
       await storageUtils.clearAuth();

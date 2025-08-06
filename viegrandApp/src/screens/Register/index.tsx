@@ -17,6 +17,8 @@ import {
 import Feather from 'react-native-vector-icons/Feather';
 import { StackActions } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
+import { generateRandomString } from '../../utils/randomString';
+import { checkPrivateKey } from '../../services/api';
 
 const { width } = Dimensions.get('window');
 
@@ -27,7 +29,36 @@ const RegisterScreen = ({ navigation }: any) => {
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'elderly' | 'relative'>('elderly');
+  const [privateKey, setPrivateKey] = useState('');
   const { register, isLoading, getUserDataByEmail } = useAuth();
+
+
+  const generatePrivateKey = async () => {
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    while (attempts < maxAttempts) {
+      const newKey = generateRandomString();
+      console.log('Generated private key:', newKey);
+      
+      // Check if the private key already exists
+      const result = await checkPrivateKey(newKey);
+      
+      if (result.success && !result.exists) {
+        console.log('Setting private key:', newKey);
+        setPrivateKey(newKey);
+        return newKey; // Return the generated key
+      }
+      
+      attempts++;
+    }
+    
+    // If we can't find a unique private key after max attempts, append timestamp
+    const fallbackKey = generateRandomString() + Date.now().toString().slice(-4);
+    console.log('Setting fallback private key:', fallbackKey);
+    setPrivateKey(fallbackKey);
+    return fallbackKey; // Return the fallback key
+  };
 
   const handleRegister = async () => {
     if (!fullName || !phone || !email || !password) {
@@ -54,8 +85,55 @@ const RegisterScreen = ({ navigation }: any) => {
       return;
     }
 
-    console.log('Attempting register with:', { fullName, phone, email, password: '***', role: selectedRole });
-    const success = await register({ fullName, phone, email, password, role: selectedRole });
+    // Generate private key if not already generated
+    let finalPrivateKey = privateKey;
+    if (!privateKey) {
+      console.log('No private key found, generating...');
+      finalPrivateKey = await generatePrivateKey();
+      console.log('Private key after generation:', finalPrivateKey);
+      console.log('Private key type:', typeof finalPrivateKey);
+      console.log('Private key length:', finalPrivateKey ? finalPrivateKey.length : 0);
+    } else {
+      console.log('Private key already exists:', privateKey);
+      console.log('Existing private key type:', typeof privateKey);
+      console.log('Existing private key length:', privateKey ? privateKey.length : 0);
+      finalPrivateKey = privateKey;
+    }
+
+    console.log('Attempting register with:', { 
+      fullName, 
+      phone, 
+      email, 
+      password: '***', 
+      role: selectedRole,
+      privateKey: finalPrivateKey || 'NULL'
+    });
+    
+    // Additional debugging for privateKey before sending
+    console.log('Final privateKey details:');
+    console.log('- Value:', finalPrivateKey);
+    console.log('- Type:', typeof finalPrivateKey);
+    console.log('- Length:', finalPrivateKey ? finalPrivateKey.length : 0);
+    console.log('- Is empty?', !finalPrivateKey);
+    console.log('- Is null?', finalPrivateKey === null);
+    console.log('- Is undefined?', finalPrivateKey === undefined);
+    
+    const registerData = { 
+      fullName, 
+      phone, 
+      email, 
+      password, 
+      privateKey: finalPrivateKey
+    };
+    
+    console.log('Calling register with data:', {
+      ...registerData,
+      password: '***',
+      privateKey: registerData.privateKey || 'NULL'
+    });
+    
+    const success = await register(registerData);
+    
     if (success) {
       // Lấy thông tin user từ API để có role chính xác
       const userData = await getUserDataByEmail(email);
@@ -135,6 +213,34 @@ const RegisterScreen = ({ navigation }: any) => {
                   color="#757575"
                 />
               </TouchableOpacity>
+            </View>
+
+            {/* Private Key Section */}
+            <View style={styles.uniqueCodeContainer}>
+              <Text style={styles.uniqueCodeLabel}>Private Key:</Text>
+              <View style={styles.uniqueCodeInputContainer}>
+                <TextInput
+                  style={styles.uniqueCodeInput}
+                  placeholder="Nhấn nút để tạo private key"
+                  value={privateKey}
+                  onChangeText={setPrivateKey}
+                  placeholderTextColor="#757575"
+                  editable={false}
+                />
+                <TouchableOpacity
+                  style={styles.generateButton}
+                  onPress={async () => {
+                    const key = await generatePrivateKey();
+                    console.log('Manual generation result:', key);
+                  }}
+                >
+                  <Feather name="refresh-cw" size={18} color="#FFFFFF" />
+                  <Text style={styles.generateButtonText}>Tạo</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.uniqueCodeHint}>
+                Private key này sẽ được sử dụng để định danh tài khoản của bạn
+              </Text>
             </View>
             
             {/* Role Selection */}
@@ -276,6 +382,54 @@ const styles = StyleSheet.create({
     right: 15,
     height: 50,
     justifyContent: 'center',
+  },
+  uniqueCodeContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  uniqueCodeLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 8,
+  },
+  uniqueCodeInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  uniqueCodeInput: {
+    flex: 1,
+    height: 50,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    color: '#333333',
+    fontFamily: 'monospace',
+    fontWeight: '600',
+  },
+  generateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#28A745',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 5,
+  },
+  generateButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  uniqueCodeHint: {
+    fontSize: 12,
+    color: '#757575',
+    marginTop: 5,
+    fontStyle: 'italic',
   },
   button: {
     width: '100%',

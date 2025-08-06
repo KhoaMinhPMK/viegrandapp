@@ -49,6 +49,7 @@ export interface User {
   email: string;
   role: string;
   phone?: string;
+  privateKey?: string;
   age?: number;
   address?: string;
   gender?: string;
@@ -69,7 +70,8 @@ export interface RegisterRequest {
   email: string;
   phone: string;
   password: string;
-  role?: string;
+  role?: string; // Make role optional since new endpoint doesn't require it
+  privateKey?: string; // Maps to private_key field in database
 }
 
 export interface AuthResponse {
@@ -133,20 +135,63 @@ export const storageUtils = {
 };
 
 // API Functions
+export const checkPrivateKey = async (privateKey: string): Promise<{ success: boolean; exists?: boolean; message?: string }> => {
+  try {
+    const response = await apiClient.post('/check_private_key.php', {
+      privateKey: privateKey,
+    });
+
+    console.log('Check private key API response:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        exists: response.data.data.exists,
+        message: response.data.message
+      };
+    } else {
+      return {
+        success: false,
+        message: response.data.error?.message || 'Failed to check private key'
+      };
+    }
+  } catch (error: any) {
+    console.error('Check private key error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.error?.message || 'Network error'
+    };
+  }
+};
+
 export const registerUser = async (userData: RegisterRequest): Promise<{ success: boolean; user?: User; message?: string }> => {
   try {
-    const response = await apiClient.post('/register.php', {
-      userName: userData.fullName,
+    const requestData = {
+      fullName: userData.fullName,
       email: userData.email,
-      phone: userData.phone, // Map phone vào field phone thay vì relative_phone
-      password: userData.password, // Gửi password lên backend
-      role: userData.role || 'user', // Gửi role lên backend
+      phone: userData.phone,
+      password: userData.password,
+      privateKey: userData.privateKey,
+    };
+    
+    console.log('Sending registration data to new endpoint:', {
+      ...requestData,
+      password: '***',
+      privateKey: requestData.privateKey || 'NULL'
     });
+    
+    // Additional debugging for privateKey
+    console.log('privateKey value:', requestData.privateKey);
+    console.log('privateKey type:', typeof requestData.privateKey);
+    console.log('privateKey length:', requestData.privateKey ? requestData.privateKey.length : 0);
+    
+    // Use the new registration endpoint
+    const response = await apiClient.post('/register_private_key.php', requestData);
 
     console.log('Register API response:', response.data);
 
     if (response.data.success) {
-      // Kiểm tra response structure trước khi access
+      // Check response structure
       if (!response.data.data || !response.data.data.user) {
         console.error('Invalid response structure:', response.data);
         return {
@@ -155,10 +200,10 @@ export const registerUser = async (userData: RegisterRequest): Promise<{ success
         };
       }
       
-      // Map từ cấu trúc API về cấu trúc User của app
+      // Map from API response to User structure
       const apiUser = response.data.data.user;
       
-      // Kiểm tra userId tồn tại
+      // Check userId exists
       if (!apiUser.userId) {
         console.error('UserId not found in response:', apiUser);
         return {
@@ -171,15 +216,10 @@ export const registerUser = async (userData: RegisterRequest): Promise<{ success
         id: apiUser.userId,
         fullName: apiUser.userName || userData.fullName,
         email: apiUser.email || userData.email,
-        role: apiUser.role || 'user', // Lấy role từ API response
-        phone: apiUser.phone || userData.phone, // Lấy phone từ API response
+        role: userData.role || 'user',
+        phone: apiUser.phone || userData.phone,
+        privateKey: apiUser.privateKey, // Include private key from response
         active: true,
-        age: apiUser.age,
-        gender: apiUser.gender,
-        bloodType: apiUser.blood,
-        allergies: apiUser.allergies,
-        chronicDiseases: apiUser.chronic_diseases,
-        address: apiUser.home_address,
       };
 
       return {
@@ -191,14 +231,14 @@ export const registerUser = async (userData: RegisterRequest): Promise<{ success
       console.log('Register failed:', response.data);
       return {
         success: false,
-        message: response.data.message || 'Đăng ký thất bại'
+        message: response.data.message || 'Registration failed'
       };
     }
   } catch (error: any) {
     console.error('Register API error:', error);
     return {
       success: false,
-      message: error.response?.data?.error?.message || error.message || 'Lỗi kết nối'
+      message: error.response?.data?.message || error.message || 'Connection error'
     };
   }
 };
