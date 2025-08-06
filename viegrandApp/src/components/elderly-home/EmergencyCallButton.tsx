@@ -54,7 +54,7 @@ const EmergencyCallButton = memo(({ onPress }: EmergencyCallButtonProps) => {
         activeOpacity={0.7}
       >
         <View style={styles.iconContainer}>
-          <Feather name="phone" size={28} color="#FFFFFF" />
+          <Feather name="phone" size={22} color="#FFFFFF" />
         </View>
         <View style={styles.pulseRing} />
       </TouchableOpacity>
@@ -70,31 +70,32 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     width: '33.33%',
-    marginBottom: 20,
+    marginBottom: 16, // Consistent with other buttons
   },
   emergencyButton: {
-    width: 70,
-    height: 70,
-    borderRadius: 20,
-    backgroundColor: '#FF3B30', // Màu đỏ khẩn cấp
+    width: 56, // Same size as other buttons for consistency
+    height: 56,
+    borderRadius: 18, // Consistent border radius
+    backgroundColor: '#FF3B30', // Keep emergency red
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#FF3B30',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-    marginBottom: 8,
-    // Thêm hiệu ứng pulse
-    borderWidth: 2,
-    borderColor: '#FF6B6B',
+    shadowOffset: { width: 0, height: 1 }, // Reduced shadow
+    shadowOpacity: 0.15, // More subtle
+    shadowRadius: 3,
+    elevation: 2,
+    marginBottom: 10,
+    // Remove pulse ring for cleaner look
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 59, 48, 0.2)',
   },
   emergencyText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11, // Consistent with other buttons
+    fontWeight: '500', // Less bold for sophistication
     color: '#FF3B30',
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 14,
+    letterSpacing: 0.2,
   },
   iconContainer: {
     justifyContent: 'center',
@@ -102,23 +103,25 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   pulseRing: {
+    // Keep for potential animation but hide by default
     position: 'absolute',
-    top: -2,
-    left: -2,
-    right: -2,
-    bottom: -2,
-    borderRadius: 22,
-    borderWidth: 2,
-    borderColor: '#FF6B6B',
-    opacity: 0.6,
+    top: -1,
+    left: -1,
+    right: -1,
+    bottom: -1,
+    borderRadius: 19,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 59, 48, 0.3)',
+    opacity: 0, // Hidden for minimalist design
     zIndex: 1,
   },
   emergencyNumber: {
-    fontSize: 10,
+    fontSize: 9, // Smaller for subtlety
     color: '#8E8E93',
     textAlign: 'center',
     marginTop: 2,
-    fontWeight: '500',
+    fontWeight: '400',
+    letterSpacing: 0.1,
   },
 });
 

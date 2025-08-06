@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Feather from 'react-native-vector-icons/Feather';
-import LinearGradient from 'react-native-linear-gradient';
+
 
 import { User, getUserData, getFriendsList } from '../../../services/api';
 import { usePremium } from '../../../contexts/PremiumContext';
@@ -43,14 +43,13 @@ const RelativeHomeScreen = ({ navigation }: any) => {
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // Menu items with new design
+  // Menu items with clean white background design
   const menuItems = [
     { 
       id: 1, 
       title: 'Theo dõi', 
       subtitle: 'Giám sát sức khỏe',
       icon: 'activity', 
-      gradient: ['#FF6B6B', '#FF8E8E'],
       route: 'Monitoring'
     },
     { 
@@ -58,7 +57,6 @@ const RelativeHomeScreen = ({ navigation }: any) => {
       title: 'Báo cáo', 
       subtitle: 'Thống kê chi tiết',
       icon: 'bar-chart-2', 
-      gradient: ['#4ECDC4', '#6EE7DF'],
       route: 'Reports'
     },
     { 
@@ -66,7 +64,6 @@ const RelativeHomeScreen = ({ navigation }: any) => {
       title: 'Thuốc', 
       subtitle: 'Quản lý thuốc',
       icon: 'pill', 
-      gradient: ['#45B7D1', '#67C9E3'],
       route: 'Medicine'
     },
     { 
@@ -74,7 +71,6 @@ const RelativeHomeScreen = ({ navigation }: any) => {
       title: 'Liên hệ', 
       subtitle: 'Gọi khẩn cấp',
       icon: 'phone', 
-      gradient: ['#96CEB4', '#B8E6C8'],
       route: 'Emergency'
     },
     { 
@@ -82,7 +78,6 @@ const RelativeHomeScreen = ({ navigation }: any) => {
       title: 'Cài đặt', 
       subtitle: 'Tùy chỉnh app',
       icon: 'settings', 
-      gradient: ['#FFEAA7', '#FFF2C7'],
       route: 'RelativeSettings'
     },
     { 
@@ -90,7 +85,6 @@ const RelativeHomeScreen = ({ navigation }: any) => {
       title: 'Thông báo', 
       subtitle: 'Xem tất cả',
       icon: 'bell', 
-      gradient: ['#DDA0DD', '#E8B5E8'],
       route: 'Notifications'
     },
   ];
@@ -411,20 +405,26 @@ const RelativeHomeScreen = ({ navigation }: any) => {
                     onPress={() => handleMenuPress(item)}
                     activeOpacity={0.8}
                   >
-                    <LinearGradient
-                      colors={item.gradient}
-                      style={styles.menuItemGradient}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                    >
-                      <View style={styles.menuItemContent}>
-                        <View style={styles.iconContainer}>
-                          <Feather name={item.icon as any} size={28} color="#FFFFFF" />
-                        </View>
-                        <Text style={styles.menuItemTitle}>{item.title}</Text>
-                        <Text style={styles.menuItemSubtitle}>{item.subtitle}</Text>
+                    <View style={styles.menuItemContent}>
+                      <View style={[
+                        styles.iconContainer,
+                        item.id === 4 && styles.emergencyIconContainer // Special styling for emergency
+                      ]}>
+                        <Feather 
+                          name={item.icon as any} 
+                          size={28} 
+                          color={item.id === 4 ? "#FF3B30" : "#007AFF"} 
+                        />
                       </View>
-                    </LinearGradient>
+                      <Text style={[
+                        styles.menuItemTitle,
+                        item.id === 4 && styles.emergencyTitle // Special styling for emergency
+                      ]}>{item.title}</Text>
+                      <Text style={[
+                        styles.menuItemSubtitle,
+                        item.id === 4 && styles.emergencySubtitle // Special styling for emergency
+                      ]}>{item.subtitle}</Text>
+                    </View>
                 </TouchableOpacity>
                 </Animated.View>
               ))}
@@ -480,48 +480,60 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 8, // Reduced gap for minimalist feel
   },
   menuItemContainer: {
-    width: (width - 60) / 2,
-    marginBottom: 12,
+    width: (width - 56) / 2, // Slightly wider
+    marginBottom: 8, // Reduced margin
   },
   menuItem: {
-    borderRadius: 16,
+    borderRadius: 20, // Increased for more modern look
     overflow: 'hidden',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  menuItemGradient: {
-    padding: 16,
-    minHeight: 120,
+    elevation: 2, // Reduced shadow for subtlety
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08, // Much more subtle
+    shadowRadius: 3,
+    backgroundColor: '#FFFFFF', // White background
+    borderWidth: 0.5,
+    borderColor: 'rgba(0, 122, 255, 0.1)',
   },
   menuItemContent: {
     flex: 1,
     justifyContent: 'space-between',
+    padding: 18, // Moved padding here
+    minHeight: 110, // Moved height here
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 44, // Slightly smaller
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 122, 255, 0.1)', // Light blue background
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12, // Increased spacing
+  },
+  emergencyIconContainer: {
+    backgroundColor: 'rgba(255, 59, 48, 0.1)', // Light red background for emergency
   },
   menuItemTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 2,
+    fontSize: 15, // Slightly smaller for elegance
+    fontWeight: '600', // Less bold for sophistication
+    color: '#007AFF', // Blue text color
+    marginBottom: 3,
+    letterSpacing: 0.3, // Added letter spacing
+  },
+  emergencyTitle: {
+    color: '#FF3B30', // Red text for emergency
   },
   menuItemSubtitle: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '500',
+    fontSize: 11,
+    color: 'rgba(0, 122, 255, 0.7)', // Blue subtitle
+    fontWeight: '400', // Lighter weight
+    letterSpacing: 0.2,
+  },
+  emergencySubtitle: {
+    color: 'rgba(255, 59, 48, 0.7)', // Red subtitle for emergency
   },
   notifications: {
     marginBottom: 30,

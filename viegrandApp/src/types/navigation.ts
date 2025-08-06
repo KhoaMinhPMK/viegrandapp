@@ -3,7 +3,6 @@ import { PremiumPlan } from './premium';
 export type RootStackParamList = {
   Splash: undefined;
   Onboarding: undefined;
-  SelectRole: undefined;
   Auth: undefined;
   Elderly: undefined;
   Relative: undefined;

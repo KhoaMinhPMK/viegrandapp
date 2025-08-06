@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import {
   ImageBackground,
   ScrollView,
   ActivityIndicator,
+  Clipboard,
+  Animated,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { StackActions } from '@react-navigation/native';
@@ -30,8 +32,46 @@ const RegisterScreen = ({ navigation }: any) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'elderly' | 'relative'>('elderly');
   const [privateKey, setPrivateKey] = useState('');
+  const [isGeneratingKey, setIsGeneratingKey] = useState(false);
+  const [rotateAnim] = useState(new Animated.Value(0));
   const { register, isLoading, getUserDataByEmail } = useAuth();
 
+  // Animation for loading icon
+  const startRotateAnimation = () => {
+    rotateAnim.setValue(0);
+    Animated.loop(
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      })
+    ).start();
+  };
+
+  const stopRotateAnimation = () => {
+    rotateAnim.stopAnimation();
+  };
+
+  // Tự động generate private key khi component mount
+  useEffect(() => {
+    const autoGeneratePrivateKey = async () => {
+      if (!privateKey) {
+        setIsGeneratingKey(true);
+        startRotateAnimation();
+        try {
+          const key = await generatePrivateKey();
+          console.log('Auto-generated private key:', key);
+        } catch (error) {
+          console.error('Error auto-generating private key:', error);
+        } finally {
+          setIsGeneratingKey(false);
+          stopRotateAnimation();
+        }
+      }
+    };
+
+    autoGeneratePrivateKey();
+  }, []);
 
   const generatePrivateKey = async () => {
     let attempts = 0;
@@ -60,9 +100,26 @@ const RegisterScreen = ({ navigation }: any) => {
     return fallbackKey; // Return the fallback key
   };
 
+  const copyPrivateKey = async () => {
+    if (privateKey) {
+      try {
+        await Clipboard.setString(privateKey);
+        Alert.alert('Thành công', 'Private key đã được sao chép vào clipboard');
+      } catch (error) {
+        console.error('Error copying to clipboard:', error);
+        Alert.alert('Lỗi', 'Không thể sao chép private key');
+      }
+    }
+  };
+
   const handleRegister = async () => {
     if (!fullName || !phone || !email || !password) {
       Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin.');
+      return;
+    }
+
+    if (!privateKey) {
+      Alert.alert('Lỗi', 'Private key chưa được tạo. Vui lòng thử lại.');
       return;
     }
 
@@ -92,6 +149,24 @@ const RegisterScreen = ({ navigation }: any) => {
       return;
     }
 
+    // Show confirmation dialog about private key importance
+    Alert.alert(
+      'Xác nhận đăng ký',
+      `🔑 Bạn đã sao chép và lưu trữ Private Key an toàn chưa?\n\nPrivate Key: ${privateKey}\n\n⚠️ Quan trọng: Bạn sẽ cần mã này để khôi phục tài khoản nếu quên mật khẩu. Hãy lưu trữ ở nơi an toàn!`,
+      [
+        {
+          text: 'Tôi chưa sao chép',
+          style: 'cancel'
+        },
+        {
+          text: 'Đã sao chép, tiếp tục',
+          onPress: proceedWithRegistration
+        }
+      ]
+    );
+  };
+
+  const proceedWithRegistration = async () => {
     // Generate private key if not already generated
     let finalPrivateKey = privateKey;
     if (!privateKey) {
@@ -130,7 +205,8 @@ const RegisterScreen = ({ navigation }: any) => {
       phone, 
       email, 
       password, 
-      privateKey: finalPrivateKey
+      privateKey: finalPrivateKey,
+      role: selectedRole
     };
     
     console.log('Calling register with data:', {
@@ -144,19 +220,23 @@ const RegisterScreen = ({ navigation }: any) => {
     if (success) {
       // Lấy thông tin user từ API để có role chính xác
       const userData = await getUserDataByEmail(email);
-      if (userData) {
+      if (userData && userData.role) {
         // Tự động điều hướng dựa trên role
         if (userData.role === 'elderly') {
           navigation.dispatch(StackActions.replace('Elderly'));
         } else if (userData.role === 'relative') {
           navigation.dispatch(StackActions.replace('Relative'));
         } else {
-          // Fallback về SelectRole nếu role không xác định
-          navigation.dispatch(StackActions.replace('SelectRole'));
+          // Fallback về elderly nếu role không xác định
+          navigation.dispatch(StackActions.replace('Elderly'));
         }
       } else {
-        // Fallback về SelectRole nếu không lấy được user data
-        navigation.dispatch(StackActions.replace('SelectRole'));
+        // Fallback dựa trên selectedRole nếu không lấy được user data từ API
+        if (selectedRole === 'elderly') {
+          navigation.dispatch(StackActions.replace('Elderly'));
+        } else {
+          navigation.dispatch(StackActions.replace('Relative'));
+        }
       }
     }
   };
@@ -224,29 +304,64 @@ const RegisterScreen = ({ navigation }: any) => {
 
             {/* Private Key Section */}
             <View style={styles.uniqueCodeContainer}>
-              <Text style={styles.uniqueCodeLabel}>Private Key:</Text>
+              <Text style={styles.uniqueCodeLabel}>Private Key (Mã định danh):</Text>
               <View style={styles.uniqueCodeInputContainer}>
                 <TextInput
                   style={styles.uniqueCodeInput}
-                  placeholder="Nhấn nút để tạo private key"
+                  placeholder={isGeneratingKey ? "Đang tạo private key..." : "Private key sẽ được tạo tự động"}
                   value={privateKey}
                   onChangeText={setPrivateKey}
                   placeholderTextColor="#757575"
                   editable={false}
                 />
-                <TouchableOpacity
-                  style={styles.generateButton}
-                  onPress={async () => {
-                    const key = await generatePrivateKey();
-                    console.log('Manual generation result:', key);
-                  }}
-                >
-                  <Feather name="refresh-cw" size={18} color="#FFFFFF" />
-                  <Text style={styles.generateButtonText}>Tạo</Text>
-                </TouchableOpacity>
+                <View style={styles.keyActionButtons}>
+                  <TouchableOpacity
+                    style={[styles.copyButton, !privateKey && styles.buttonDisabled]}
+                    onPress={copyPrivateKey}
+                    disabled={!privateKey}
+                  >
+                    <Feather name="copy" size={16} color="#FFFFFF" />
+                    <Text style={styles.copyButtonText}>Sao chép</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.generateButton, isGeneratingKey && styles.buttonDisabled]}
+                    onPress={async () => {
+                      if (!isGeneratingKey) {
+                        setIsGeneratingKey(true);
+                        startRotateAnimation();
+                        try {
+                          const key = await generatePrivateKey();
+                          console.log('Manual generation result:', key);
+                        } finally {
+                          setIsGeneratingKey(false);
+                          stopRotateAnimation();
+                        }
+                      }
+                    }}
+                    disabled={isGeneratingKey}
+                  >
+                    {isGeneratingKey ? (
+                      <Animated.View
+                        style={{
+                          transform: [{
+                            rotate: rotateAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: ['0deg', '360deg']
+                            })
+                          }]
+                        }}
+                      >
+                        <Feather name="loader" size={16} color="#FFFFFF" />
+                      </Animated.View>
+                    ) : (
+                      <Feather name="refresh-cw" size={16} color="#FFFFFF" />
+                    )}
+                    <Text style={styles.generateButtonText}>Tạo mới</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
               <Text style={styles.uniqueCodeHint}>
-                Private key này sẽ được sử dụng để định danh tài khoản của bạn
+                ⚠️ Mã này rất quan trọng! Hãy sao chép và lưu trữ an toàn. Bạn sẽ cần mã này để khôi phục tài khoản nếu quên mật khẩu.
               </Text>
             </View>
             
@@ -401,8 +516,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   uniqueCodeInputContainer: {
+    flexDirection: 'column',
+    gap: 10,
+  },
+  keyActionButtons: {
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 10,
   },
   uniqueCodeInput: {
@@ -419,8 +538,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   generateButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#28A745',
     paddingHorizontal: 15,
     paddingVertical: 12,
@@ -428,6 +549,22 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   generateButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  copyButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#007BFF',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 5,
+  },
+  copyButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',

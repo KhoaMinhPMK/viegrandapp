@@ -172,6 +172,7 @@ export const registerUser = async (userData: RegisterRequest): Promise<{ success
       phone: userData.phone,
       password: userData.password,
       privateKey: userData.privateKey,
+      role: userData.role,
     };
     
     console.log('Sending registration data to new endpoint:', {
@@ -216,7 +217,7 @@ export const registerUser = async (userData: RegisterRequest): Promise<{ success
         id: apiUser.userId,
         fullName: apiUser.userName || userData.fullName,
         email: apiUser.email || userData.email,
-        role: userData.role || 'user',
+        role: apiUser.role || userData.role || 'user', // Prefer role from API response
         phone: apiUser.phone || userData.phone,
         privateKey: apiUser.privateKey, // Include private key from response
         active: true,

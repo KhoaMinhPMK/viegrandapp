@@ -8,7 +8,7 @@ import VerificationScreen from '../screens/Verification';
 import SplashScreen from '../screens/SplashScreen';
 import ResetPasswordScreen from '../screens/ResetPassword';
 import OnboardingScreen from '../screens/Onboarding';
-import SelectRoleScreen from '../screens/SelectRole';
+
 import ElderlyNavigator from './ElderlyNavigator';
 import RelativeNavigator from './RelativeNavigator';
 
@@ -28,7 +28,6 @@ const AuthNavigator = () => {
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="Verification" component={VerificationScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
-      <Stack.Screen name="SelectRole" component={SelectRoleScreen} />
       <Stack.Screen name="Elderly" component={ElderlyNavigator} />
       <Stack.Screen name="Relative" component={RelativeNavigator} />
     </Stack.Navigator>

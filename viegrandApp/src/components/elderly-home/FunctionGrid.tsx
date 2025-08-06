@@ -87,19 +87,20 @@ const styles = StyleSheet.create({
   dividerSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10, // Adjusted for container padding
-    marginVertical: 20,
+    paddingHorizontal: 10,
+    marginVertical: 16, // Reduced for tighter spacing
   },
   dividerLine: {
     flex: 1,
-    height: 1,
-    backgroundColor: '#E5E5EA',
+    height: 0.5, // Thinner line for subtlety
+    backgroundColor: 'rgba(0, 122, 255, 0.1)', // Subtle blue tint
   },
   dividerText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#6D6D70',
-    marginHorizontal: 16,
+    fontSize: 16, // Smaller for elegance
+    fontWeight: '600', // Less bold
+    color: '#8E8E93', // Softer gray
+    marginHorizontal: 12, // Reduced margin
+    letterSpacing: 0.3,
   },
   grid: {
     marginTop: 16,

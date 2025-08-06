@@ -59,19 +59,20 @@ const LoginScreen = ({ navigation }: any) => {
       
       // Lấy thông tin user từ API để có role chính xác
       const userData = await getUserDataByEmail(email);
-      if (userData) {
+      if (userData && userData.role) {
         // Tự động điều hướng dựa trên role
         if (userData.role === 'elderly') {
           navigation.dispatch(StackActions.replace('Elderly'));
         } else if (userData.role === 'relative') {
           navigation.dispatch(StackActions.replace('Relative'));
         } else {
-          // Fallback về SelectRole nếu role không xác định
-          navigation.dispatch(StackActions.replace('SelectRole'));
+          // Fallback về elderly nếu role không xác định
+          navigation.dispatch(StackActions.replace('Elderly'));
         }
       } else {
-        // Fallback về SelectRole nếu không lấy được user data
-        navigation.dispatch(StackActions.replace('SelectRole'));
+        // Fallback về elderly nếu không lấy được user data
+        Alert.alert('Cảnh báo', 'Không thể xác định vai trò người dùng. Sẽ chuyển vào giao diện người cao tuổi.');
+        navigation.dispatch(StackActions.replace('Elderly'));
       }
     }
   };
