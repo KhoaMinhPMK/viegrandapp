@@ -115,6 +115,17 @@ const RelativeSettingsScreen = ({ navigation }: any) => {
     );
   };
 
+  // Handle premium navigation based on status
+  const handlePremiumNavigation = () => {
+    if (isPremium) {
+      // Navigate to management screen for premium users
+      navigation.navigate('PremiumManagement');
+    } else {
+      // Navigate to subscription screen for non-premium users
+      navigation.navigate('Premium');
+    }
+  };
+
   if (!settings) {
     return (
       <SafeAreaView style={styles.container}>
@@ -223,7 +234,7 @@ const RelativeSettingsScreen = ({ navigation }: any) => {
               iconBackgroundColor="#32CD32"
               title="Premium Active"
               value={daysRemaining ? `Còn ${daysRemaining} ngày` : 'Đang hoạt động'}
-              onPress={() => navigation.navigate('Premium')}
+              onPress={handlePremiumNavigation}
               isLast
             />
           ) : (
@@ -233,7 +244,7 @@ const RelativeSettingsScreen = ({ navigation }: any) => {
               iconBackgroundColor="#FFD700"
               title="Nâng cấp Premium"
               value="Xem chi tiết gói"
-              onPress={() => navigation.navigate('Premium')}
+              onPress={handlePremiumNavigation}
               isLast
             />
           )}

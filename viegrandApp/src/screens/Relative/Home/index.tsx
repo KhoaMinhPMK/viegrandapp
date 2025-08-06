@@ -22,7 +22,7 @@ import { usePremium } from '../../../contexts/PremiumContext';
 import { useSocket } from '../../../contexts/SocketContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import Header from '../../../components/elderly-home/Header';
-import PremiumUpgradeCard from '../../../components/elderly-home/PremiumUpgradeCard';
+import RelativePremiumCard from '../../../components/relative-home/RelativePremiumCard';
 import WeatherCard from '../../../components/elderly-home/WeatherCard';
 
 // Import Notification type from SocketContext to avoid conflict
@@ -384,7 +384,7 @@ const RelativeHomeScreen = ({ navigation }: any) => {
           <WeatherCard isPremium={isPremium} />
           
           {/* Premium Upgrade Card */}
-          <PremiumUpgradeCard 
+          <RelativePremiumCard 
             isPremium={isPremium} 
             daysRemaining={premiumDaysRemaining || undefined}
           />

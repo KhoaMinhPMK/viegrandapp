@@ -25,6 +25,7 @@ import { SettingsContainer } from '../../../components/settings/SettingsContaine
 import PermissionStatusIndicator from '../../../components/elderly-home/PermissionStatusIndicator';
 import PermissionGuideModal from '../../../components/elderly-home/PermissionGuideModal';
 import emergencyCallService, { setPermissionGuideCallback } from '../../../services/emergencyCall';
+import { showElderlyPremiumAlert } from '../../../utils/elderlyPremiumAlert';
 
 const ElderlySettingsScreen = () => {
     const navigation = useNavigation<any>();
@@ -168,6 +169,16 @@ const ElderlySettingsScreen = () => {
           );
     };
 
+    const handlePremiumPress = () => {
+        if (isPremium) {
+            // If user is already premium, navigate to management screen
+            navigation.navigate('PremiumManagement');
+        } else {
+            // If user is not premium, show the elderly alert
+            showElderlyPremiumAlert();
+        }
+    };
+
     return (
         <SettingsContainer>
             <SafeAreaView style={styles.flex}>
@@ -221,7 +232,7 @@ const ElderlySettingsScreen = () => {
                                 <Feather name="chevron-right" size={22} color="#C7C7CC" />
                             </TouchableOpacity>
                         ) : isPremium ? (
-                            <TouchableOpacity style={styles.premiumRow} onPress={() => navigation.navigate('Premium')}>
+                            <TouchableOpacity style={styles.premiumRow} onPress={handlePremiumPress}>
                                 <LinearGradient colors={['#32CD32', '#228B22']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.premiumIconContainer}>
                                     <Feather name="check" size={20} color="#FFFFFF" />
                                 </LinearGradient>
@@ -234,7 +245,7 @@ const ElderlySettingsScreen = () => {
                                 <Feather name="chevron-right" size={22} color="#C7C7CC" />
                             </TouchableOpacity>
                         ) : (
-                            <TouchableOpacity style={styles.premiumRow} onPress={() => navigation.navigate('Premium')}>
+                            <TouchableOpacity style={styles.premiumRow} onPress={handlePremiumPress}>
                                 <LinearGradient colors={['#1E3A8A', '#3B82F6']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.premiumIconContainer}>
                                     <Feather name="zap" size={20} color="#FFD700" />
                                 </LinearGradient>

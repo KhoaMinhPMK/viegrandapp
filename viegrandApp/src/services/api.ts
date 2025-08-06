@@ -411,6 +411,96 @@ export const savePremiumSubscription = async (subscriptionData: {
   }
 };
 
+// Get premium subscription details API
+export const getPremiumSubscription = async (email: string): Promise<{ 
+  success: boolean; 
+  data?: {
+    hasSubscription: boolean;
+    isActive: boolean;
+    subscription?: {
+      premiumKey: string;
+      startDate: string;
+      endDate: string;
+      status: string;
+      daysRemaining: number;
+      elderlyKeys: string[];
+      note: string;
+    };
+    user: {
+      name: string;
+      email: string;
+      youngPersonKey: string;
+    };
+  };
+  message?: string;
+}> => {
+  try {
+    const response = await apiClient.post('/get_premium_subscription.php', { email });
+    
+    console.log('Get premium subscription API response:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } else {
+      console.log('Get premium subscription failed:', response.data);
+      return {
+        success: false,
+        message: response.data.message || 'Không thể lấy thông tin subscription'
+      };
+    }
+  } catch (error: any) {
+    console.error('Get premium subscription API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Add elderly user to premium subscription API
+export const addElderlyToPremium = async (relativeUserId: number, elderlyPrivateKey: string): Promise<{ 
+  success: boolean; 
+  data?: {
+    premium_key: string;
+    elderly_user: string;
+    elderly_count: number;
+  };
+  message?: string;
+}> => {
+  try {
+    const response = await apiClient.post('/add_elderly_to_premium.php', {
+      relative_user_id: relativeUserId,
+      elderly_private_key: elderlyPrivateKey
+    });
+    
+    console.log('Add elderly to premium API response:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } else {
+      console.log('Add elderly to premium failed:', response.data);
+      return {
+        success: false,
+        message: response.data.message || 'Không thể thêm người thân vào gói premium'
+      };
+    }
+  } catch (error: any) {
+    console.error('Add elderly to premium API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
 // Update user data API
 export const updateUserData = async (email: string, updateData: any): Promise<{ success: boolean; user?: any; message?: string }> => {
   try {

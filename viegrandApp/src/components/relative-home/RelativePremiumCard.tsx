@@ -3,23 +3,22 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { showElderlyPremiumAlert } from '../../utils/elderlyPremiumAlert';
 
-interface PremiumUpgradeCardProps {
+interface RelativePremiumCardProps {
   isPremium: boolean;
   daysRemaining?: number;
 }
 
-const PremiumUpgradeCard = memo(({ isPremium, daysRemaining }: PremiumUpgradeCardProps) => {
+const RelativePremiumCard = memo(({ isPremium, daysRemaining }: RelativePremiumCardProps) => {
   const navigation = useNavigation<any>();
 
   const handleNavigate = useCallback(() => {
     if (isPremium) {
-      // Navigate to Premium management screen for active users
+      // Navigate to Premium management screen for active premium users
       navigation.navigate('PremiumManagement');
     } else {
-      // Show alert for elderly users trying to upgrade
-      showElderlyPremiumAlert();
+      // Navigate to Premium subscription screen for non-premium users
+      navigation.navigate('Premium');
     }
   }, [navigation, isPremium]);
 
@@ -85,4 +84,4 @@ const styles = StyleSheet.create({
   cardSubtitle: { fontSize: 12, color: 'rgba(255, 255, 255, 0.8)', fontWeight: '500' },
 });
 
-export default PremiumUpgradeCard; 
+export default RelativePremiumCard;

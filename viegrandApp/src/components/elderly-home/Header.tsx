@@ -8,6 +8,7 @@ import PrivateKeyQRModal from '../PrivateKeyQRModal';
 import { User, useAuth } from '../../contexts/AuthContext';
 import { useSocket } from '../../contexts/SocketContext';
 import { getUserData } from '../../services/api';
+import { showElderlyPremiumAlert } from '../../utils/elderlyPremiumAlert';
 
 interface HeaderProps {
   user: User | null;
@@ -119,7 +120,13 @@ const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, 
   };
 
   const handleNavigateToPremium = () => {
-    navigation.navigate('Premium');
+    if (isPremium) {
+      // If user is already premium, navigate to management screen
+      navigation.navigate('PremiumManagement');
+    } else {
+      // If user is not premium, show the elderly alert
+      showElderlyPremiumAlert();
+    }
   };
 
   const handleOpenQRModal = async () => {
