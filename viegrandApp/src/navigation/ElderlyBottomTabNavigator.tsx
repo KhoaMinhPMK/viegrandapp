@@ -12,7 +12,6 @@ import ElderlySettingsScreen from '../screens/Elderly/Settings';
 import Icon from 'react-native-vector-icons/Ionicons';
 import SettingsNavigator from './SettingsNavigator';
 import HomeNavigator from './HomeNavigator';
-import PremiumTabScreen from '../screens/Premium/PremiumTabScreen'; // Added PremiumNavigator import
 
 // Import voice components
 import { useVoice } from '../contexts/VoiceContext';
@@ -194,13 +193,7 @@ const ElderlyBottomTabNavigator = () => {
           tabBarIcon: () => null
         }}
       />
-      <Tab.Screen 
-        name="PremiumTab" // Changed name to be specific
-        component={PremiumTabScreen}
-        options={{
-          tabBarIcon: renderTabBarIcon('shield')
-        }}
-      />
+
       <Tab.Screen 
         name="Settings"
         options={{

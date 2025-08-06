@@ -25,10 +25,15 @@ export type ElderlyStackParamList = {
 };
 
 export type RelativeStackParamList = {
-  RelativeHome: undefined;
-  RelativeProfile: undefined;
-  RelativeSettings: undefined;
+  RelativeMain: undefined;
   Premium: undefined;
+  EditProfile: undefined;
+};
+
+export type RelativeBottomTabParamList = {
+  Home: undefined;
+  Profile: undefined;
+  Settings: undefined;
 };
 
 export type PremiumStackParamList = {

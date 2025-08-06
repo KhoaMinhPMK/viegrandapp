@@ -1,9 +1,7 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 
-import RelativeHomeScreen from '../screens/Relative/Home';
-import RelativeProfileScreen from '../screens/Relative/Profile';
-import RelativeSettingsScreen from '../screens/Relative/Settings';
+import RelativeBottomTabNavigator from './RelativeBottomTabNavigator';
 import PremiumNavigator from './PremiumNavigator';
 import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 
@@ -12,13 +10,11 @@ const Stack = createStackNavigator();
 const RelativeNavigator = () => {
   return (
     <Stack.Navigator
-      initialRouteName="RelativeHome"
+      initialRouteName="RelativeMain"
       screenOptions={{
         headerShown: false,
       }}>
-      <Stack.Screen name="RelativeHome" component={RelativeHomeScreen} />
-      <Stack.Screen name="RelativeProfile" component={RelativeProfileScreen} />
-      <Stack.Screen name="RelativeSettings" component={RelativeSettingsScreen} />
+      <Stack.Screen name="RelativeMain" component={RelativeBottomTabNavigator} />
       <Stack.Screen name="Premium" component={PremiumNavigator} />
       <Stack.Screen 
         name="EditProfile" 

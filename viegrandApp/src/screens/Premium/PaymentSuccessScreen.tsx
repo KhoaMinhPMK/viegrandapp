@@ -8,6 +8,8 @@ import {
   ScrollView,
   Animated,
   Alert,
+  Platform,
+  Clipboard,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { usePremium } from '../../contexts/PremiumContext';
@@ -31,9 +33,43 @@ const PaymentSuccessScreen: React.FC<{
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const [isSubscriptionSaved, setIsSubscriptionSaved] = useState(false);
+  const [actualTransactionCode, setActualTransactionCode] = useState<string | null>(null);
+  const [showTransactionDetails, setShowTransactionDetails] = useState(false);
 
+  // Format transaction code for display
+  const formatTransactionCode = (code: string) => {
+    if (!code || code.length !== 16) return code;
+    
+    // Return the code as-is without any formatting (no dashes)
+    return code;
+  };
 
-  // Save subscription to database
+  const getTransactionCodeInfo = (code: string) => {
+    if (!code || code.length !== 16) return null;
+    
+    const day = code.substring(0, 2);
+    const sequence = parseInt(code.substring(2, 12));
+    const month = code.substring(12, 14);
+    const year = '20' + code.substring(14, 16);
+    
+    return {
+      day,
+      sequence,
+      month,
+      year,
+      formatted: `${day}-${code.substring(2, 12)}-${month}${code.substring(14, 16)}`
+         };
+   };
+
+   // Copy transaction code to clipboard
+   const copyTransactionCode = () => {
+     if (actualTransactionCode) {
+       Clipboard.setString(actualTransactionCode);
+       Alert.alert('Đã sao chép', 'Mã giao dịch đã được sao chép vào clipboard');
+     }
+   };
+
+    // Save subscription to database
   const saveSubscriptionData = async () => {
     if (!user?.email || isSubscriptionSaved) {
       return;
@@ -55,6 +91,14 @@ const PaymentSuccessScreen: React.FC<{
       if (result.success) {
         console.log('Subscription saved successfully:', result.subscription);
         setIsSubscriptionSaved(true);
+        // Set the actual transaction code from backend response
+        if (result.subscription?.premiumKey) {
+          setActualTransactionCode(result.subscription.premiumKey);
+          // Show transaction details with a small delay for better UX
+          setTimeout(() => {
+            setShowTransactionDetails(true);
+          }, 500);
+        }
       } else {
         console.error('Failed to save subscription:', result.message);
         Alert.alert(
@@ -147,9 +191,26 @@ const PaymentSuccessScreen: React.FC<{
 
           {/* Transaction Details */}
           <View style={styles.card}>
-            <View style={styles.row}>
+            <TouchableOpacity style={styles.row} onPress={copyTransactionCode} disabled={!actualTransactionCode}>
               <Text style={styles.label}>Mã giao dịch</Text>
-              <Text style={styles.value}>{transactionId}</Text>
+              <View style={styles.transactionCodeContainer}>
+                <Text style={styles.transactionCode}>
+                  {actualTransactionCode || transactionId || 'Đang tạo...'}
+                </Text>
+                {actualTransactionCode && showTransactionDetails && (
+                  <Text style={styles.transactionCodeDetail}>
+                    Giao dịch #{getTransactionCodeInfo(actualTransactionCode)?.sequence} - {getTransactionCodeInfo(actualTransactionCode)?.day}/{getTransactionCodeInfo(actualTransactionCode)?.month}/{getTransactionCodeInfo(actualTransactionCode)?.year}
+                  </Text>
+                )}
+                {actualTransactionCode && (
+                  <Text style={styles.copyHint}>Chạm để sao chép</Text>
+                )}
+              </View>
+            </TouchableOpacity>
+            <View style={styles.divider} />
+            <View style={styles.row}>
+              <Text style={styles.label}>Gói Premium</Text>
+              <Text style={styles.value}>{planName}</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.row}>
@@ -247,6 +308,32 @@ const styles = StyleSheet.create({
   label: { fontSize: 16, color: '#6A6A6E' },
   value: { fontSize: 16, color: '#1C1C1E', fontWeight: '500' },
   divider: { height: 1, backgroundColor: '#E5E5EA' },
+  
+  // Transaction Code Styles
+  transactionCodeContainer: {
+    alignItems: 'flex-end',
+    flex: 1,
+    marginLeft: 16,
+  },
+  transactionCode: {
+    fontSize: 16,
+    color: '#1C1C1E',
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  transactionCodeDetail: {
+    fontSize: 12,
+    color: '#6A6A6E',
+    marginTop: 2,
+    textAlign: 'right',
+  },
+  copyHint: {
+    fontSize: 11,
+    color: '#007AFF',
+    marginTop: 4,
+    textAlign: 'right',
+    fontStyle: 'italic',
+  },
 
   // Status Badge
   statusBadge: {

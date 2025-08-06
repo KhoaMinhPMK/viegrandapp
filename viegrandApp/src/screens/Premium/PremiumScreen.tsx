@@ -122,7 +122,18 @@ const PremiumScreen: React.FC = () => {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    // Check if we can go back in the navigation stack
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      // If no back stack, navigate to appropriate home based on user role
+      // This handles the case when Premium is accessed from bottom tabs
+      const rootNavigation = navigation.getParent();
+      if (rootNavigation) {
+        // Try to go back to the previous tab or home
+        rootNavigation.goBack();
+      }
+    }
   };
 
   // Format giá tiền

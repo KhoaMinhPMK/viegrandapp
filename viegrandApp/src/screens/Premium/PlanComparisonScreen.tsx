@@ -45,7 +45,16 @@ function PlanComparisonScreen({ navigation }: any) {
   
   // ✅ ĐÚNG: Hook được gọi bên trong component
   const handleBack = () => {
-    navigation.goBack();
+    // Check if we can go back in the navigation stack
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      // If no back stack, navigate to appropriate home based on user role
+      const rootNavigation = navigation.getParent();
+      if (rootNavigation) {
+        rootNavigation.goBack();
+      }
+    }
   };
 
   useEffect(() => {
