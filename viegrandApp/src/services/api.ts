@@ -501,6 +501,47 @@ export const addElderlyToPremium = async (relativeUserId: number, elderlyPrivate
   }
 };
 
+// Get elderly users in premium subscription API
+export const getElderlyInPremium = async (relativeUserId: number): Promise<{ 
+  success: boolean; 
+  data?: Array<{
+    userId: number;
+    userName: string;
+    email: string;
+    phone: string;
+    age: number;
+    gender: string;
+    private_key: string;
+  }>;
+  message?: string;
+}> => {
+  try {
+    const response = await apiClient.get(`/get_elderly_in_premium.php?user_id=${relativeUserId}`);
+    
+    console.log('Get elderly in premium API response:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } else {
+      console.log('Get elderly in premium failed:', response.data);
+      return {
+        success: false,
+        message: response.data.message || 'Không thể lấy danh sách người thân'
+      };
+    }
+  } catch (error: any) {
+    console.error('Get elderly in premium API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
 // Update user data API
 export const updateUserData = async (email: string, updateData: any): Promise<{ success: boolean; user?: any; message?: string }> => {
   try {
