@@ -17,6 +17,7 @@ import BookReaderScreen from '../screens/Elderly/Entertainment/BookReaderScreen'
 import BookSettingsScreen from '../screens/Elderly/Entertainment/BookSettingsScreen';
 import BookStatsScreen from '../screens/Elderly/Entertainment/BookStatsScreen';
 import BookBookmarkScreen from '../screens/Elderly/Entertainment/BookBookmarkScreen';
+import PremiumNavigator from './PremiumNavigator';
 
 const Stack = createStackNavigator();
 
@@ -88,6 +89,14 @@ const ElderlyNavigator = () => {
         component={BookBookmarkScreen} 
         options={{ headerShown: false }}
       />
+      
+      {/* Premium Navigator - Full screen without bottom tabs */}
+      <Stack.Screen 
+        name="Premium" 
+        component={PremiumNavigator} 
+        options={{ headerShown: false }}
+      />
+      
       {/* 
         Các màn hình Modal toàn màn hình hoặc các luồng khác không có bottom tab 
         sẽ được thêm vào đây trong tương lai.

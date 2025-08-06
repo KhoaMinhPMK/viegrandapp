@@ -22,7 +22,7 @@ import NotificationsScreen from '../screens/Elderly/Notifications';
 import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 
 // Navigators
-import PremiumNavigator from './PremiumNavigator';
+// Premium Navigator moved to ElderlyNavigator level
 
 const Stack = createStackNavigator();
 
@@ -82,7 +82,6 @@ const HomeNavigator = () => {
         options={{ headerShown: false }} // Ẩn header để full-screen game experience
       />
       <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Premium" component={PremiumNavigator} />
       <Stack.Screen 
         name="EditProfile" 
         component={EditProfileScreen}

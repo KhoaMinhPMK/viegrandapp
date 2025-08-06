@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Feather from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 import NotificationDropdown from '../NotificationDropdown';
+import PrivateKeyQRModal from '../PrivateKeyQRModal';
 import { User } from '../../contexts/AuthContext';
 import { useSocket } from '../../contexts/SocketContext';
 import { getUserData } from '../../services/api';
@@ -20,6 +21,7 @@ interface HeaderProps {
 const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, onNotificationsUpdate, onConversationsRefresh }: HeaderProps) => {
   const navigation = useNavigation<any>();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
   const notificationButtonRef = useRef<any>(null);
   const [notificationPosition, setNotificationPosition] = useState({ top: 0, right: 0 });
   
@@ -151,6 +153,16 @@ const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, 
               <Text style={styles.premiumText}>Nâng cấp</Text>
                   </TouchableOpacity>
                 )}
+          
+          {/* QR Code Button */}
+          <TouchableOpacity 
+            style={styles.qrButton} 
+            onPress={() => setShowQRModal(true)}
+            activeOpacity={0.7}
+          >
+            <Feather name="qr-code" size={24} color="#007AFF" />
+          </TouchableOpacity>
+          
           <TouchableOpacity ref={notificationButtonRef} style={styles.notificationButton} onPress={handleToggleNotifications}>
             <Feather name="bell" size={24} color="#007AFF" />
             {unreadNotificationCount > 0 && (
@@ -174,6 +186,13 @@ const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, 
         onConversationsRefresh={onConversationsRefresh}
       />
       )}
+      
+      {/* Private Key QR Modal */}
+      <PrivateKeyQRModal 
+        visible={showQRModal}
+        onClose={() => setShowQRModal(false)}
+        privateKey={user?.privateKey || ''}
+      />
     </>
   );
 });
@@ -227,6 +246,11 @@ const styles = StyleSheet.create({
     color: '#FFC700',
     fontSize: 12,
     fontWeight: '600',
+  },
+  qrButton: {
+    backgroundColor: '#F2F2F7',
+    borderRadius: 20,
+    padding: 10,
   },
   notificationButton: { 
     backgroundColor: '#F2F2F7', 
