@@ -13,9 +13,9 @@ import Feather from 'react-native-vector-icons/Feather';
 const RelativeProfileScreen = ({ navigation }: any) => {
   const profileItems = [
     { id: 1, title: 'Thông tin cá nhân', icon: 'user', action: 'edit' },
-    { id: 2, title: 'Danh sách người cao tuổi', icon: 'users', action: 'elderly' },
+    { id: 2, title: 'Danh sách người cao tuổi', icon: 'user', action: 'elderly' },
     { id: 3, title: 'Liên hệ khẩn cấp', icon: 'phone', action: 'emergency' },
-    { id: 4, title: 'Lịch sử theo dõi', icon: 'file-text', action: 'history' },
+    { id: 4, title: 'Lịch sử theo dõi', icon: 'file', action: 'history' },
   ];
 
   return (

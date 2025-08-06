@@ -168,7 +168,7 @@ const RelativeSettingsScreen = ({ navigation }: any) => {
           />
           <SettingsRow
             type="toggle"
-            icon="message-circle"
+            icon="message-square"
             iconBackgroundColor="#32CD32"
             title="Cảnh báo qua SMS"
             value={settings.relative_smsAlertsEnabled}
@@ -189,7 +189,7 @@ const RelativeSettingsScreen = ({ navigation }: any) => {
           />
           <SettingsRow
             type="navigation"
-            icon="shield"
+            icon="lock"
             iconBackgroundColor="#6A5ACD"
             title="Bảo mật"
             onPress={() => Alert.alert('Tính năng đang phát triển')}
@@ -209,7 +209,7 @@ const RelativeSettingsScreen = ({ navigation }: any) => {
           {isLoadingUserData ? (
             <SettingsRow
               type="navigation"
-              icon="star"
+              icon="zap"
               iconBackgroundColor="#FFD700"
               title="Premium"
               value="Đang tải..."
@@ -219,7 +219,7 @@ const RelativeSettingsScreen = ({ navigation }: any) => {
           ) : isPremium ? (
             <SettingsRow
               type="navigation"
-              icon="crown"
+              icon="check-circle"
               iconBackgroundColor="#32CD32"
               title="Premium Active"
               value={daysRemaining ? `Còn ${daysRemaining} ngày` : 'Đang hoạt động'}
@@ -229,7 +229,7 @@ const RelativeSettingsScreen = ({ navigation }: any) => {
           ) : (
             <SettingsRow
               type="navigation"
-              icon="star"
+              icon="zap"
               iconBackgroundColor="#FFD700"
               title="Nâng cấp Premium"
               value="Xem chi tiết gói"

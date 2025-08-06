@@ -103,7 +103,7 @@ function PlanComparisonScreen({ navigation }: any) {
 
           <View style={styles.heroSection}>
             <View style={styles.heroIconContainer}>
-              <Feather name="star" size={36} color="#FFD700" />
+              <Feather name="award" size={36} color="#FFD700" />
             </View>
             <Text style={styles.heroTitle}>Nâng cấp Premium</Text>
             <Text style={styles.heroSubtitle}>Trải nghiệm đầy đủ các tính năng cao cấp dành cho người thân yêu.</Text>

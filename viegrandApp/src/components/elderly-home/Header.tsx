@@ -165,7 +165,7 @@ const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, 
         <View style={styles.rightIcons}>
           {!isPremium && (
             <TouchableOpacity style={styles.premiumButton} onPress={handleNavigateToPremium}>
-              <Feather name="shield" size={16} color="#FFC700" />
+              <Feather name="zap" size={16} color="#FFC700" />
               <Text style={styles.premiumText}>Nâng cấp</Text>
                   </TouchableOpacity>
                 )}
@@ -176,7 +176,7 @@ const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, 
             onPress={handleOpenQRModal}
             activeOpacity={0.7}
           >
-            <Feather name="qr-code" size={24} color="#007AFF" />
+            <Feather name="grid" size={24} color="#007AFF" />
           </TouchableOpacity>
           
           <TouchableOpacity ref={notificationButtonRef} style={styles.notificationButton} onPress={handleToggleNotifications}>

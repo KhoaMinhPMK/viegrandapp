@@ -9,7 +9,7 @@ import PhoneScreen from '../screens/Elderly/Phone';
 import MessageScreen from '../screens/Elderly/Message';
 import MessageNavigator from './MessageNavigator'; // Import the new navigator
 import ElderlySettingsScreen from '../screens/Elderly/Settings';
-import Icon from 'react-native-vector-icons/Ionicons';
+
 import SettingsNavigator from './SettingsNavigator';
 import HomeNavigator from './HomeNavigator';
 

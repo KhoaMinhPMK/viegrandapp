@@ -396,7 +396,7 @@ const ElderlyProfileScreen = ({ navigation }: any) => {
             activeOpacity={0.8}
           >
             <View style={styles.actionIconContainer}>
-              <Feather name="shield" size={20} color="#0D4C92" />
+                                      <Feather name="lock" size={20} color="#0D4C92" />
             </View>
             <Text style={styles.actionText}>Bảo mật & Quyền riêng tư</Text>
             <Feather name="chevron-right" size={20} color="#C7C7CC" />

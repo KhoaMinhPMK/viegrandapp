@@ -70,7 +70,7 @@ const VideoPlayerScreen = ({ navigation }: any) => {
     { 
       id: 'exercise', 
       name: 'Tập thể dục', 
-      icon: 'activity',
+      icon: 'trending-up',
       searchQueries: ['tập thể dục người già', 'yoga cho người cao tuổi', 'thể dục dưỡng sinh', 'tập luyện sức khỏe']
     },
     { 

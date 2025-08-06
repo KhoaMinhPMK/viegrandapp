@@ -49,21 +49,21 @@ const RelativeHomeScreen = ({ navigation }: any) => {
       id: 1, 
       title: 'Theo dõi', 
       subtitle: 'Giám sát sức khỏe',
-      icon: 'activity', 
+      icon: 'trending-up', 
       route: 'Monitoring'
     },
     { 
       id: 2, 
       title: 'Báo cáo', 
       subtitle: 'Thống kê chi tiết',
-      icon: 'bar-chart-2', 
+      icon: 'bar-chart', 
       route: 'Reports'
     },
     { 
       id: 3, 
       title: 'Thuốc', 
       subtitle: 'Quản lý thuốc',
-      icon: 'pill', 
+      icon: 'package', 
       route: 'Medicine'
     },
     { 

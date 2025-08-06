@@ -13,7 +13,7 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Feather } from 'react-native-vector-icons/Feather';
 import { launchCamera } from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
@@ -216,7 +216,7 @@ const HealthCheckScreen = () => {
           onPress={() => navigation.goBack()} 
           style={styles.backButton}
         >
-          <Icon name="chevron-back" size={24} color="#007AFF" />
+          <Feather name="chevron-left" size={24} color="#007AFF" />
         </TouchableOpacity>
         <Text style={styles.title}>Kiểm tra sức khỏe</Text>
         <View style={styles.headerSpacer} />
@@ -227,7 +227,7 @@ const HealthCheckScreen = () => {
           <View style={styles.cameraContainer}>
             <View style={styles.cameraPlaceholder}>
               <View style={styles.iconContainer}>
-                <Icon name="camera-outline" size={48} color="#8E8E93" />
+                <Feather name="camera" size={48} color="#8E8E93" />
               </View>
               <Text style={styles.cameraTitle}>Chụp ảnh máy đo</Text>
               <Text style={styles.cameraSubtitle}>
@@ -239,7 +239,7 @@ const HealthCheckScreen = () => {
               style={styles.captureButton} 
               onPress={takePicture}
             >
-              <Icon name="camera" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+              <Feather name="camera" size={20} color="#FFFFFF" style={styles.buttonIcon} />
               <Text style={styles.captureButtonText}>Chụp ảnh</Text>
             </TouchableOpacity>
           </View>
@@ -264,7 +264,7 @@ const HealthCheckScreen = () => {
             {readings && (
               <View style={styles.readingsContainer}>
                 <View style={styles.readingsHeader}>
-                  <Icon name="checkmark-circle" size={24} color="#34C759" />
+                  <Feather name="check-circle" size={24} color="#34C759" />
                   <Text style={styles.readingsTitle}>Kết quả đo</Text>
                 </View>
                 
@@ -333,7 +333,7 @@ const HealthCheckScreen = () => {
                     <ActivityIndicator size="small" color="#fff" />
                   ) : (
                     <>
-                      <Icon name="cloud-upload" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+                      <Feather name="upload" size={20} color="#FFFFFF" style={styles.buttonIcon} />
                       <Text style={styles.updateButtonText}>Cập nhật thông tin</Text>
                     </>
                   )}
@@ -344,7 +344,7 @@ const HealthCheckScreen = () => {
                 style={styles.retakeButton} 
                 onPress={retakePicture}
               >
-                <Icon name="refresh" size={18} color="#007AFF" style={styles.buttonIcon} />
+                <Feather name="refresh-cw" size={18} color="#007AFF" style={styles.buttonIcon} />
                 <Text style={styles.retakeButtonText}>Chụp lại</Text>
               </TouchableOpacity>
             </View>

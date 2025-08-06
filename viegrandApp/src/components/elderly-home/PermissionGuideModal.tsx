@@ -29,7 +29,7 @@ const PermissionGuideModal = ({ visible, onClose, onOpenSettings }: PermissionGu
       number: '2',
       title: 'Tìm ứng dụng',
       description: 'Tìm và chọn "ViegrandApp"',
-      icon: 'smartphone',
+      icon: 'monitor',
     },
     {
       number: '3',

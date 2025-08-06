@@ -236,7 +236,7 @@ const ElderlySettingsScreen = () => {
                         ) : (
                             <TouchableOpacity style={styles.premiumRow} onPress={() => navigation.navigate('Premium')}>
                                 <LinearGradient colors={['#1E3A8A', '#3B82F6']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.premiumIconContainer}>
-                                    <Feather name="star" size={20} color="#FFD700" />
+                                    <Feather name="zap" size={20} color="#FFD700" />
                                 </LinearGradient>
                                 <View style={styles.premiumInfo}>
                                     <Text style={styles.premiumTitle}>Nâng cấp lên Premium</Text>
@@ -256,7 +256,7 @@ const ElderlySettingsScreen = () => {
                         />
                         <SettingsRow
                             title="Bảo mật"
-                            icon="shield"
+                            icon="lock"
                             type="navigation"
                             onPress={() => { /* Navigate to Security Settings */ }}
                         />
@@ -265,7 +265,7 @@ const ElderlySettingsScreen = () => {
                     <SettingsSection title="Thiết bị & Kết nối">
                         <SettingsRow
                             title="Thiết bị đã kết nối"
-                            icon="smartphone"
+                            icon="monitor"
                             type="navigation"
                             onPress={() => { /* Navigate to Connected Devices */ }}
                         />
@@ -297,13 +297,13 @@ const ElderlySettingsScreen = () => {
                     <SettingsSection title="Hỗ trợ">
                         <SettingsRow
                             title="Trung tâm hỗ trợ"
-                            icon="help-circle"
+                            icon="info"
                             type="navigation"
                             onPress={() => { /* Navigate to Help Center */ }}
                         />
-                        <SettingsRow
+                                                 <SettingsRow
                             title="Điều khoản dịch vụ"
-                            icon="file-text"
+                            icon="file"
                             type="navigation"
                             onPress={() => { /* Navigate to ToS */ }}
                         />

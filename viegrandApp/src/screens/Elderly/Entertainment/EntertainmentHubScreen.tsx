@@ -36,7 +36,7 @@ const entertainmentItems = [
   {
     title: 'Bài tập',
     subtitle: 'Nâng cao sức khỏe',
-    icon: 'activity',
+    icon: 'trending-up',
     screen: 'Exercise', // Placeholder
   },
 ];
