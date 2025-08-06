@@ -67,6 +67,8 @@ const PaymentMethodScreen: React.FC<{
       paymentMethod: selectedMethodId,
       amount: plan.price,
       billingCycle: plan.type,
+      planType: plan.type,
+      planDuration: plan.type === 'yearly' ? 12 : 1,
     });
   };
 

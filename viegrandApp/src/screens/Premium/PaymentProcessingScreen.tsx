@@ -26,7 +26,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
   navigation, 
   route 
 }) => {
-  const { planId, paymentMethod, amount } = route.params;
+  const { planId, paymentMethod, amount, planType, planDuration } = route.params;
   const { plans, purchasePremium } = usePremium();
 
   
@@ -50,6 +50,8 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
               params: {
                 transactionId: result.transaction.transactionCode,
                 planName: selectedPlan?.name || 'Premium',
+                planType: planType || selectedPlan?.type || 'premium',
+                planDuration: planDuration || (selectedPlan?.type === 'yearly' ? 12 : 1),
               }
             }]
           });

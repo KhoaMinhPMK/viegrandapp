@@ -378,6 +378,39 @@ export const getUserData = async (email: string): Promise<{ success: boolean; us
   }
 };
 
+// Save premium subscription API
+export const savePremiumSubscription = async (subscriptionData: {
+  userEmail: string;
+  planType: string;
+  planDuration: number;
+}): Promise<{ success: boolean; subscription?: any; message?: string }> => {
+  try {
+    const response = await apiClient.post('/save_premium_subscription.php', subscriptionData);
+    
+    console.log('Save premium subscription API response:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        subscription: response.data.data.subscription,
+        message: response.data.message
+      };
+    } else {
+      console.log('Save premium subscription failed:', response.data);
+      return {
+        success: false,
+        message: response.data.message || 'Không thể lưu thông tin subscription'
+      };
+    }
+  } catch (error: any) {
+    console.error('Save premium subscription API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
 // Update user data API
 export const updateUserData = async (email: string, updateData: any): Promise<{ success: boolean; user?: any; message?: string }> => {
   try {

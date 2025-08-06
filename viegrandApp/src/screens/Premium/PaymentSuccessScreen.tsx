@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   ScrollView,
   Animated,
+  Alert,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { usePremium } from '../../contexts/PremiumContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { savePremiumSubscription } from '../../services/api';
 
 import { PremiumStackParamList } from '../../types/navigation';
 
@@ -23,18 +25,62 @@ const PaymentSuccessScreen: React.FC<{
   navigation: NavigationProp<PremiumStackParamList, 'PaymentSuccess'>;
   route: RouteProp<PremiumStackParamList, 'PaymentSuccess'>;
 }> = ({ navigation, route }) => {
-  const { transactionId, planName } = route.params;
+  const { transactionId, planName, planType, planDuration } = route.params;
   const { fetchPremiumStatus, triggerRefresh } = usePremium();
   const { user } = useAuth();
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+  const [isSubscriptionSaved, setIsSubscriptionSaved] = useState(false);
 
+
+  // Save subscription to database
+  const saveSubscriptionData = async () => {
+    if (!user?.email || isSubscriptionSaved) {
+      return;
+    }
+
+    try {
+      console.log('Saving subscription data...', {
+        userEmail: user.email,
+        planType: planType || 'premium',
+        planDuration: planDuration || 1
+      });
+
+      const result = await savePremiumSubscription({
+        userEmail: user.email,
+        planType: planType || 'premium',
+        planDuration: planDuration || 1
+      });
+
+      if (result.success) {
+        console.log('Subscription saved successfully:', result.subscription);
+        setIsSubscriptionSaved(true);
+      } else {
+        console.error('Failed to save subscription:', result.message);
+        Alert.alert(
+          'Lưu thông tin',
+          'Không thể lưu thông tin subscription. Vui lòng liên hệ hỗ trợ.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Error saving subscription:', error);
+      Alert.alert(
+        'Lỗi',
+        'Có lỗi xảy ra khi lưu thông tin subscription.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
 
   useEffect(() => {
     fetchPremiumStatus();
     
     // Trigger refresh để các màn hình khác cập nhật ngay lập tức
     triggerRefresh();
+
+    // Save subscription data to database
+    saveSubscriptionData();
 
     Animated.parallel([
       Animated.spring(scaleAnim, {

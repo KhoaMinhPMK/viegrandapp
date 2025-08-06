@@ -40,10 +40,14 @@ export type PremiumStackParamList = {
     billingCycle: string;
     paymentMethod: string;
     amount: number;
+    planType?: string;
+    planDuration?: number;
   };
   PaymentSuccess: { 
     transactionId: string;
     planName: string;
+    planType?: string;
+    planDuration?: number;
   };
   PaymentFailed: { 
     transactionId: string;
@@ -61,10 +65,14 @@ export type PremiumNavigationProps = {
     planId: number; 
     paymentMethod: string;
     customerInfo: any;
+    planType?: string;
+    planDuration?: number;
   };
   PaymentSuccess: { 
     transactionId: string;
     planName: string;
+    planType?: string;
+    planDuration?: number;
   };
   PaymentFailed: { 
     transactionId: string;
