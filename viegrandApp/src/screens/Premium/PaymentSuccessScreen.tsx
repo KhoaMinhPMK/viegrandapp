@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { usePremium } from '../../contexts/PremiumContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 import { PremiumStackParamList } from '../../types/navigation';
 
@@ -24,6 +25,7 @@ const PaymentSuccessScreen: React.FC<{
 }> = ({ navigation, route }) => {
   const { transactionId, planName } = route.params;
   const { fetchPremiumStatus, triggerRefresh } = usePremium();
+  const { user } = useAuth();
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -55,11 +57,31 @@ const PaymentSuccessScreen: React.FC<{
     // Trigger refresh để các màn hình khác cập nhật
     triggerRefresh();
     
-    // Reset navigation về PremiumHome
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'PremiumHome' }],
-    });
+    // Navigate về trang home tương ứng theo role của user
+    // Sử dụng getParent để access root navigator
+    const rootNavigation = navigation.getParent();
+    
+    if (rootNavigation && user?.role) {
+      if (user.role === 'elderly') {
+        // Navigate về Elderly home
+        rootNavigation.reset({
+          index: 0,
+          routes: [{ name: 'Elderly' }],
+        });
+      } else if (user.role === 'relative') {
+        // Navigate về Relative home
+        rootNavigation.reset({
+          index: 0,
+          routes: [{ name: 'Relative' }],
+        });
+      } else {
+        // Fallback: quay về màn hình trước
+        navigation.goBack();
+      }
+    } else {
+      // Fallback: quay về màn hình trước
+      navigation.goBack();
+    }
   };
 
   return (
