@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,12 @@ import {
   Alert,
   ActivityIndicator,
   TextInput,
+  ImageBackground,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Feather from 'react-native-vector-icons/Feather';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getPremiumSubscription, addElderlyToPremium, getElderlyInPremium } from '../../services/api';
+import { getPremiumSubscription, addElderlyToPremium, getElderlyInPremium, autoFriendProcess } from '../../services/api';
 
 interface PremiumSubscriptionData {
   hasSubscription: boolean;
@@ -94,16 +95,30 @@ const PremiumManagementScreen = () => {
       const userDataStr = await AsyncStorage.getItem('user');
       if (!userDataStr) {
         console.error('No user data found in cache');
+        setElderlyUsers([]);
         return;
       }
       
       const userData = JSON.parse(userDataStr);
-      const result = await getElderlyInPremium(userData.userId);
+      
+      // Check if user has premium subscription first
+      if (!subscriptionData?.hasSubscription || !subscriptionData?.isActive) {
+        console.log('User does not have active premium subscription');
+        setElderlyUsers([]);
+        return;
+      }
+      
+      const result = await getElderlyInPremium(userData.id || userData.userId);
       
       if (result.success && result.data) {
         setElderlyUsers(result.data);
       } else {
         console.error('Failed to load elderly users:', result.message);
+        // Don't show error alert for "User not found or does not have premium status"
+        // as this is expected for users without premium
+        if (result.message && !result.message.includes('User not found or does not have premium status')) {
+          Alert.alert('Lỗi', result.message || 'Không thể tải danh sách người thân');
+        }
         setElderlyUsers([]);
       }
     } catch (error) {
@@ -118,9 +133,15 @@ const PremiumManagementScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
       loadPremiumSubscription();
-      loadElderlyUsers();
     }, [])
   );
+
+  // Load elderly users when subscription data changes
+  React.useEffect(() => {
+    if (subscriptionData) {
+      loadElderlyUsers();
+    }
+  }, [subscriptionData]);
 
   const formatDate = (dateString: string) => {
     try {
@@ -168,28 +189,64 @@ const PremiumManagementScreen = () => {
       }
       
       const userData = JSON.parse(userDataStr);
-      const result = await addElderlyToPremium(userData.userId, elderlyPrivateKey.trim());
+      
+      // Step 1: Add elderly to premium subscription
+      const result = await addElderlyToPremium(userData.id || userData.userId, elderlyPrivateKey.trim());
       
       if (result.success) {
-        Alert.alert(
-          'Thành công!',
-          `Đã thêm ${result.data?.elderly_user} vào gói Premium.\nTổng số người thân: ${result.data?.elderly_count}`,
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                setElderlyPrivateKey('');
-                loadPremiumSubscription(); // Refresh subscription data
-                loadElderlyUsers(); // Refresh elderly users list
+        console.log('✅ Premium subscription updated successfully');
+        
+        // Step 2: Auto friend process
+        console.log('🔄 Starting auto friend process...');
+        const autoFriendResult = await autoFriendProcess(userData.phone, elderlyPrivateKey.trim());
+        
+        if (autoFriendResult.success) {
+          console.log('✅ Auto friend process completed successfully');
+          
+          // Enhanced success message
+          const successMessage = autoFriendResult.data?.friendship_created 
+            ? `Đã thêm ${result.data?.elderly_user} vào gói Premium.\n\n✅ Tự động kết bạn thành công\n✅ Có thể nhắn tin ngay\n✅ Theo dõi sức khỏe\n\nTổng số người thân: ${result.data?.elderly_count}`
+            : `Đã thêm ${result.data?.elderly_user} vào gói Premium.\n\n✅ Đã là bạn bè trước đó\n✅ Có thể nhắn tin ngay\n✅ Theo dõi sức khỏe\n\nTổng số người thân: ${result.data?.elderly_count}`;
+          
+          Alert.alert(
+            'Thành công!',
+            successMessage,
+            [
+              {
+                text: 'Tuyệt vời!',
+                onPress: () => {
+                  setElderlyPrivateKey('');
+                  loadPremiumSubscription(); // Refresh subscription data
+                  loadElderlyUsers(); // Refresh elderly users list
+                }
               }
-            }
-          ]
-        );
+            ]
+          );
+        } else {
+          console.log('⚠️ Auto friend process failed:', autoFriendResult.message);
+          
+          // Still show success for premium addition, but mention friend issue
+          Alert.alert(
+            'Thành công một phần!',
+            `Đã thêm ${result.data?.elderly_user} vào gói Premium.\n\n⚠️ Lưu ý: Có thể cần kết bạn thủ công để nhắn tin.\n\nTổng số người thân: ${result.data?.elderly_count}`,
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  setElderlyPrivateKey('');
+                  loadPremiumSubscription(); // Refresh subscription data
+                  loadElderlyUsers(); // Refresh elderly users list
+                }
+              }
+            ]
+          );
+        }
       } else {
         Alert.alert('Lỗi', result.message || 'Không thể thêm người thân vào gói Premium');
       }
     } catch (error) {
-      Alert.alert('Lỗi', 'Đã xảy ra lỗi khi thêm người thân');
+      console.error('Error adding elderly user:', error);
+      Alert.alert('Lỗi', 'Không thể thêm người thân vào gói Premium');
     } finally {
       setIsAddingElderly(false);
     }

@@ -1482,4 +1482,184 @@ export const getEmergencyContact = async (userEmail: string) => {
   }
 };
 
+// Get user by private key API
+export const getUserByPrivateKey = async (privateKey: string): Promise<{ success: boolean; user?: any; message?: string }> => {
+  try {
+    const response = await apiClient.post('/get_user_by_private_key.php', {
+      private_key: privateKey.trim()
+    });
+    
+    console.log('Get user by private key API response:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        user: response.data.data.user,
+        message: response.data.message
+      };
+    } else {
+      console.log('Get user by private key failed:', response.data);
+      return {
+        success: false,
+        message: response.data.message || 'Không thể lấy thông tin người dùng'
+      };
+    }
+  } catch (error: any) {
+    console.error('Get user by private key API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.error?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Create auto friend request API
+export const createAutoFriendRequest = async (fromPhone: string, toPhone: string): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    console.log('🔄 createAutoFriendRequest - Sending request:', { fromPhone, toPhone });
+    const response = await apiClient.post('/create_auto_friend_request.php', {
+      from_phone: fromPhone.trim(),
+      to_phone: toPhone.trim()
+    });
+    
+    console.log('✅ createAutoFriendRequest API response:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } else {
+      console.log('❌ createAutoFriendRequest failed:', response.data);
+      return {
+        success: false,
+        message: response.data.message || 'Không thể tạo lời mời kết bạn tự động'
+      };
+    }
+  } catch (error: any) {
+    console.error('❌ createAutoFriendRequest API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Auto accept friend request API
+export const autoAcceptFriendRequest = async (requestId: number): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    console.log('🔄 autoAcceptFriendRequest - Sending request:', { requestId });
+    const response = await apiClient.post('/auto_accept_friend_request.php', {
+      request_id: requestId
+    });
+    
+    console.log('✅ autoAcceptFriendRequest API response:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } else {
+      console.log('❌ autoAcceptFriendRequest failed:', response.data);
+      return {
+        success: false,
+        message: response.data.message || 'Không thể tự động chấp nhận lời mời kết bạn'
+      };
+    }
+  } catch (error: any) {
+    console.error('❌ autoAcceptFriendRequest API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Auto friend process - Complete flow
+export const autoFriendProcess = async (relativePhone: string, elderlyPrivateKey: string): Promise<{ 
+  success: boolean; 
+  data?: {
+    friendship_created: boolean;
+    conversation_created: boolean;
+    notifications_sent: boolean;
+    accepter_name: string;
+    requester_name: string;
+    conversation_id: number;
+  };
+  message?: string;
+}> => {
+  try {
+    console.log('🔄 autoFriendProcess - Starting auto friend process:', { relativePhone, elderlyPrivateKey });
+    
+    // Step 1: Get elderly user data by private key
+    const elderlyUserResult = await getUserByPrivateKey(elderlyPrivateKey);
+    if (!elderlyUserResult.success || !elderlyUserResult.user) {
+      console.log('❌ autoFriendProcess - Failed to get elderly user:', elderlyUserResult.message);
+      return {
+        success: false,
+        message: elderlyUserResult.message || 'Không thể tìm thấy người dùng với private key này'
+      };
+    }
+    
+    const elderlyUser = elderlyUserResult.user;
+    console.log('✅ autoFriendProcess - Elderly user found:', elderlyUser.userName);
+    
+    // Step 2: Create auto friend request
+    const friendRequestResult = await createAutoFriendRequest(relativePhone, elderlyUser.phone);
+    if (!friendRequestResult.success) {
+      console.log('❌ autoFriendProcess - Failed to create friend request:', friendRequestResult.message);
+      return {
+        success: false,
+        message: friendRequestResult.message || 'Không thể tạo lời mời kết bạn'
+      };
+    }
+    
+    const requestId = friendRequestResult.data?.request_id;
+    if (!requestId) {
+      console.log('✅ autoFriendProcess - Friendship already exists or request already exists');
+      return {
+        success: true,
+        data: {
+          friendship_created: true,
+          conversation_created: true,
+          notifications_sent: false,
+          accepter_name: elderlyUser.userName,
+          requester_name: 'Người thân',
+          conversation_id: 0
+        },
+        message: 'Friendship already exists'
+      };
+    }
+    
+    console.log('✅ autoFriendProcess - Friend request created with ID:', requestId);
+    
+    // Step 3: Auto accept friend request
+    const acceptResult = await autoAcceptFriendRequest(requestId);
+    if (!acceptResult.success) {
+      console.log('❌ autoFriendProcess - Failed to auto accept friend request:', acceptResult.message);
+      return {
+        success: false,
+        message: acceptResult.message || 'Không thể tự động chấp nhận lời mời kết bạn'
+      };
+    }
+    
+    console.log('✅ autoFriendProcess - Auto friend process completed successfully');
+    return {
+      success: true,
+      data: acceptResult.data,
+      message: acceptResult.message
+    };
+    
+  } catch (error: any) {
+    console.error('❌ autoFriendProcess - Error in auto friend process:', error);
+    return {
+      success: false,
+      message: error.message || 'Lỗi trong quá trình tự động kết bạn'
+    };
+  }
+};
+
 export default apiClient;

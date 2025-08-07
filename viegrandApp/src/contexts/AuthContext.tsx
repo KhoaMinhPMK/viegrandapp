@@ -105,7 +105,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         await AsyncStorage.setItem('user_email', userData.email);
         
         setUser(result.user);
-        Alert.alert('Thành công', result.message || 'Đăng ký thành công');
         return true;
       } else {
         Alert.alert('Lỗi', result.message || 'Đăng ký thất bại');

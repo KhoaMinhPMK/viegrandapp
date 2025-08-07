@@ -4,7 +4,6 @@ import { View, StyleSheet } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
 import RelativeHomeScreen from '../screens/Relative/Home';
-import RelativeProfileScreen from '../screens/Relative/Profile';
 import RelativeSettingsScreen from '../screens/Relative/Settings';
 import { RelativeBottomTabParamList } from '../types/navigation';
 
@@ -25,9 +24,6 @@ const RelativeBottomTabNavigator = () => {
           switch (route.name) {
             case 'Home':
               iconName = 'home';
-              break;
-            case 'Profile':
-              iconName = 'user';
               break;
             case 'Settings':
               iconName = 'settings';
@@ -53,13 +49,6 @@ const RelativeBottomTabNavigator = () => {
         component={RelativeHomeScreen}
         options={{
           tabBarLabel: 'Trang chủ',
-        }}
-      />
-      <Tab.Screen 
-        name="Profile" 
-        component={RelativeProfileScreen}
-        options={{
-          tabBarLabel: 'Hồ sơ',
         }}
       />
       <Tab.Screen 
