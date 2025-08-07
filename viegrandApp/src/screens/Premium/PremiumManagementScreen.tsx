@@ -14,7 +14,7 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Feather from 'react-native-vector-icons/Feather';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getPremiumSubscription, addElderlyToPremium, getElderlyInPremium, autoFriendProcess } from '../../services/api';
+import { getPremiumSubscription, addElderlyToPremium, getElderlyInPremium, autoFriendProcess, getUserData } from '../../services/api';
 
 interface PremiumSubscriptionData {
   hasSubscription: boolean;
@@ -190,6 +190,16 @@ const PremiumManagementScreen = () => {
       
       const userData = JSON.parse(userDataStr);
       
+      // Get user's phone number from API
+      const userDataResult = await getUserData(userData.email);
+      if (!userDataResult.success || !userDataResult.user?.phone) {
+        Alert.alert('Lỗi', 'Không thể lấy số điện thoại người dùng');
+        return;
+      }
+      
+      const relativePhone = userDataResult.user.phone;
+      console.log('✅ Relative phone number:', relativePhone);
+      
       // Step 1: Add elderly to premium subscription
       const result = await addElderlyToPremium(userData.id || userData.userId, elderlyPrivateKey.trim());
       
@@ -198,16 +208,14 @@ const PremiumManagementScreen = () => {
         
         // Step 2: Auto friend process
         console.log('🔄 Starting auto friend process...');
-        const autoFriendResult = await autoFriendProcess(userData.phone, elderlyPrivateKey.trim());
+        const autoFriendResult = await autoFriendProcess(relativePhone, elderlyPrivateKey.trim());
         
         if (autoFriendResult.success) {
           console.log('✅ Auto friend process completed successfully');
-          
-          // Enhanced success message
-          const successMessage = autoFriendResult.data?.friendship_created 
+          const successMessage = autoFriendResult.data?.friendship_created
             ? `Đã thêm ${result.data?.elderly_user} vào gói Premium.\n\n✅ Tự động kết bạn thành công\n✅ Có thể nhắn tin ngay\n✅ Theo dõi sức khỏe\n\nTổng số người thân: ${result.data?.elderly_count}`
             : `Đã thêm ${result.data?.elderly_user} vào gói Premium.\n\n✅ Đã là bạn bè trước đó\n✅ Có thể nhắn tin ngay\n✅ Theo dõi sức khỏe\n\nTổng số người thân: ${result.data?.elderly_count}`;
-          
+
           Alert.alert(
             'Thành công!',
             successMessage,
@@ -216,8 +224,8 @@ const PremiumManagementScreen = () => {
                 text: 'Tuyệt vời!',
                 onPress: () => {
                   setElderlyPrivateKey('');
-                  loadPremiumSubscription(); // Refresh subscription data
-                  loadElderlyUsers(); // Refresh elderly users list
+                  loadPremiumSubscription();
+                  loadElderlyUsers();
                 }
               }
             ]

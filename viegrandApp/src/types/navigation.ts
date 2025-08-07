@@ -19,6 +19,7 @@ export type AuthStackParamList = {
 
 export type ElderlyStackParamList = {
   Main: undefined;
+  Family: undefined;
   Notifications: undefined;
   Premium: undefined;
   Sudoku: undefined;
