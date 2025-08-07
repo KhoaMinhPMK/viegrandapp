@@ -5,6 +5,7 @@ import RelativeBottomTabNavigator from './RelativeBottomTabNavigator';
 import PremiumNavigator from './PremiumNavigator';
 import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 import PremiumManagementScreen from '../screens/Premium/PremiumManagementScreen';
+import AddReminderScreen from '../screens/Relative/AddReminderScreen'
 
 const Stack = createStackNavigator();
 
@@ -26,6 +27,7 @@ const RelativeNavigator = () => {
           presentation: 'modal',
         }} 
       />
+      <Stack.Screen name="AddReminder" component={AddReminderScreen} />
     </Stack.Navigator>
   );
 };

@@ -21,6 +21,7 @@ const RemindersScreen = () => {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string>('');
+  const [userPrivateKey, setUserPrivateKey] = useState<string>('');
 
   // Load user email from storage
   useEffect(() => {
@@ -38,14 +39,29 @@ const RemindersScreen = () => {
     loadUserEmail();
   }, []);
 
+  // Load user private key from storage
+  useEffect(() => {
+    const loadUserPrivateKey = async () => {
+      try {
+        const userData = await AsyncStorage.getItem('user');
+        if (userData) {
+          const user = JSON.parse(userData);
+          setUserPrivateKey(user.privateKey || user.private_key || '');
+        }
+      } catch (error) {
+        console.error('Error loading user private key:', error);
+      }
+    };
+    loadUserPrivateKey();
+  }, []);
+
   // Load reminders from API
   useEffect(() => {
     const loadReminders = async () => {
-      if (!userEmail) return;
-      
+      if (!userPrivateKey) return;
       setLoading(true);
       try {
-        const result = await getReminders(userEmail);
+        const result = await getReminders(userPrivateKey, true);
         if (result.success && result.data) {
           setReminders(result.data);
         } else {
@@ -59,22 +75,18 @@ const RemindersScreen = () => {
         setLoading(false);
       }
     };
-
     loadReminders();
-  }, [userEmail]);
+  }, [userPrivateKey]);
 
   const handleMarkCompleted = async (id: string) => {
-    if (!userEmail) return;
-
+    if (!userPrivateKey) return;
     try {
       const reminder = reminders.find(r => r.id === id);
       if (!reminder) return;
-
       const newStatus = reminder.isCompleted ? 'pending' : 'completed';
-      const result = await updateReminderStatus(id, newStatus, userEmail);
-      
+      // Gọi updateReminderStatus với email là rỗng hoặc privateKey nếu cần sửa backend
+      const result = await updateReminderStatus(id, newStatus, '');
       if (result.success) {
-        // Update local state
         setReminders(prev =>
           prev.map(reminder =>
             reminder.id === id
@@ -127,26 +139,26 @@ const RemindersScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
-      
+      {/* Nút back nổi */}
+      <TouchableOpacity
+        style={styles.floatingBackButton}
+        onPress={() => navigation.goBack()}
+        activeOpacity={0.7}
+      >
+        <Feather name="arrow-left" size={28} color="#0D4C92" />
+      </TouchableOpacity>
       {/* Header */}
+      <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}>
-          <Feather name="arrow-left" size={24} color="#0D4C92" />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Nhắc nhở</Text>
         <View style={styles.headerRight} />
       </View>
-
       {/* Status Summary */}
       <ReminderStatus
         todayCount={today.length}
         tomorrowCount={tomorrow.length}
         completedCount={completed.length}
       />
-
       {/* Reminders List */}
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -250,6 +262,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#8E8E93',
     textAlign: 'center',
+  },
+  floatingBackButton: {
+    position: 'absolute',
+    top: 18,
+    left: 16,
+    zIndex: 10,
+    backgroundColor: '#fff',
+    borderRadius: 22,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });
 

@@ -87,6 +87,13 @@ const RelativeHomeScreen = ({ navigation }: any) => {
       icon: 'bell', 
       route: 'Notifications'
     },
+    { 
+      id: 7, 
+      title: 'Tạo nhắc nhở', 
+      subtitle: 'Thêm nhắc nhở cho người cao tuổi',
+      icon: 'plus-circle', 
+      route: 'AddReminder'
+    },
   ];
   
   // Animation states for menu items
@@ -358,6 +365,9 @@ const RelativeHomeScreen = ({ navigation }: any) => {
       case 6:
         navigation.navigate('Notifications');
         break;
+      case 7:
+        navigation.navigate('AddReminder');
+        break;
       default:
         console.log('Menu item pressed:', item.title);
         break;
@@ -425,7 +435,7 @@ const RelativeHomeScreen = ({ navigation }: any) => {
                         item.id === 4 && styles.emergencySubtitle // Special styling for emergency
                       ]}>{item.subtitle}</Text>
                     </View>
-                </TouchableOpacity>
+                  </TouchableOpacity>
                 </Animated.View>
               ))}
             </View>

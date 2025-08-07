@@ -3,18 +3,20 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  TextInput,
-  ImageBackground,
+  SafeAreaView,
+  Modal,
+  Dimensions,
+  TextInput
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import Feather from 'react-native-vector-icons/Feather';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPremiumSubscription, addElderlyToPremium, getElderlyInPremium, autoFriendProcess, getUserData } from '../../services/api';
+
+const { width, height } = Dimensions.get('window');
 
 interface PremiumSubscriptionData {
   hasSubscription: boolean;
@@ -53,6 +55,13 @@ const PremiumManagementScreen = () => {
   const [loadingElderly, setLoadingElderly] = useState(false);
   const [elderlyPrivateKey, setElderlyPrivateKey] = useState('');
   const [isAddingElderly, setIsAddingElderly] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successData, setSuccessData] = useState<{
+    elderlyName: string;
+    elderlyCount: number;
+    friendshipCreated: boolean;
+    message: string;
+  } | null>(null);
 
   // Load premium subscription details
   const loadPremiumSubscription = async () => {
@@ -159,11 +168,95 @@ const PremiumManagementScreen = () => {
   };
 
   const copyToClipboard = (text: string, label: string) => {
-    // Clipboard functionality temporarily disabled
     Alert.alert(
       'Thông tin',
       `${label}: ${text}`,
       [{ text: 'OK', style: 'default' }]
+    );
+  };
+
+  // Handle modal close
+  const handleModalClose = () => {
+    setShowSuccessModal(false);
+    setSuccessData(null);
+    setElderlyPrivateKey('');
+    loadPremiumSubscription();
+    loadElderlyUsers();
+  };
+
+  // Custom Success Modal Component
+  const SuccessModal = ({ visible, data, onClose }: {
+    visible: boolean;
+    data: {
+      elderlyName: string;
+      elderlyCount: number;
+      friendshipCreated: boolean;
+      message: string;
+    } | null;
+    onClose: () => void;
+  }) => {
+    if (!data) return null;
+
+    return (
+      <Modal
+        visible={visible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={onClose}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            {/* Success Icon */}
+            <View style={styles.successIconContainer}>
+              <View style={styles.successIcon}>
+                <Text style={{fontSize:32, color:'#FFFFFF'}}>✔️</Text>
+              </View>
+            </View>
+
+            {/* Title */}
+            <Text style={styles.modalTitle}>Thành công!</Text>
+
+            {/* Content */}
+            <View style={styles.modalContent}>
+              <Text style={styles.modalSubtitle}>
+                Đã thêm {data.elderlyName} vào gói Premium
+              </Text>
+
+              {/* Features List */}
+              <View style={styles.featuresContainer}>
+                <View style={styles.featureItem}>
+                  <Text style={{fontSize:20, color:'#4CAF50'}}>✅</Text>
+                  <Text style={styles.featureText}>
+                    {data.friendshipCreated ? 'Tự động kết bạn thành công' : 'Đã là bạn bè trước đó'}
+                  </Text>
+                </View>
+                
+                <View style={styles.featureItem}>
+                  <Text style={{fontSize:20, color:'#4CAF50'}}>💬</Text>
+                  <Text style={styles.featureText}>Có thể nhắn tin ngay</Text>
+                </View>
+                
+                <View style={styles.featureItem}>
+                  <Text style={{fontSize:20, color:'#4CAF50'}}>❤️</Text>
+                  <Text style={styles.featureText}>Theo dõi sức khỏe</Text>
+                </View>
+              </View>
+
+              {/* Summary */}
+              <View style={styles.summaryContainer}>
+                <Text style={styles.summaryText}>
+                  Tổng số người thân: {data.elderlyCount}
+                </Text>
+              </View>
+            </View>
+
+            {/* Action Button */}
+            <TouchableOpacity style={styles.modalButton} onPress={onClose}>
+              <Text style={styles.modalButtonText}>Tuyệt vời!</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     );
   };
 
@@ -212,24 +305,17 @@ const PremiumManagementScreen = () => {
         
         if (autoFriendResult.success) {
           console.log('✅ Auto friend process completed successfully');
-          const successMessage = autoFriendResult.data?.friendship_created
-            ? `Đã thêm ${result.data?.elderly_user} vào gói Premium.\n\n✅ Tự động kết bạn thành công\n✅ Có thể nhắn tin ngay\n✅ Theo dõi sức khỏe\n\nTổng số người thân: ${result.data?.elderly_count}`
-            : `Đã thêm ${result.data?.elderly_user} vào gói Premium.\n\n✅ Đã là bạn bè trước đó\n✅ Có thể nhắn tin ngay\n✅ Theo dõi sức khỏe\n\nTổng số người thân: ${result.data?.elderly_count}`;
-
-          Alert.alert(
-            'Thành công!',
-            successMessage,
-            [
-              {
-                text: 'Tuyệt vời!',
-                onPress: () => {
-                  setElderlyPrivateKey('');
-                  loadPremiumSubscription();
-                  loadElderlyUsers();
-                }
-              }
-            ]
-          );
+          
+          // Set success data for modal
+          setSuccessData({
+            elderlyName: result.data?.elderly_user || 'Người thân',
+            elderlyCount: result.data?.elderly_count || 0,
+            friendshipCreated: autoFriendResult.data?.friendship_created || false,
+            message: autoFriendResult.message || 'Tự động kết bạn thành công'
+          });
+          
+          // Show success modal
+          setShowSuccessModal(true);
         } else {
           console.log('⚠️ Auto friend process failed:', autoFriendResult.message);
           
@@ -242,8 +328,8 @@ const PremiumManagementScreen = () => {
                 text: 'OK',
                 onPress: () => {
                   setElderlyPrivateKey('');
-                  loadPremiumSubscription(); // Refresh subscription data
-                  loadElderlyUsers(); // Refresh elderly users list
+                  loadPremiumSubscription();
+                  loadElderlyUsers();
                 }
               }
             ]
@@ -268,7 +354,7 @@ const PremiumManagementScreen = () => {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Feather name="arrow-left" size={24} color="#007AFF" />
+            <Text style={{fontSize:24, color:'#007AFF'}}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Quản lý</Text>
           <View style={styles.placeholder} />
@@ -289,7 +375,7 @@ const PremiumManagementScreen = () => {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Feather name="arrow-left" size={24} color="#007AFF" />
+          <Text style={{fontSize:24, color:'#007AFF'}}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Quản lý</Text>
         <View style={styles.placeholder} />
@@ -302,7 +388,7 @@ const PremiumManagementScreen = () => {
             {/* User Info Card */}
             <View style={styles.card}>
               <View style={styles.cardHeader}>
-                <Feather name="user" size={20} color="#007AFF" />
+                <Text style={{fontSize:20, color:'#007AFF'}}>👤</Text>
                 <Text style={styles.cardTitle}>Thông tin người dùng</Text>
               </View>
               <View style={styles.cardContent}>
@@ -328,11 +414,11 @@ const PremiumManagementScreen = () => {
             {/* Subscription Status Card */}
             <View style={styles.card}>
               <View style={styles.cardHeader}>
-                <Feather 
-                  name={subscriptionData.isActive ? "check-circle" : "x-circle"} 
-                  size={20} 
-                  color={subscriptionData.isActive ? "#32CD32" : "#FF3B30"} 
-                />
+                <Text 
+                  style={{fontSize:20, color:subscriptionData.isActive ? "#32CD32" : "#FF3B30"}} 
+                >
+                  {subscriptionData.isActive ? "✅" : "❌"}
+                </Text>
                 <Text style={styles.cardTitle}>Trạng thái Premium</Text>
               </View>
               <View style={styles.cardContent}>
@@ -351,7 +437,7 @@ const PremiumManagementScreen = () => {
             {subscriptionData.hasSubscription && subscriptionData.subscription ? (
               <View style={styles.card}>
                 <View style={styles.cardHeader}>
-                  <Feather name="star" size={20} color="#FFD700" />
+                  <Text style={{fontSize:20, color:'#FFD700'}}>⭐</Text>
                   <Text style={styles.cardTitle}>Chi tiết gói Premium</Text>
                 </View>
                 <View style={styles.cardContent}>
@@ -396,7 +482,7 @@ const PremiumManagementScreen = () => {
               <View style={styles.card}>
                 <View style={styles.cardContent}>
                   <View style={styles.emptyState}>
-                    <Feather name="info" size={32} color="#C7C7CC" />
+                    <Text style={{fontSize:32, color:'#C7C7CC'}}>⚠️</Text>
                     <Text style={styles.emptyTitle}>Chưa có gói Premium</Text>
                     <Text style={styles.emptySubtitle}>
                       Bạn chưa đăng ký gói Premium nào
@@ -410,7 +496,7 @@ const PremiumManagementScreen = () => {
             {subscriptionData.hasSubscription && (
               <View style={styles.card}>
                 <View style={styles.cardHeader}>
-                  <Feather name="users" size={20} color="#32CD32" />
+                  <Text style={{fontSize:20, color:'#32CD32'}}>👥</Text>
                   <Text style={styles.cardTitle}>Danh sách người thân</Text>
                 </View>
                 <View style={styles.cardContent}>
@@ -436,14 +522,14 @@ const PremiumManagementScreen = () => {
                             </TouchableOpacity>
                           </View>
                           <View style={styles.elderlyIcon}>
-                            <Feather name="user-check" size={20} color="#32CD32" />
+                            <Text style={{fontSize:20, color:'#32CD32'}}>👤</Text>
                           </View>
                         </View>
                       ))}
                     </>
                   ) : (
                     <View style={styles.emptyElderlyState}>
-                      <Feather name="user-x" size={32} color="#C7C7CC" />
+                      <Text style={{fontSize:32, color:'#C7C7CC'}}>👥</Text>
                       <Text style={styles.emptyElderlyTitle}>Chưa có người thân nào</Text>
                       <Text style={styles.emptyElderlySubtitle}>
                         Thêm người thân để họ được bảo hiểm bởi gói Premium
@@ -458,7 +544,7 @@ const PremiumManagementScreen = () => {
             {subscriptionData.hasSubscription && subscriptionData.isActive && (
               <View style={styles.card}>
                 <View style={styles.cardHeader}>
-                  <Feather name="user-plus" size={20} color="#007AFF" />
+                  <Text style={{fontSize:20, color:'#007AFF'}}>👥</Text>
                   <Text style={styles.cardTitle}>Thêm người thân</Text>
                 </View>
                 <View style={styles.cardContent}>
@@ -483,7 +569,7 @@ const PremiumManagementScreen = () => {
                       <ActivityIndicator size="small" color="#FFFFFF" />
                     ) : (
                       <>
-                        <Feather name="plus" size={16} color="#FFFFFF" />
+                        <Text style={{fontSize:16, color:'#FFFFFF'}}>＋</Text>
                         <Text style={styles.addButtonText}>Thêm người thân</Text>
                       </>
                     )}
@@ -494,7 +580,7 @@ const PremiumManagementScreen = () => {
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <Feather name="alert-circle" size={48} color="#C7C7CC" />
+            <Text style={{fontSize:48, color:'#C7C7CC'}}>⚠️</Text>
             <Text style={styles.emptyTitle}>Không có dữ liệu</Text>
             <Text style={styles.emptySubtitle}>
               Không thể tải thông tin Premium
@@ -502,6 +588,11 @@ const PremiumManagementScreen = () => {
           </View>
         )}
       </ScrollView>
+      <SuccessModal
+        visible={showSuccessModal}
+        data={successData}
+        onClose={handleModalClose}
+      />
     </SafeAreaView>
   );
 };
@@ -763,6 +854,96 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     maxWidth: 280,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    width: '80%',
+    alignItems: 'center',
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  successIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#4CAF50',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  successIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1D1D1F',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1D1D1F',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalContent: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  featuresContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  featureText: {
+    fontSize: 16,
+    color: '#1D1D1F',
+    marginLeft: 10,
+  },
+  summaryContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  summaryText: {
+    fontSize: 16,
+    color: '#8E8E93',
+    textAlign: 'center',
+  },
+  modalButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 30,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
 

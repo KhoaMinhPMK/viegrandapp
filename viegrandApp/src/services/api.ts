@@ -1361,38 +1361,28 @@ export interface Reminder {
   updatedAt: string;
 }
 
-export const getReminders = async (email: string): Promise<{ success: boolean; data?: Reminder[]; message?: string }> => {
+export const getReminders = async (emailOrPrivateKey: string, isPrivateKey = false): Promise<{ success: boolean; data?: Reminder[]; message?: string }> => {
   try {
-    console.log('🔄 getReminders - Sending request:', { email });
-    const response = await apiClient.get(`/get_reminders.php?email=${encodeURIComponent(email)}`);
-    
-    console.log('✅ getReminders API - Full response:', {
-      status: response.status,
-      statusText: response.statusText,
-      data: response.data
-    });
-
+    let url = ''
+    if (isPrivateKey) {
+      url = `/get_reminders.php?private_key_nguoi_nhan=${encodeURIComponent(emailOrPrivateKey)}`
+    } else {
+      url = `/get_reminders.php?email=${encodeURIComponent(emailOrPrivateKey)}`
+    }
+    const response = await apiClient.get(url);
     if (response.data.success) {
-      console.log('✅ getReminders - Success response data:', response.data.data);
       return {
         success: true,
         data: response.data.data || [],
         message: response.data.message
       };
     } else {
-      console.log('❌ getReminders - API returned success=false:', response.data.message);
       return {
         success: false,
         message: response.data.message || 'Failed to get reminders'
       };
     }
   } catch (error: any) {
-    console.error('❌ getReminders API - Detailed error:', {
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data
-    });
     return {
       success: false,
       message: error.response?.data?.message || 'Network error occurred'
@@ -1753,3 +1743,35 @@ export const autoFriendProcess = async (relativePhone: string, elderlyPrivateKey
 };
 
 export default apiClient;
+
+export interface AddReminderPayload {
+  email: string;
+  ten_nguoi_dung: string;
+  noi_dung: string;
+  ngay_gio: string;
+  thoi_gian: string;
+  private_key_nguoi_nhan: string;
+}
+
+export const addReminder = async (payload: AddReminderPayload): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    const response = await apiClient.post('/add_reminder.php', payload)
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      }
+    } else {
+      return {
+        success: false,
+        message: response.data.message || 'Không thể thêm nhắc nhở'
+      }
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Lỗi kết nối'
+    }
+  }
+}
