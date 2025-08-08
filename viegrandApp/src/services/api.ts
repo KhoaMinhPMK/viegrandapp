@@ -1361,38 +1361,28 @@ export interface Reminder {
   updatedAt: string;
 }
 
-export const getReminders = async (email: string): Promise<{ success: boolean; data?: Reminder[]; message?: string }> => {
+export const getReminders = async (emailOrPrivateKey: string, isPrivateKey = false): Promise<{ success: boolean; data?: Reminder[]; message?: string }> => {
   try {
-    console.log('🔄 getReminders - Sending request:', { email });
-    const response = await apiClient.get(`/get_reminders.php?email=${encodeURIComponent(email)}`);
-    
-    console.log('✅ getReminders API - Full response:', {
-      status: response.status,
-      statusText: response.statusText,
-      data: response.data
-    });
-
+    let url = ''
+    if (isPrivateKey) {
+      url = `/get_reminders.php?private_key_nguoi_nhan=${encodeURIComponent(emailOrPrivateKey)}`
+    } else {
+      url = `/get_reminders.php?email=${encodeURIComponent(emailOrPrivateKey)}`
+    }
+    const response = await apiClient.get(url);
     if (response.data.success) {
-      console.log('✅ getReminders - Success response data:', response.data.data);
       return {
         success: true,
         data: response.data.data || [],
         message: response.data.message
       };
     } else {
-      console.log('❌ getReminders - API returned success=false:', response.data.message);
       return {
         success: false,
         message: response.data.message || 'Failed to get reminders'
       };
     }
   } catch (error: any) {
-    console.error('❌ getReminders API - Detailed error:', {
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data
-    });
     return {
       success: false,
       message: error.response?.data?.message || 'Network error occurred'
@@ -1482,4 +1472,306 @@ export const getEmergencyContact = async (userEmail: string) => {
   }
 };
 
+// Get user by private key API
+export const getUserByPrivateKey = async (privateKey: string): Promise<{ success: boolean; user?: any; message?: string }> => {
+  try {
+    const response = await apiClient.post('/get_user_by_private_key.php', {
+      private_key: privateKey.trim()
+    });
+    
+    console.log('Get user by private key API response:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        user: response.data.data.user,
+        message: response.data.message
+      };
+    } else {
+      console.log('Get user by private key failed:', response.data);
+      return {
+        success: false,
+        message: response.data.message || 'Không thể lấy thông tin người dùng'
+      };
+    }
+  } catch (error: any) {
+    console.error('Get user by private key API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.error?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Create auto friend request API
+export const createAutoFriendRequest = async (fromPhone: string, toPhone: string): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    // Validate input parameters
+    if (!fromPhone || !toPhone) {
+      console.error('❌ createAutoFriendRequest - Invalid parameters:', { fromPhone, toPhone });
+      return {
+        success: false,
+        message: 'Số điện thoại không hợp lệ'
+      };
+    }
+    
+    console.log('🔄 createAutoFriendRequest - Sending request:', { fromPhone, toPhone });
+    const response = await apiClient.post('/create_auto_friend_request.php', {
+      from_phone: fromPhone.trim(),
+      to_phone: toPhone.trim()
+    });
+    
+    console.log('✅ createAutoFriendRequest API response:', response.data);
+
+    // Handle case where PHP warnings are included in response
+    let responseData = response.data;
+    if (typeof responseData === 'string') {
+      // Extract JSON from string that might contain PHP warnings
+      const jsonMatch = responseData.match(/\{.*\}$/);
+      if (jsonMatch) {
+        try {
+          responseData = JSON.parse(jsonMatch[0]);
+        } catch (parseError) {
+          console.error('Failed to parse JSON from response:', parseError);
+          return {
+            success: false,
+            message: 'Invalid response format from server'
+          };
+        }
+      }
+    }
+
+    if (responseData.success) {
+      return {
+        success: true,
+        data: responseData.data,
+        message: responseData.message
+      };
+    } else {
+      console.log('❌ createAutoFriendRequest failed:', responseData);
+      return {
+        success: false,
+        message: responseData.message || 'Không thể tạo lời mời kết bạn tự động'
+      };
+    }
+  } catch (error: any) {
+    console.error('❌ createAutoFriendRequest API error:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data
+    });
+    return {
+      success: false,
+      message: error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Auto accept friend request API
+export const autoAcceptFriendRequest = async (requestId: number): Promise<{ 
+  success: boolean; 
+  data?: {
+    friendship_created: boolean;
+    conversation_created: boolean;
+    notifications_sent: boolean;
+    real_time_notifications_sent: boolean;
+    accepter_name: string;
+    requester_name: string;
+    conversation_id: string;
+    friendship_already_existed: boolean;
+  };
+  message?: string;
+}> => {
+  try {
+    console.log('🔄 autoAcceptFriendRequest - Sending request:', { requestId });
+    const response = await apiClient.post('/auto_accept_friend_request.php', {
+      request_id: requestId
+    });
+    
+    console.log('✅ autoAcceptFriendRequest API response:', response.data);
+
+    // Handle case where PHP warnings are included in response
+    let responseData = response.data;
+    if (typeof responseData === 'string') {
+      // Extract JSON from string that might contain PHP warnings
+      const jsonMatch = responseData.match(/\{.*\}$/);
+      if (jsonMatch) {
+        try {
+          responseData = JSON.parse(jsonMatch[0]);
+        } catch (parseError) {
+          console.error('Failed to parse JSON from response:', parseError);
+          return {
+            success: false,
+            message: 'Invalid response format from server'
+          };
+        }
+      }
+    }
+
+    if (responseData.success) {
+      return {
+        success: true,
+        data: responseData.data,
+        message: responseData.message
+      };
+    } else {
+      console.log('❌ autoAcceptFriendRequest failed:', responseData);
+      return {
+        success: false,
+        message: responseData.message || 'Không thể tự động chấp nhận lời mời kết bạn'
+      };
+    }
+  } catch (error: any) {
+    console.error('❌ autoAcceptFriendRequest API error:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data
+    });
+    return {
+      success: false,
+      message: error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Auto friend process - Complete flow
+export const autoFriendProcess = async (relativePhone: string, elderlyPrivateKey: string): Promise<{ 
+  success: boolean; 
+  data?: {
+    friendship_created: boolean;
+    conversation_created: boolean;
+    notifications_sent: boolean;
+    accepter_name: string;
+    requester_name: string;
+    conversation_id: string;
+  };
+  message?: string;
+}> => {
+  try {
+    console.log('🔄 autoFriendProcess - Starting auto friend process:', { relativePhone, elderlyPrivateKey });
+    
+    // Validate input parameters
+    if (!relativePhone || !elderlyPrivateKey) {
+      console.error('❌ autoFriendProcess - Invalid parameters:', { relativePhone, elderlyPrivateKey });
+      return {
+        success: false,
+        message: 'Thông tin không hợp lệ'
+      };
+    }
+    
+    // Step 1: Get elderly user data by private key
+    const elderlyUserResult = await getUserByPrivateKey(elderlyPrivateKey);
+    if (!elderlyUserResult.success || !elderlyUserResult.user) {
+      console.log('❌ autoFriendProcess - Failed to get elderly user:', elderlyUserResult.message);
+      return {
+        success: false,
+        message: elderlyUserResult.message || 'Không thể tìm thấy người dùng với private key này'
+      };
+    }
+    
+    const elderlyUser = elderlyUserResult.user;
+    console.log('✅ autoFriendProcess - Elderly user found:', elderlyUser.userName);
+    
+    // Validate that users are not trying to friend themselves
+    if (relativePhone === elderlyUser.phone) {
+      console.log('❌ autoFriendProcess - Self-friending detected:', { relativePhone, elderlyPhone: elderlyUser.phone });
+      return {
+        success: false,
+        message: 'Không thể kết bạn với chính mình'
+      };
+    }
+    
+    console.log('✅ autoFriendProcess - Phone validation passed:', { relativePhone, elderlyPhone: elderlyUser.phone });
+    
+    // Step 2: Create auto friend request
+    const friendRequestResult = await createAutoFriendRequest(relativePhone, elderlyUser.phone);
+    if (!friendRequestResult.success) {
+      console.log('❌ autoFriendProcess - Failed to create friend request:', friendRequestResult.message);
+      return {
+        success: false,
+        message: friendRequestResult.message || 'Không thể tạo lời mời kết bạn'
+      };
+    }
+    
+    const requestId = friendRequestResult.data?.request_id;
+    if (!requestId) {
+      console.log('✅ autoFriendProcess - Friendship already exists or request already exists');
+      return {
+        success: true,
+        data: {
+          friendship_created: false,
+          conversation_created: false,
+          notifications_sent: false,
+          accepter_name: elderlyUser.userName,
+          requester_name: 'Unknown',
+          conversation_id: '0' // Changed to string '0'
+        },
+        message: 'Đã là bạn bè hoặc lời mời đã tồn tại'
+      };
+    }
+    
+    // Step 3: Auto accept friend request
+    const acceptResult = await autoAcceptFriendRequest(requestId);
+    if (!acceptResult.success) {
+      console.log('❌ autoFriendProcess - Failed to accept friend request:', acceptResult.message);
+      return {
+        success: false,
+        message: acceptResult.message || 'Không thể tự động chấp nhận lời mời kết bạn'
+      };
+    }
+    
+    console.log('✅ autoFriendProcess - Completed successfully');
+    return {
+      success: true,
+      data: acceptResult.data,
+      message: acceptResult.data?.friendship_already_existed 
+        ? 'Đã là bạn bè trước đó' 
+        : 'Tự động kết bạn thành công'
+    };
+    
+  } catch (error: any) {
+    console.error('❌ autoFriendProcess - Error:', error);
+    return {
+      success: false,
+      message: error.message || 'Lỗi trong quá trình tự động kết bạn'
+    };
+  }
+};
+
 export default apiClient;
+
+export interface AddReminderPayload {
+  email: string;
+  ten_nguoi_dung: string;
+  noi_dung: string;
+  ngay_gio: string;
+  thoi_gian: string;
+  private_key_nguoi_nhan: string;
+}
+
+export const addReminder = async (payload: AddReminderPayload): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    const response = await apiClient.post('/add_reminder.php', payload)
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      }
+    } else {
+      return {
+        success: false,
+        message: response.data.message || 'Không thể thêm nhắc nhở'
+      }
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Lỗi kết nối'
+    }
+  }
+}

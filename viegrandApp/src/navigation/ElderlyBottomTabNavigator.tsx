@@ -99,7 +99,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: any) => {
   ];
   
   // Kiểm tra nếu đang ở Message tab hoặc các màn hình cần ẩn tab bar
-  if (currentRouteName === 'Message' || hideTabBarScreens.includes(currentScreen)) {
+  if (currentRouteName === 'Message' || currentRouteName === 'Message2' || hideTabBarScreens.includes(currentScreen)) {
     return null;
   }
 
@@ -119,8 +119,22 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: any) => {
       }
     };
 
-    if (index === 2) { // Giả sử nút giữa luôn ở vị trí thứ 3
+    if (index === 2) { // Nút micro ở vị trí thứ 3
       return <CenterButton key={route.key} />;
+    }
+
+    // Nút tin nhắn thứ 2 ở vị trí thứ 4 (sau micro)
+    if (index === 3 && route.name === 'Message2') {
+      return (
+        <TouchableOpacity
+          key={route.key}
+          style={styles.tabButton}
+          onPress={onPress}
+          activeOpacity={0.7}
+        >
+          <TabBarItem isFocused={isFocused} icon="message-circle" />
+        </TouchableOpacity>
+      );
     }
 
     return (
@@ -193,7 +207,13 @@ const ElderlyBottomTabNavigator = () => {
           tabBarIcon: () => null
         }}
       />
-
+      <Tab.Screen 
+        name="Message2" 
+        component={MessageNavigator} // Second message tab for the new position
+        options={{
+          tabBarIcon: renderTabBarIcon('message-circle'),
+        }}
+      />
       <Tab.Screen 
         name="Settings"
         options={{
@@ -224,6 +244,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-around',
     borderTopWidth: 0,
+    paddingHorizontal: 10, // Thêm padding để các tab không quá sát nhau
     ...(isIOS && {
       borderWidth: 0.5,
       borderColor: 'rgba(203, 213, 225, 0.3)',
@@ -234,6 +255,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: 60,
+    minWidth: 40, // Đảm bảo tab button có kích thước tối thiểu
   },
   tabItemContainer: {
     alignItems: 'center',

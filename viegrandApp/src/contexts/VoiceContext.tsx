@@ -24,7 +24,13 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     try {
       if (NativeModules.Voice) {
-        voiceEmitter = new NativeEventEmitter(NativeModules.Voice);
+        // Kiểm tra xem module có đầy đủ methods không
+        if (typeof NativeModules.Voice.addListener === 'function' && 
+            typeof NativeModules.Voice.removeListeners === 'function') {
+          voiceEmitter = new NativeEventEmitter(NativeModules.Voice);
+        } else {
+          console.warn('Voice module missing required methods, using fallback');
+        }
       }
     } catch (error) {
       console.warn('Voice module not available:', error);

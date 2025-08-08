@@ -6,6 +6,7 @@ import Feather from 'react-native-vector-icons/Feather';
 
 // Screens
 import HomeScreen from '../screens/Elderly/Home';
+import FamilyScreen from '../screens/Elderly/Family';
 import EntertainmentHubScreen from '../screens/Elderly/Entertainment/EntertainmentHubScreen';
 import GameHubScreen from '../screens/Elderly/Entertainment/GameHubScreen';
 import BookLibraryScreen from '../screens/Elderly/Entertainment/BookLibraryScreen';
@@ -53,6 +54,11 @@ const HomeNavigator = () => {
         component={HomeScreen} 
         options={{ headerShown: false }}
       />
+      <Stack.Screen 
+        name="Family" 
+        component={FamilyScreen} 
+        options={{ headerShown: false }}
+      />
       <Stack.Screen name="EntertainmentHub" component={EntertainmentHubScreen} />
       <Stack.Screen name="GameHub" component={GameHubScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="BookLibrary" component={BookLibraryScreen} options={{ headerShown: false }} />
@@ -81,14 +87,15 @@ const HomeNavigator = () => {
         component={WordSearchScreen}
         options={{ headerShown: false }} // Ẩn header để full-screen game experience
       />
-      <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: false }} />
+      <Stack.Screen 
+        name="Notifications" 
+        component={NotificationsScreen}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen 
         name="EditProfile" 
         component={EditProfileScreen}
-        options={{ 
-          presentation: 'modal',
-          headerShown: false, // Modal tự có nút đóng
-        }} 
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

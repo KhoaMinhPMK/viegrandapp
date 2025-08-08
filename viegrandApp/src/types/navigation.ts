@@ -19,6 +19,7 @@ export type AuthStackParamList = {
 
 export type ElderlyStackParamList = {
   Main: undefined;
+  Family: undefined;
   Notifications: undefined;
   Premium: undefined;
   Sudoku: undefined;
@@ -32,7 +33,6 @@ export type RelativeStackParamList = {
 
 export type RelativeBottomTabParamList = {
   Home: undefined;
-  Profile: undefined;
   Settings: undefined;
 };
 
