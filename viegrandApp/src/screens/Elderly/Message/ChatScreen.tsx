@@ -15,9 +15,10 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Feather from 'react-native-vector-icons/Feather';
 import io from 'socket.io-client';
-import { getMessages, sendMessage, markMessageAsRead, getUserPhone } from '../../../services/api';
+import { getMessages, sendMessage, markMessageAsRead, getUserPhone, uploadChatImage } from '../../../services/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import { lastMessageStorage, LastMessage } from '../../../utils/lastMessageStorage';
+import { launchImageLibrary } from 'react-native-image-picker';
 
 // Import new components
 import ChatHeader from './ChatHeader';
@@ -73,6 +74,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
   const [isConnected, setIsConnected] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [userPhone, setUserPhone] = useState<string>('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   
   // Sử dụng ref để tránh multiple connections
   const socketRef = useRef<any>(null);
@@ -126,55 +128,47 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       let messageText = '';
       let senderName = 'Người dùng';
       let isOwnMessage = false;
+      let messageType = 'text';
+      let fileUrl: string | undefined = undefined;
       
       if (typeof msg === 'string') {
         // Tin nhắn đơn giản
         messageText = msg;
         senderName = 'Người dùng';
         isOwnMessage = false;
+        messageType = 'text';
         console.log('📨 Processing string message:', { messageText, senderName, isOwnMessage });
       } else {
         // Tin nhắn có cấu trúc
         messageText = msg.message || msg.message_text || '';
         senderName = msg.sender || msg.senderName || 'Người dùng';
         isOwnMessage = msg.sender === userPhone || msg.sender_phone === userPhone;
+        messageType = msg.message_type || msg.messageType || (msg.file_url ? 'image' : 'text');
+        fileUrl = msg.file_url || msg.fileUrl || undefined;
         console.log('📨 Processing object message:', { 
           messageText, 
           senderName, 
           isOwnMessage, 
           msgSender: msg.sender,
           msgSenderPhone: msg.sender_phone,
-          userPhone 
+          userPhone,
+          messageType,
+          fileUrl
         });
       }
       
-      if (messageText) {
-        console.log('📨 App processing message:', {
-          messageText,
-          senderName,
-          isOwnMessage,
-          msg,
-          timestamp: msg.timestamp,
-          sentAt: msg.sent_at
-        });
-        
-        // Chỉ bỏ qua tin nhắn tự gửi nếu sender là chính mình
-        if (isOwnMessage) {
-          console.log('🚫 Bỏ qua tin nhắn tự gửi trong app');
-          return;
-        }
-        
+      // Nếu là tin nhắn ảnh mà không có text, vẫn hiển thị ảnh
+      const displayText = messageType === 'image' && !messageText ? '[Hình ảnh]' : messageText;
+      
+      if (displayText || fileUrl) {
         // Xử lý timestamp
         let sentAt = new Date().toISOString();
         if (msg.timestamp || msg.sent_at) {
           try {
             const timestamp = msg.timestamp || msg.sent_at;
             if (typeof timestamp === 'string') {
-              // Thử parse ISO string
               const date = new Date(timestamp);
-              if (!isNaN(date.getTime())) {
-                sentAt = date.toISOString();
-              }
+              if (!isNaN(date.getTime())) sentAt = date.toISOString();
             }
           } catch (error) {
             console.log('⚠️ Invalid timestamp, using current time:', msg.timestamp);
@@ -186,8 +180,9 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
           conversationId: msg.conversationId || msg.conversation_id || conversationId,
           senderPhone: msg.sender || msg.sender_phone || '',
           receiverPhone: msg.receiver || msg.receiver_phone || '',
-          messageText: messageText,
-          messageType: 'text',
+          messageText: displayText,
+          messageType: messageType,
+          fileUrl: fileUrl,
           isRead: false,
           sentAt: sentAt,
           requiresFriendship: true,
@@ -203,7 +198,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
         const saveLastMessage = async () => {
           const lastMessage: LastMessage = {
             conversationId: newMessage.conversationId,
-            messageText: newMessage.messageText,
+            messageText: newMessage.messageType === 'image' ? '[Hình ảnh]' : newMessage.messageText,
             senderPhone: newMessage.senderPhone,
             receiverPhone: newMessage.receiverPhone,
             sentAt: newMessage.sentAt,
@@ -357,8 +352,9 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       });
 
       // Tạo tin nhắn mới để hiển thị ngay lập tức
+      const tempId = Date.now();
       const newMessage: Message = {
-        id: Date.now(),
+        id: tempId,
         conversationId,
         senderPhone: userPhone,
         receiverPhone,
@@ -380,7 +376,9 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
         conversationId,
         userPhone,
         receiverPhone,
-        inputText.trim()
+        inputText.trim(),
+        'text',
+        undefined
       );
       
       if (messageResult.success) {
@@ -390,7 +388,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
         // Cập nhật ID thực từ database
         setMessages(prev => 
           prev.map(msg => 
-            msg.id === Date.now() 
+            msg.id === tempId 
               ? { ...msg, id: messageResult.messageId || msg.id }
               : msg
           )
@@ -399,7 +397,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
         // Lưu tin nhắn cuối cùng vào bộ nhớ đệm
         const lastMessage: LastMessage = {
           conversationId,
-          messageText: inputText.trim(),
+          messageText: newMessage.messageText,
           senderPhone: userPhone,
           receiverPhone,
           sentAt: new Date().toISOString(),
@@ -412,7 +410,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
         Alert.alert('Lỗi', 'Không thể gửi tin nhắn: ' + messageResult.message);
         
         // Xóa tin nhắn khỏi UI nếu gửi thất bại
-        setMessages(prev => prev.filter(msg => msg.id !== Date.now()));
+        setMessages(prev => prev.filter(msg => msg.id !== tempId));
       }
     } catch (error) {
       console.error('❌ Lỗi gửi tin nhắn:', error);
@@ -420,6 +418,91 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       
       // Xóa tin nhắn khỏi UI nếu có lỗi
       setMessages(prev => prev.filter(msg => msg.id !== Date.now()));
+    }
+  };
+
+  const handleSendImage = async () => {
+    try {
+      if (!userPhone) {
+        Alert.alert('Lỗi', 'Không tìm thấy số điện thoại người dùng!');
+        return;
+      }
+
+      const result = await launchImageLibrary({ mediaType: 'photo', quality: 0.8 });
+      if (result.didCancel) return;
+      const asset = result.assets?.[0];
+      if (!asset?.uri) return;
+
+      setIsUploadingImage(true);
+
+      // Optimistic UI: show placeholder message
+      const tempId = Date.now();
+      const tempMessage: Message = {
+        id: tempId,
+        conversationId,
+        senderPhone: userPhone,
+        receiverPhone,
+        messageText: '[Đang gửi hình ảnh...]',
+        messageType: 'image',
+        fileUrl: asset.uri,
+        isRead: false,
+        sentAt: new Date().toISOString(),
+        requiresFriendship: true,
+        friendshipStatus: 'friends',
+        senderName: user?.fullName || 'Bạn',
+        isOwnMessage: true,
+      };
+      setMessages(prev => [...prev, tempMessage]);
+
+      const uploadRes = await uploadChatImage({
+        uri: asset.uri,
+        name: asset.fileName || `photo_${Date.now()}.jpg`,
+        type: asset.type || 'image/jpeg',
+      });
+
+      if (!uploadRes.success || !uploadRes.data?.url) {
+        setIsUploadingImage(false);
+        setMessages(prev => prev.filter(m => m.id !== tempId));
+        Alert.alert('Lỗi', uploadRes.message || 'Tải ảnh thất bại');
+        return;
+      }
+
+      const fileUrl = uploadRes.data.url;
+
+      // Update UI message with real URL
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, messageText: '', fileUrl } : m));
+
+      // Send message via backend with message_type image
+      const messageResult = await sendMessage(
+        conversationId,
+        userPhone,
+        receiverPhone,
+        '',
+        'image',
+        fileUrl
+      );
+
+      setIsUploadingImage(false);
+
+      if (messageResult.success) {
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: messageResult.messageId || m.id } : m));
+        const lastMessage: LastMessage = {
+          conversationId,
+          messageText: '[Hình ảnh]',
+          senderPhone: userPhone,
+          receiverPhone,
+          sentAt: new Date().toISOString(),
+          senderName: user?.fullName || 'Bạn',
+          isOwnMessage: true
+        };
+        await lastMessageStorage.saveLastMessage(lastMessage);
+      } else {
+        setMessages(prev => prev.filter(m => m.id !== tempId));
+        Alert.alert('Lỗi', messageResult.message || 'Không thể gửi ảnh');
+      }
+    } catch (e: any) {
+      setIsUploadingImage(false);
+      Alert.alert('Lỗi', e.message || 'Không thể gửi ảnh');
     }
   };
 
@@ -506,10 +589,10 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
           onChangeText={setInputText}
           onSend={handleSend}
           onEmoji={() => Alert.alert('Emoji', 'Tính năng emoji sẽ được thêm sau')}
-          onAttachment={() => Alert.alert('File', 'Tính năng gửi file sẽ được thêm sau')}
+          onAttachment={handleSendImage}
           onVoice={() => {}} // Voice recognition sẽ được xử lý trong InputBar
-          placeholder="Nhập tin nhắn..."
-          disabled={!isConnected}
+          placeholder={isUploadingImage ? 'Đang tải ảnh...' : 'Nhập tin nhắn...'}
+          disabled={!isConnected || isUploadingImage}
         />
       </SafeAreaView>
     </KeyboardAvoidingView>
