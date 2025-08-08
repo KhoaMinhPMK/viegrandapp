@@ -34,58 +34,16 @@ interface VideoItem {
 
 const VideoPlayerScreen = ({ navigation }: any) => {
   const [videos, setVideos] = useState<VideoItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
-  const [isFiltering, setIsFiltering] = useState(false);
   const [filteredVideos, setFilteredVideos] = useState<VideoItem[]>([]);
-  const [activeCategory, setActiveCategory] = useState('all');
   const [hasSearched, setHasSearched] = useState(false);
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const API_KEY = 'AIzaSyBnaEQD7O2SMQFAcL6pBmx8wjNNmKLUc2A';
-
-  // Categories for filtering with search queries
-  const categories = [
-    { 
-      id: 'all', 
-      name: 'Tất cả', 
-      icon: 'grid',
-      searchQueries: ['nấu ăn', 'tập thể dục', 'âm nhạc', 'du lịch', 'sức khỏe', 'làm vườn', 'thiền', 'yoga', 'dạy học', 'công nghệ']
-    },
-    { 
-      id: 'cooking', 
-      name: 'Nấu ăn', 
-      icon: 'coffee',
-      searchQueries: ['nấu ăn ngon', 'công thức món ăn', 'dạy nấu ăn', 'món ăn Việt Nam', 'nấu ăn đơn giản']
-    },
-    { 
-      id: 'health', 
-      name: 'Sức khỏe', 
-      icon: 'heart',
-      searchQueries: ['sức khỏe người già', 'bệnh tuổi già', 'dinh dưỡng', 'thuốc nam', 'chăm sóc sức khỏe']
-    },
-    { 
-      id: 'exercise', 
-      name: 'Tập thể dục', 
-      icon: 'trending-up',
-      searchQueries: ['tập thể dục người già', 'yoga cho người cao tuổi', 'thể dục dưỡng sinh', 'tập luyện sức khỏe']
-    },
-    { 
-      id: 'music', 
-      name: 'Âm nhạc', 
-      icon: 'music',
-      searchQueries: ['nhạc trữ tình', 'ca khúc xưa', 'âm nhạc Việt Nam', 'hát karaoke', 'nhạc vàng']
-    },
-    { 
-      id: 'travel', 
-      name: 'Du lịch', 
-      icon: 'map-pin',
-      searchQueries: ['du lịch Việt Nam', 'địa điểm du lịch', 'khám phá Việt Nam', 'du lịch trong nước']
-    },
-  ];
 
   // Sensitive keywords to filter out
   const sensitiveKeywords = [
@@ -93,13 +51,14 @@ const VideoPlayerScreen = ({ navigation }: any) => {
     'cờ bạc', 'tình dục', 'phản động', 'khủng bố', 'tự tử'
   ];
 
-  useEffect(() => {
-    // Tự động fetch videos với category "Tất cả" khi component mount
-    setHasSearched(true);
-    fetchVideos(false, 'all');
-  }, []);
+  // Suggested search terms for initial content
+  const suggestedSearches = [
+    'Doraemon', 'Tom và Jerry', 'nấu ăn', 'tập thể dục', 
+    'âm nhạc Việt Nam', 'du lịch Việt Nam', 'sức khỏe người già',
+    'yoga cho người cao tuổi', 'nhạc trữ tình', 'công thức món ăn'
+  ];
 
-  const fetchVideos = async (isLoadMore = false, categoryId = activeCategory) => {
+  const fetchVideos = async (query: string, isLoadMore = false) => {
     try {
       if (isLoadMore) {
         setIsLoadingMore(true);
@@ -107,15 +66,8 @@ const VideoPlayerScreen = ({ navigation }: any) => {
         setIsLoading(true);
       }
       
-      // Get search queries for category
-      const category = categories.find(c => c.id === categoryId);
-      if (!category) return;
-      
-      // Select random search query from category
-      const randomQuery = category.searchQueries[Math.floor(Math.random() * category.searchQueries.length)];
-      
-      // Build API URL with pagination
-      let apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(randomQuery)}&type=video&maxResults=10&key=${API_KEY}`;
+      // Build API URL with user's search query
+      let apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=10&key=${API_KEY}`;
       
       if (isLoadMore && nextPageToken) {
         apiUrl += `&pageToken=${nextPageToken}`;
@@ -225,27 +177,26 @@ const VideoPlayerScreen = ({ navigation }: any) => {
   const handleVoiceSearch = (text: string) => {
     setSearchQuery(text);
     setHasSearched(true);
-    fetchVideos(false, activeCategory);
+    fetchVideos(text);
   };
 
   const handleTextSearch = () => {
     if (searchQuery.trim()) {
       setHasSearched(true);
-      fetchVideos(false, activeCategory);
+      fetchVideos(searchQuery.trim());
     }
   };
 
   const handleLoadMore = () => {
-    if (nextPageToken && !isLoadingMore) {
-      fetchVideos(true, activeCategory);
+    if (nextPageToken && !isLoadingMore && searchQuery.trim()) {
+      fetchVideos(searchQuery.trim(), true);
     }
   };
 
-  const handleCategoryFilter = (categoryId: string) => {
-    setActiveCategory(categoryId);
-    setNextPageToken(null); // Reset pagination
+  const handleSuggestedSearch = (suggestion: string) => {
+    setSearchQuery(suggestion);
     setHasSearched(true);
-    fetchVideos(false, categoryId);
+    fetchVideos(suggestion);
   };
 
   const renderVideoCard = (video: VideoItem) => (
@@ -308,7 +259,7 @@ const VideoPlayerScreen = ({ navigation }: any) => {
         <Text style={styles.headerTitle}>Video hay</Text>
         <TouchableOpacity
           style={styles.refreshButton}
-          onPress={() => fetchVideos(false, activeCategory)}
+          onPress={() => searchQuery.trim() && fetchVideos(searchQuery.trim())}
         >
           <Feather name="refresh-cw" size={20} color="#1C1C1E" />
         </TouchableOpacity>
@@ -330,6 +281,8 @@ const VideoPlayerScreen = ({ navigation }: any) => {
               value={searchQuery}
               onChangeText={setSearchQuery}
               placeholderTextColor="#8E8E93"
+              onSubmitEditing={handleTextSearch}
+              returnKeyType="search"
             />
             <TouchableOpacity
               style={[styles.searchButton, !searchQuery.trim() && styles.searchButtonDisabled]}
@@ -343,37 +296,6 @@ const VideoPlayerScreen = ({ navigation }: any) => {
           </View>
         </View>
 
-        {/* Categories */}
-        <View style={styles.categoriesSection}>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoriesContainer}
-          >
-            {categories.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                style={[
-                  styles.categoryButton,
-                  activeCategory === category.id && styles.categoryButtonActive
-                ]}
-                onPress={() => handleCategoryFilter(category.id)}
-              >
-                <Feather 
-                  name={category.icon as any} 
-                  size={16} 
-                  color={activeCategory === category.id ? '#FFFFFF' : '#8E8E93'} 
-                />
-                <Text style={[
-                  styles.categoryText,
-                  activeCategory === category.id && styles.categoryTextActive
-                ]}>
-                  {category.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
         {!hasSearched ? (
           <View style={styles.welcomeContainer}>
             <Feather name="search" size={64} color="#E5E7EB" />
@@ -384,18 +306,13 @@ const VideoPlayerScreen = ({ navigation }: any) => {
             <View style={styles.suggestedSearches}>
               <Text style={styles.suggestedTitle}>Gợi ý tìm kiếm:</Text>
               <View style={styles.suggestedTags}>
-                {categories.map((category, index) => (
+                {suggestedSearches.map((suggestion, index) => (
                   <TouchableOpacity
                     key={index}
                     style={styles.suggestedTag}
-                    onPress={() => {
-                      setActiveCategory(category.id);
-                      setNextPageToken(null);
-                      setHasSearched(true);
-                      fetchVideos(false, category.id);
-                    }}
+                    onPress={() => handleSuggestedSearch(suggestion)}
                   >
-                    <Text style={styles.suggestedTagText}>{category.name}</Text>
+                    <Text style={styles.suggestedTagText}>{suggestion}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -410,7 +327,7 @@ const VideoPlayerScreen = ({ navigation }: any) => {
           <>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>
-                {categories.find(c => c.id === activeCategory)?.name || 'Video hay'}
+                Kết quả tìm kiếm: "{searchQuery}"
               </Text>
               <Text style={styles.sectionSubtitle}>{filteredVideos.length} video</Text>
             </View>

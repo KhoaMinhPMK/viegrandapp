@@ -574,21 +574,26 @@ const PremiumManagementScreen = () => {
                   <Text style={styles.addElderlyDescription}>
                     Nhập mã người dùng của người thân hoặc chọn/chụp ảnh QR để thêm vào gói Premium
                   </Text>
-                  <View style={styles.inputRow}>
-                    <View style={styles.inputContainer}>
-                      <TextInput
-                        style={styles.textInput}
-                        placeholder="Nhập mã người dùng của người thân"
-                        value={elderlyPrivateKey}
-                        onChangeText={setElderlyPrivateKey}
-                        editable={!isAddingElderly}
-                      />
-                    </View>
-                    <TouchableOpacity style={styles.scanButton} onPress={pickImageAndDetectQR} disabled={isAddingElderly}>
+                  <View style={styles.inputContainerFull}>
+                    <TextInput
+                      style={[styles.textInput, styles.textInputFull]}
+                      placeholder="Nhập mã người dùng của người thân"
+                      value={elderlyPrivateKey}
+                      onChangeText={setElderlyPrivateKey}
+                      editable={!isAddingElderly}
+                      multiline={false}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      returnKeyType="done"
+                      onSubmitEditing={() => addElderlyUser()}
+                    />
+                  </View>
+                  <View style={styles.actionRow}>
+                    <TouchableOpacity style={[styles.scanButton, { flex: 1 }]} onPress={pickImageAndDetectQR} disabled={isAddingElderly}>
                       <Feather name="image" size={18} color="#FFFFFF" />
                       <Text style={styles.scanButtonText}>Chọn ảnh</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.scanButtonAlt} onPress={captureImageAndDetectQR} disabled={isAddingElderly}>
+                    <TouchableOpacity style={[styles.scanButtonAlt, { flex: 1 }]} onPress={captureImageAndDetectQR} disabled={isAddingElderly}>
                       <Feather name="camera" size={18} color="#FFFFFF" />
                       <Text style={styles.scanButtonText}>Chụp ảnh</Text>
                     </TouchableOpacity>
@@ -1038,6 +1043,18 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+  inputContainerFull: {
+    marginBottom: 12,
+  },
+  textInputFull: {
+    width: '100%',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
   },
 });
 
