@@ -17,6 +17,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import { getMessages, sendMessage, markMessageAsRead, getUserPhone, uploadChatImage } from '../../../services/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useSocket } from '../../../contexts/SocketContext';
+import { useFocusEffect } from '@react-navigation/native';
 import { lastMessageStorage, LastMessage } from '../../../utils/lastMessageStorage';
 import { launchImageLibrary } from 'react-native-image-picker';
 
@@ -74,8 +75,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [userPhone, setUserPhone] = useState<string>('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-
-  const isConnected = !!socket?.connected;
+  const [isConnected, setIsConnected] = useState<boolean>(!!socket?.connected);
 
   // Load user phone and messages
   useEffect(() => {
@@ -106,16 +106,49 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
     loadUserPhoneAndMessages();
   }, [conversationId, user?.email]);
 
+  // Keep local isConnected state in sync and refresh on reconnect
+  useEffect(() => {
+    if (!socket) return;
+    const handleConnect = () => {
+      setIsConnected(true);
+      if (userPhone) loadMessages(userPhone);
+    };
+    const handleDisconnect = () => setIsConnected(false);
+    const handleReconnect = () => {
+      setIsConnected(true);
+      if (userPhone) loadMessages(userPhone);
+    };
+
+    // Initialize
+    setIsConnected(!!socket.connected);
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+    socket.on('reconnect', handleReconnect as any);
+
+    return () => {
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+      socket.off('reconnect', handleReconnect as any);
+    };
+  }, [socket, userPhone]);
+
+  // Refresh messages when screen regains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (userPhone) loadMessages(userPhone);
+    }, [userPhone, conversationId])
+  );
+
   // Wire socket listeners from shared socket
   useEffect(() => {
     if (!socket) return;
 
     const onChatMessage = (msg: any) => {
+      // Only process if it belongs to this conversation (if provided)
+      const msgConvId = msg?.conversationId || msg?.conversation_id;
+      if (msgConvId && msgConvId !== conversationId) return;
+
       console.log('📨 App received direct chat message:', msg);
-      console.log('📨 Message type:', typeof msg);
-      console.log('📨 Current userPhone:', userPhone);
-      console.log('📨 Current conversationId:', conversationId);
-      
       let messageText = '';
       let senderName = 'Người dùng';
       let isOwnMessage = false;
@@ -123,69 +156,50 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       let fileUrl: string | undefined = undefined;
       
       if (typeof msg === 'string') {
-        // Tin nhắn đơn giản
         messageText = msg;
         senderName = 'Người dùng';
         isOwnMessage = false;
         messageType = 'text';
-        console.log('📨 Processing string message:', { messageText, senderName, isOwnMessage });
       } else {
-        // Tin nhắn có cấu trúc
         messageText = msg.message || msg.message_text || '';
         senderName = msg.sender || msg.senderName || 'Người dùng';
         isOwnMessage = msg.sender === userPhone || msg.sender_phone === userPhone;
         messageType = msg.message_type || msg.messageType || (msg.file_url ? 'image' : 'text');
         fileUrl = msg.file_url || msg.fileUrl || undefined;
-        console.log('📨 Processing object message:', { 
-          messageText, 
-          senderName, 
-          isOwnMessage, 
-          msgSender: msg.sender,
-          msgSenderPhone: msg.sender_phone,
-          userPhone,
-          messageType,
-          fileUrl
-        });
       }
       
-      // Nếu là tin nhắn ảnh mà không có text, vẫn hiển thị ảnh
       const displayText = messageType === 'image' && !messageText ? '[Hình ảnh]' : messageText;
       
       if (displayText || fileUrl) {
-        // Xử lý timestamp
         let sentAt = new Date().toISOString();
-        if (msg.timestamp || msg.sent_at) {
+        if (msg?.timestamp || msg?.sent_at) {
           try {
             const timestamp = msg.timestamp || msg.sent_at;
             if (typeof timestamp === 'string') {
               const date = new Date(timestamp);
               if (!isNaN(date.getTime())) sentAt = date.toISOString();
             }
-          } catch (error) {
-            console.log('⚠️ Invalid timestamp, using current time:', msg.timestamp);
-          }
+          } catch {}
         }
         
         const newMessage: Message = {
           id: msg.id || Date.now(),
-          conversationId: msg.conversationId || msg.conversation_id || conversationId,
+          conversationId: msgConvId || conversationId,
           senderPhone: msg.sender || msg.sender_phone || '',
           receiverPhone: msg.receiver || msg.receiver_phone || '',
           messageText: displayText,
-          messageType: messageType,
-          fileUrl: fileUrl,
+          messageType,
+          fileUrl,
           isRead: false,
-          sentAt: sentAt,
+          sentAt,
           requiresFriendship: true,
           friendshipStatus: 'friends',
-          senderName: senderName,
-          isOwnMessage: isOwnMessage
+          senderName,
+          isOwnMessage,
         };
-        
-        console.log('📨 Adding new message to app:', newMessage);
         setMessages(prev => [...prev, newMessage]);
 
-        // Lưu tin nhắn cuối cùng vào bộ nhớ đệm
+        // Cache last message
         const saveLastMessage = async () => {
           const lastMessage: LastMessage = {
             conversationId: newMessage.conversationId,
@@ -194,7 +208,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
             receiverPhone: newMessage.receiverPhone,
             sentAt: newMessage.sentAt,
             senderName: newMessage.senderName,
-            isOwnMessage: newMessage.isOwnMessage
+            isOwnMessage: newMessage.isOwnMessage,
           };
           await lastMessageStorage.saveLastMessage(lastMessage);
         };
@@ -203,7 +217,6 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
     };
 
     const onMessageRead = (data: any) => {
-      console.log('👁️ Tin nhắn đã đọc:', data);
       setMessages(prev => prev.map(msg => 
         msg.id === data.message_id 
           ? { ...msg, isRead: true, readAt: data.read_at }
@@ -229,7 +242,6 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
     try {
       const result = await getMessages(conversationId, userPhoneToUse);
       if (result.success && result.messages) {
-        // Sắp xếp tin nhắn từ cũ đến mới (cũ ở trên, mới ở dưới)
         const sortedMessages = result.messages.sort((a, b) => 
           new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
         );
@@ -245,40 +257,16 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
   };
 
   const handleSend = async () => {
-    console.log('🔍 handleSend - Debug info:', {
-      inputText: inputText,
-      inputTextTrim: inputText.trim(),
-      inputTextLength: inputText.trim().length,
-      userPhone: userPhone,
-      userPhoneType: typeof userPhone,
-      userPhoneLength: userPhone?.length,
-      isConnected: isConnected,
-      conversationId: conversationId,
-      receiverPhone: receiverPhone,
-      routeParams: route.params
-    });
-
     if (!inputText.trim()) {
-      console.log('❌ handleSend - Input text is empty');
       Alert.alert('Lỗi', 'Vui lòng nhập tin nhắn!');
       return;
     }
-
     if (!userPhone) {
-      console.log('❌ handleSend - User phone is missing');
       Alert.alert('Lỗi', 'Không tìm thấy số điện thoại người dùng!');
       return;
     }
 
     try {
-      console.log('📤 Gửi tin nhắn:', {
-        conversationId,
-        senderPhone: userPhone,
-        receiverPhone,
-        messageText: inputText.trim()
-      });
-
-      // Tạo tin nhắn mới để hiển thị ngay lập tức
       const tempId = Date.now();
       const newMessage: Message = {
         id: tempId,
@@ -291,14 +279,13 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
         sentAt: new Date().toISOString(),
         requiresFriendship: true,
         friendshipStatus: 'friends',
-        senderName: user?.fullName || 'Bạn', // SỬA LẠI DÒNG NÀY
-        isOwnMessage: true
+        senderName: user?.fullName || 'Bạn',
+        isOwnMessage: true,
       };
 
       setMessages(prev => [...prev, newMessage]);
       setInputText('');
       
-      // Gửi tin nhắn vào database và socket server
       const messageResult = await sendMessage(
         conversationId,
         userPhone,
@@ -309,10 +296,6 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       );
       
       if (messageResult.success) {
-        console.log('✅ Tin nhắn đã gửi thành công:', messageResult.messageId);
-        console.log('📤 Socket delivered:', messageResult.data?.socket_delivered);
-        
-        // Cập nhật ID thực từ database
         setMessages(prev => 
           prev.map(msg => 
             msg.id === tempId 
@@ -321,7 +304,6 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
           )
         );
 
-        // Lưu tin nhắn cuối cùng vào bộ nhớ đệm
         const lastMessage: LastMessage = {
           conversationId,
           messageText: newMessage.messageText,
@@ -329,21 +311,15 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
           receiverPhone,
           sentAt: new Date().toISOString(),
           senderName: user?.fullName || 'Bạn',
-          isOwnMessage: true
+          isOwnMessage: true,
         };
         await lastMessageStorage.saveLastMessage(lastMessage);
       } else {
-        console.log('❌ Lỗi gửi tin nhắn:', messageResult.message);
         Alert.alert('Lỗi', 'Không thể gửi tin nhắn: ' + messageResult.message);
-        
-        // Xóa tin nhắn khỏi UI nếu gửi thất bại
         setMessages(prev => prev.filter(msg => msg.id !== tempId));
       }
     } catch (error) {
-      console.error('❌ Lỗi gửi tin nhắn:', error);
       Alert.alert('Lỗi', 'Không thể gửi tin nhắn');
-      
-      // Xóa tin nhắn khỏi UI nếu có lỗi
       setMessages(prev => prev.filter(msg => msg.id !== Date.now()));
     }
   };
@@ -362,7 +338,6 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
 
       setIsUploadingImage(true);
 
-      // Optimistic UI: show placeholder message
       const tempId = Date.now();
       const tempMessage: Message = {
         id: tempId,
@@ -395,11 +370,8 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       }
 
       const fileUrl = uploadRes.data.url;
-
-      // Update UI message with real URL
       setMessages(prev => prev.map(m => m.id === tempId ? { ...m, messageText: '', fileUrl } : m));
 
-      // Send message via backend with message_type image
       const messageResult = await sendMessage(
         conversationId,
         userPhone,
@@ -420,7 +392,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
           receiverPhone,
           sentAt: new Date().toISOString(),
           senderName: user?.fullName || 'Bạn',
-          isOwnMessage: true
+          isOwnMessage: true,
         };
         await lastMessageStorage.saveLastMessage(lastMessage);
       } else {
@@ -455,7 +427,6 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
   // Thêm useEffect để auto scroll khi có tin nhắn mới
   useEffect(() => {
     if (messages.length > 0) {
-      // Delay một chút để đảm bảo render xong
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
@@ -469,7 +440,6 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
     >
       <SafeAreaView style={styles.container}>
-        {/* New Chat Header */}
         <ChatHeader
           name={name}
           avatar={avatar}
@@ -480,7 +450,6 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
           onMenu={() => Alert.alert('Menu', 'Tính năng menu sẽ được thêm sau')}
         />
 
-        {/* Messages List */}
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -489,9 +458,6 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
           style={styles.messagesList}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.messagesContent}
-          onContentSizeChange={() => {
-            // Tự động cuộn xuống cuối khi có tin nhắn mới
-          }}
           ListEmptyComponent={
             isLoadingMessages ? (
               <View style={styles.loadingContainer}>
@@ -507,17 +473,15 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
           }
         />
 
-        {/* Typing Indicator */}
         <TypingIndicator isTyping={false} userName={name} />
 
-        {/* New Input Bar */}
         <InputBar
           value={inputText}
           onChangeText={setInputText}
           onSend={handleSend}
           onEmoji={() => Alert.alert('Emoji', 'Tính năng emoji sẽ được thêm sau')}
           onAttachment={handleSendImage}
-          onVoice={() => {}} // Voice recognition sẽ được xử lý trong InputBar
+          onVoice={() => {}}
           placeholder={isUploadingImage ? 'Đang tải ảnh...' : 'Nhập tin nhắn...'}
           disabled={!isConnected || isUploadingImage}
         />

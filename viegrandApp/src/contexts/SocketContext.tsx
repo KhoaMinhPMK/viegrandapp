@@ -44,6 +44,7 @@ interface SocketProviderProps {
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const { user } = useAuth();
   const socketRef = useRef<Socket | null>(null);
+  const [socketState, setSocketState] = useState<Socket | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [userPhone, setUserPhone] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -139,6 +140,14 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     };
   }, [fetchNotifications, userPhone]);
 
+  // Nếu socket đã kết nối và userPhone vừa có, đăng ký ngay
+  useEffect(() => {
+    if (userPhone && socketRef.current && socketRef.current.connected) {
+      console.log('🔔 Registering phone due to userPhone change:', userPhone);
+      socketRef.current.emit('register', userPhone);
+    }
+  }, [userPhone]);
+
   // Quản lý socket connection
   useEffect(() => {
     console.log('🔄 SocketContext - Socket effect triggered:', { userPhone, hasExistingSocket: !!socketRef.current });
@@ -146,6 +155,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       if (socketRef.current) {
         console.log('🧹 SocketContext - Disconnecting existing socket');
         socketRef.current.disconnect();
+        socketRef.current = null;
+        setSocketState(null);
       }
 
       console.log(`🚀 SocketContext: Connecting for phone ${userPhone}...`);
@@ -156,10 +167,18 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         newSocket.emit('register', userPhone);
       });
 
-      // Re-register on reconnect
+      // Re-register on reconnect and keep state in sync
       newSocket.on('reconnect', (attempt) => {
         console.log(`🔁 SocketContext: Reconnected after ${attempt} attempts. Re-registering phone...`);
         if (userPhone) newSocket.emit('register', userPhone);
+      });
+
+      newSocket.on('disconnect', (reason: string) => {
+        console.log(`🔌 SocketContext: Disconnected. Reason: ${reason}`);
+      });
+
+      newSocket.on('connect_error', (error) => {
+        console.error('❌ SocketContext: Connection Error', error);
       });
 
       newSocket.on('notification', (newNotification: Notification) => {
@@ -171,18 +190,14 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         });
       });
 
-      newSocket.on('disconnect', (reason: string) => {
-        console.log(`🔌 SocketContext: Disconnected. Reason: ${reason}`);
-      });
-
-      newSocket.on('connect_error', (error) => {
-        console.error('❌ SocketContext: Connection Error', error);
-      });
-
       socketRef.current = newSocket;
+      setSocketState(newSocket); // <-- expose via state so consumers re-render
+
       return () => { 
         console.log('🧹 SocketContext: Cleanup - disconnecting socket');
         newSocket.disconnect(); 
+        socketRef.current = null;
+        setSocketState(null);
       };
     } else {
       if (socketRef.current) {
@@ -190,6 +205,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         socketRef.current.disconnect();
         socketRef.current = null;
       }
+      setSocketState(null);
     }
   }, [userPhone]);
 
@@ -243,7 +259,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   }, []);
 
   const value = {
-    socket: socketRef.current,
+    socket: socketState,
     notifications,
     unreadCount: notifications.filter(n => !n.isRead).length,
     isLoading,
