@@ -3,6 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
+  Image,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
@@ -15,6 +16,8 @@ interface MessageBubbleProps {
     isOwnMessage: boolean;
     senderName: string;
     senderPhone: string;
+    messageType?: string;
+    fileUrl?: string;
   };
   showAvatar?: boolean;
   avatar?: string;
@@ -73,12 +76,23 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     return <Feather name="check" size={14} color="#8E8E93" />;
   };
 
+  const renderContent = () => {
+    if (message.messageType === 'image' && message.fileUrl) {
+      return (
+        <View style={styles.imageWrapper}>
+          <Image source={{ uri: message.fileUrl }} style={styles.image} resizeMode="cover" />
+        </View>
+      );
+    }
+    return <Text style={message.isOwnMessage ? styles.ownMessageText : styles.otherMessageText}>{message.messageText}</Text>;
+  };
+
   if (message.isOwnMessage) {
     return (
       <View style={styles.ownMessageContainer}>
         <View style={styles.ownMessageContent}>
-          <View style={styles.ownBubble}>
-            <Text style={styles.ownMessageText}>{message.messageText}</Text>
+          <View style={[styles.ownBubble, message.messageType === 'image' && styles.ownImageBubble]}>
+            {renderContent()}
           </View>
           
           <View style={styles.messageFooter}>
@@ -110,8 +124,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <Text style={styles.senderName}>{message.senderName}</Text>
         )}
         
-        <View style={styles.otherBubble}>
-          <Text style={styles.otherMessageText}>{message.messageText}</Text>
+        <View style={[styles.otherBubble, message.messageType === 'image' && styles.otherImageBubble]}>
+          {renderContent()}
         </View>
         
         <View style={styles.messageFooter}>
@@ -140,10 +154,26 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomRightRadius: 4,
   },
+  ownImageBubble: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    borderBottomRightRadius: 0,
+  },
   ownMessageText: {
     color: '#FFFFFF',
     fontSize: 16,
     lineHeight: 20,
+  },
+  imageWrapper: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#E5E5EA',
+    maxWidth: 220,
+  },
+  image: {
+    width: 220,
+    height: 220,
   },
   otherMessageContainer: {
     flexDirection: 'row',
@@ -181,6 +211,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomLeftRadius: 4,
+  },
+  otherImageBubble: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    borderBottomLeftRadius: 0,
   },
   otherMessageText: {
     color: '#000000',

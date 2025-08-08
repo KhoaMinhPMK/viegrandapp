@@ -14,6 +14,12 @@ const apiClient = axios.create({
   },
 });
 
+// Node server client for uploads
+const nodeClient = axios.create({
+  baseURL: config.API_BASE_URL,
+  timeout: 30000,
+});
+
 // Request interceptor
 apiClient.interceptors.request.use(
   async (config) => {
@@ -1160,16 +1166,26 @@ export const getConversationsList = async (userPhone: string): Promise<{ success
 };
 
 // Send message API
-export const sendMessage = async (conversationId: string, senderPhone: string, receiverPhone: string, messageText: string): Promise<{ success: boolean; messageId?: number; data?: any; message?: string }> => {
+export const sendMessage = async (
+  conversationId: string,
+  senderPhone: string,
+  receiverPhone: string,
+  messageText: string,
+  messageType?: 'text' | 'image',
+  fileUrl?: string,
+): Promise<{ success: boolean; messageId?: number; data?: any; message?: string }> => {
   try {
-    console.log('🔄 sendMessage - Sending request:', { conversationId, senderPhone, receiverPhone, messageText });
+    console.log('🔄 sendMessage - Sending request:', { conversationId, senderPhone, receiverPhone, messageText, messageType, fileUrl });
     
     // Log request details
-    const requestData = {
+    const requestData: any = {
       sender_phone: senderPhone.trim(),
       receiver_phone: receiverPhone.trim(),
-      message_text: messageText.trim()
+      message_text: (messageText || '').trim(),
     };
+    if (messageType) requestData.message_type = messageType;
+    if (fileUrl) requestData.file_url = fileUrl;
+
     console.log('🔍 sendMessage - Request data:', requestData);
     console.log('🔍 sendMessage - Request URL:', apiClient.defaults.baseURL + 'send_message_complete.php');
     
@@ -1775,3 +1791,28 @@ export const addReminder = async (payload: AddReminderPayload): Promise<{ succes
     }
   }
 }
+
+export interface UploadChatImageResponse {
+  success: boolean;
+  data?: { url: string; filename: string; size: number; mimeType: string };
+  message?: string;
+}
+
+export const uploadChatImage = async (file: { uri: string; name: string; type: string }): Promise<UploadChatImageResponse> => {
+  const form = new FormData();
+  // @ts-ignore React Native FormData
+  form.append('image', {
+    uri: file.uri,
+    name: file.name,
+    type: file.type,
+  } as any);
+
+  try {
+    const res = await nodeClient.post('/upload/chat-image', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+  } catch (e: any) {
+    return { success: false, message: e.response?.data?.message || e.message };
+  }
+};
