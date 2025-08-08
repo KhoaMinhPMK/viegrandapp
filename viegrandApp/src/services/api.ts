@@ -1816,3 +1816,18 @@ export const uploadChatImage = async (file: { uri: string; name: string; type: s
     return { success: false, message: e.response?.data?.message || e.message };
   }
 };
+
+export const getOrCreateSelfConversation = async (userPhone: string, userEmail?: string): Promise<{ success: boolean; conversationId?: string; message?: string }> => {
+  try {
+    const payload: any = { user_phone: userPhone };
+    if (userEmail) payload.user_email = userEmail;
+
+    const response = await apiClient.post('/get_or_create_self_conversation.php', payload);
+    if (response.data.success) {
+      return { success: true, conversationId: response.data.data?.conversation_id, message: response.data.message };
+    }
+    return { success: false, message: response.data.message };
+  } catch (e: any) {
+    return { success: false, message: e.response?.data?.message || e.message };
+  }
+};

@@ -125,90 +125,93 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       console.log('📨 Current userPhone:', userPhone);
       console.log('📨 Current conversationId:', conversationId);
       
-      let messageText = '';
-      let senderName = 'Người dùng';
-      let isOwnMessage = false;
-      let messageType = 'text';
-      let fileUrl: string | undefined = undefined;
-      
+      // Bỏ qua định dạng cũ dạng string để tránh nhiễu hội thoại khác
       if (typeof msg === 'string') {
-        // Tin nhắn đơn giản
-        messageText = msg;
-        senderName = 'Người dùng';
-        isOwnMessage = false;
-        messageType = 'text';
-        console.log('📨 Processing string message:', { messageText, senderName, isOwnMessage });
-      } else {
-        // Tin nhắn có cấu trúc
-        messageText = msg.message || msg.message_text || '';
-        senderName = msg.sender || msg.senderName || 'Người dùng';
-        isOwnMessage = msg.sender === userPhone || msg.sender_phone === userPhone;
-        messageType = msg.message_type || msg.messageType || (msg.file_url ? 'image' : 'text');
-        fileUrl = msg.file_url || msg.fileUrl || undefined;
-        console.log('📨 Processing object message:', { 
-          messageText, 
-          senderName, 
-          isOwnMessage, 
-          msgSender: msg.sender,
-          msgSenderPhone: msg.sender_phone,
-          userPhone,
-          messageType,
-          fileUrl
-        });
+        console.log('⏭️ Ignoring legacy string message');
+        return;
       }
-      
-      // Nếu là tin nhắn ảnh mà không có text, vẫn hiển thị ảnh
-      const displayText = messageType === 'image' && !messageText ? '[Hình ảnh]' : messageText;
-      
-      if (displayText || fileUrl) {
-        // Xử lý timestamp
-        let sentAt = new Date().toISOString();
-        if (msg.timestamp || msg.sent_at) {
-          try {
-            const timestamp = msg.timestamp || msg.sent_at;
-            if (typeof timestamp === 'string') {
-              const date = new Date(timestamp);
-              if (!isNaN(date.getTime())) sentAt = date.toISOString();
-            }
-          } catch (error) {
-            console.log('⚠️ Invalid timestamp, using current time:', msg.timestamp);
-          }
-        }
-        
-        const newMessage: Message = {
-          id: msg.id || Date.now(),
-          conversationId: msg.conversationId || msg.conversation_id || conversationId,
-          senderPhone: msg.sender || msg.sender_phone || '',
-          receiverPhone: msg.receiver || msg.receiver_phone || '',
-          messageText: displayText,
-          messageType: messageType,
-          fileUrl: fileUrl,
-          isRead: false,
-          sentAt: sentAt,
-          requiresFriendship: true,
-          friendshipStatus: 'friends',
-          senderName: senderName,
-          isOwnMessage: isOwnMessage
-        };
-        
-        console.log('📨 Adding new message to app:', newMessage);
-        setMessages(prev => [...prev, newMessage]);
 
-        // Lưu tin nhắn cuối cùng vào bộ nhớ đệm
-        const saveLastMessage = async () => {
-          const lastMessage: LastMessage = {
-            conversationId: newMessage.conversationId,
-            messageText: newMessage.messageType === 'image' ? '[Hình ảnh]' : newMessage.messageText,
-            senderPhone: newMessage.senderPhone,
-            receiverPhone: newMessage.receiverPhone,
-            sentAt: newMessage.sentAt,
-            senderName: newMessage.senderName,
-            isOwnMessage: newMessage.isOwnMessage
-          };
-          await lastMessageStorage.saveLastMessage(lastMessage);
-        };
-        saveLastMessage();
+      const targetConversationId = msg.conversationId || msg.conversation_id;
+      const targetSender = msg.sender || msg.sender_phone;
+      const targetReceiver = msg.receiver || msg.receiver_phone;
+
+      // Chỉ xử lý tin nhắn thuộc đúng conversation hiện tại
+      if (!targetConversationId || targetConversationId !== conversationId) {
+        console.log('⏭️ Ignoring message for different conversation:', targetConversationId);
+        return;
       }
+
+      // Xác thực cặp người gửi/nhận thuộc cặp đang chat
+      const isForThisPair = (
+        (targetSender === receiverPhone && targetReceiver === userPhone) ||
+        (targetSender === userPhone && targetReceiver === receiverPhone)
+      );
+      if (!isForThisPair) {
+        console.log('⏭️ Ignoring message not matching this user pair', { targetSender, targetReceiver, receiverPhone, userPhone });
+        return;
+      }
+
+      // Bỏ qua tin nhắn tự gửi để tránh duplicate
+      if (targetSender === userPhone) {
+        console.log('🚫 Skipping self-sent message duplicate');
+        return;
+      }
+
+      const messageType = msg.message_type || msg.messageType || (msg.file_url ? 'image' : 'text');
+      const fileUrl: string | undefined = msg.file_url || msg.fileUrl || undefined;
+      const messageTextRaw = msg.message || msg.message_text || '';
+
+      // Nếu là ảnh và không có text → hiển thị nhãn
+      const displayText = messageType === 'image' && !messageTextRaw ? '[Hình ảnh]' : messageTextRaw;
+      if (!displayText && !fileUrl) return;
+
+      // Xử lý timestamp
+      let sentAt = new Date().toISOString();
+      if (msg.timestamp || msg.sent_at) {
+        try {
+          const timestamp = msg.timestamp || msg.sent_at;
+          if (typeof timestamp === 'string') {
+            const date = new Date(timestamp);
+            if (!isNaN(date.getTime())) sentAt = date.toISOString();
+          }
+        } catch (error) {
+          console.log('⚠️ Invalid timestamp, using current time:', msg.timestamp);
+        }
+      }
+      
+      const newMessage: Message = {
+        id: msg.id || Date.now(),
+        conversationId: targetConversationId,
+        senderPhone: targetSender || '',
+        receiverPhone: targetReceiver || '',
+        messageText: displayText,
+        messageType: messageType,
+        fileUrl: fileUrl,
+        isRead: false,
+        sentAt: sentAt,
+        requiresFriendship: true,
+        friendshipStatus: 'friends',
+        senderName: msg.senderName || 'Người dùng',
+        isOwnMessage: false,
+      };
+      
+      console.log('📨 Adding new message to app:', newMessage);
+      setMessages(prev => [...prev, newMessage]);
+
+      // Lưu tin nhắn cuối cùng vào bộ nhớ đệm
+      const saveLastMessage = async () => {
+        const lastMessage: LastMessage = {
+          conversationId: newMessage.conversationId,
+          messageText: newMessage.messageType === 'image' ? '[Hình ảnh]' : newMessage.messageText,
+          senderPhone: newMessage.senderPhone,
+          receiverPhone: newMessage.receiverPhone,
+          sentAt: newMessage.sentAt,
+          senderName: newMessage.senderName,
+          isOwnMessage: newMessage.isOwnMessage
+        };
+        await lastMessageStorage.saveLastMessage(lastMessage);
+      };
+      saveLastMessage();
     });
 
     // Nhận thông báo tin nhắn đã đọc

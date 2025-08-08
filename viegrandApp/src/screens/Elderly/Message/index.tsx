@@ -17,7 +17,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MessageStackParamList } from './ChatScreen';
 import Feather from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
-import { searchFriend, requestFriend, getUserData, cancelFriendRequest, getUserPhone, acceptFriendRequest, rejectFriendRequest, getFriendsList, getConversationsList, debugConversations } from '../../../services/api';
+import { searchFriend, requestFriend, getUserData, cancelFriendRequest, getUserPhone, acceptFriendRequest, rejectFriendRequest, getFriendsList, getConversationsList, debugConversations, getOrCreateSelfConversation } from '../../../services/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useSocket } from '../../../contexts/SocketContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -561,6 +561,29 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
     }
   }, [userPhone]);
 
+  const handleOpenSelfCloud = useCallback(async () => {
+    try {
+      if (!userPhone) {
+        Alert.alert('Lỗi', 'Không tìm thấy số điện thoại người dùng');
+        return;
+      }
+      const userEmail = user?.email || (await AsyncStorage.getItem('user_email')) || undefined;
+      const res = await getOrCreateSelfConversation(userPhone, userEmail || undefined);
+      if (!res.success || !res.conversationId) {
+        Alert.alert('Lỗi', res.message || 'Không thể mở Cloud của tôi');
+        return;
+      }
+      navigation.navigate('Chat', {
+        conversationId: res.conversationId,
+        name: 'Cloud của tôi',
+        avatar: 'CL',
+        receiverPhone: userPhone,
+      });
+    } catch (e: any) {
+      Alert.alert('Lỗi', e.message || 'Không thể mở Cloud của tôi');
+    }
+  }, [userPhone, user?.email]);
+
   const renderConversation = ({ item }: { item: Conversation }) => (
     <TouchableOpacity 
       style={styles.conversationItem} 
@@ -690,31 +713,45 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
           <Text style={styles.loadingText}>Đang tải danh sách cuộc trò chuyện...</Text>
         </View>
       ) : (
-      <FlatList<ListItem>
-        data={showSearchResults ? searchResults : filteredConversations}
-        renderItem={renderListItem}
-        keyExtractor={(item, index) => {
-          if ('userId' in item) {
-            return `search-${item.userId}`;
-          } else {
-            return item.id;
-          }
-        }}
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            !showSearchResults && !isLoadingConversations ? (
-              <View style={styles.emptyContainer}>
-                <Feather name="users" size={48} color="#C7C7CC" />
-                <Text style={styles.emptyTitle}>Chưa có bạn bè</Text>
-                <Text style={styles.emptySubtitle}>
-                  Tìm kiếm và kết bạn với người thân, bạn bè để bắt đầu trò chuyện
-                </Text>
-              </View>
-            ) : null
-          }
-        />
+      <>
+        {/* Self Cloud Card */}
+        {userPhone ? (
+          <TouchableOpacity style={styles.selfCloudCard} activeOpacity={0.8} onPress={handleOpenSelfCloud}>
+            <View style={styles.selfCloudAvatar}><Feather name="cloud" size={18} color="#fff" /></View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.selfCloudTitle}>Cloud của tôi</Text>
+              <Text style={styles.selfCloudSubtitle}>Lưu nhanh ghi chú, ảnh, file</Text>
+            </View>
+            <Feather name="chevron-right" size={16} color="#8E8E93" />
+          </TouchableOpacity>
+        ) : null}
+
+        <FlatList<ListItem>
+          data={showSearchResults ? searchResults : filteredConversations}
+          renderItem={renderListItem}
+          keyExtractor={(item, index) => {
+            if ('userId' in item) {
+              return `search-${item.userId}`;
+            } else {
+              return item.id;
+            }
+          }}
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              !showSearchResults && !isLoadingConversations ? (
+                <View style={styles.emptyContainer}>
+                  <Feather name="users" size={48} color="#C7C7CC" />
+                  <Text style={styles.emptyTitle}>Chưa có bạn bè</Text>
+                  <Text style={styles.emptySubtitle}>
+                    Tìm kiếm và kết bạn với người thân, bạn bè để bắt đầu trò chuyện
+                  </Text>
+                </View>
+              ) : null
+            }
+          />
+        </>
       )}
       
       {/* <TouchableOpacity style={styles.fab} activeOpacity={0.8}>
@@ -1421,6 +1458,40 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  selfCloudCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 16,
+    shadowColor: 'rgba(0,0,0,0.08)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  selfCloudAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  selfCloudTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1C1C1E',
+  },
+  selfCloudSubtitle: {
+    fontSize: 12,
+    color: '#8E8E93',
+    marginTop: 2,
   },
 });
 
