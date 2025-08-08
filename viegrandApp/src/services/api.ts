@@ -1816,3 +1816,44 @@ export const uploadChatImage = async (file: { uri: string; name: string; type: s
     return { success: false, message: e.response?.data?.message || e.message };
   }
 };
+
+// Restricted Content Management
+export const getUserRestrictedContent = async (userId: number): Promise<{ 
+  success: boolean; 
+  restricted_contents?: string[]; 
+  message?: string 
+}> => {
+  try {
+    const response = await apiClient.get(`/get_user_restricted_content.php?userId=${userId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error getting user restricted content:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to get restricted content',
+    };
+  }
+};
+
+export const updateUserRestrictedContent = async (
+  userId: number, 
+  restrictedContents: string[]
+): Promise<{ 
+  success: boolean; 
+  restricted_contents?: string[]; 
+  message?: string 
+}> => {
+  try {
+    const response = await apiClient.post('/update_user_restricted_content.php', {
+      userId,
+      restricted_contents: restrictedContents,
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error updating user restricted content:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to update restricted content',
+    };
+  }
+};

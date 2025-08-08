@@ -17,6 +17,8 @@ import {
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import VoiceRecognitionModal from '../../../components/VoiceRecognitionModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getUserRestrictedContent } from '../../../services/api';
 
 const { width } = Dimensions.get('window');
 
@@ -42,14 +44,11 @@ const VideoPlayerScreen = ({ navigation }: any) => {
   const [hasSearched, setHasSearched] = useState(false);
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [userRestrictedContent, setUserRestrictedContent] = useState<string[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [filteredCount, setFilteredCount] = useState(0);
 
   const API_KEY = 'AIzaSyBnaEQD7O2SMQFAcL6pBmx8wjNNmKLUc2A';
-
-  // Sensitive keywords to filter out
-  const sensitiveKeywords = [
-    'chính trị', 'bạo lực', 'kinh dị', 'ma túy', 'rượu bia',
-    'cờ bạc', 'tình dục', 'phản động', 'khủng bố', 'tự tử'
-  ];
 
   // Suggested search terms for initial content
   const suggestedSearches = [
@@ -57,6 +56,75 @@ const VideoPlayerScreen = ({ navigation }: any) => {
     'âm nhạc Việt Nam', 'du lịch Việt Nam', 'sức khỏe người già',
     'yoga cho người cao tuổi', 'nhạc trữ tình', 'công thức món ăn'
   ];
+
+  // Load user's personalized restricted content
+  const loadUserRestrictedContent = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        setCurrentUserId(user.id);
+        
+        const result = await getUserRestrictedContent(user.id);
+        if (result.success && result.restricted_contents) {
+          setUserRestrictedContent(result.restricted_contents);
+        } else {
+          // No restricted content - user sees everything
+          setUserRestrictedContent([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user restricted content:', error);
+      // No restricted content - user sees everything
+      setUserRestrictedContent([]);
+    }
+  };
+
+  // Load user restricted content on component mount
+  useEffect(() => {
+    loadUserRestrictedContent();
+  }, []);
+
+  // Personalized filtering function - ONLY uses user's restricted content
+  const shouldFilterVideo = (video: VideoItem): boolean => {
+    // If user has no restricted content, show everything
+    if (userRestrictedContent.length === 0) {
+      return false;
+    }
+
+    const title = video.title.toLowerCase();
+    const description = video.description.toLowerCase();
+    const channelTitle = video.channelTitle.toLowerCase();
+
+    // Debug: Log what we're checking
+    console.log('🔍 Checking video:', {
+      title: video.title,
+      restrictedKeywords: userRestrictedContent
+    });
+
+    // Check if any of the user's restricted keywords appear in the video
+    const shouldFilter = userRestrictedContent.some(keyword => {
+      const lowerKeyword = keyword.toLowerCase();
+      const titleMatch = title.includes(lowerKeyword);
+      const descMatch = description.includes(lowerKeyword);
+      const channelMatch = channelTitle.includes(lowerKeyword);
+      
+      if (titleMatch || descMatch || channelMatch) {
+        console.log('🚫 Filtering video due to keyword:', keyword, {
+          titleMatch,
+          descMatch,
+          channelMatch,
+          title: video.title,
+          description: video.description.substring(0, 100) + '...',
+          channelTitle: video.channelTitle
+        });
+      }
+      
+      return titleMatch || descMatch || channelMatch;
+    });
+
+    return shouldFilter;
+  };
 
   const fetchVideos = async (query: string, isLoadMore = false) => {
     try {
@@ -101,16 +169,21 @@ const VideoPlayerScreen = ({ navigation }: any) => {
           };
         });
         
-        // Filter out sensitive content
-        const filteredVideos = processedVideos.filter((video: VideoItem) => {
-          const title = video.title.toLowerCase();
-          const description = video.description.toLowerCase();
-          
-          return !sensitiveKeywords.some(keyword => 
-            title.includes(keyword.toLowerCase()) || 
-            description.includes(keyword.toLowerCase())
+        // Filter out sensitive content using personalized keywords
+        const filteredVideos = processedVideos.filter((video: VideoItem) => !shouldFilterVideo(video));
+        
+        // Count filtered videos for this batch
+        const newFilteredCount = processedVideos.length - filteredVideos.length;
+        setFilteredCount(prev => prev + newFilteredCount);
+        
+        // Show notification if many videos are filtered
+        if (newFilteredCount > 3 && !isLoadMore) {
+          Alert.alert(
+            'Bảo vệ nội dung',
+            `Đã lọc bỏ ${newFilteredCount} video không phù hợp để bảo vệ bạn.`,
+            [{ text: 'OK' }]
           );
-        });
+        }
         
         if (isLoadMore) {
           setVideos(prev => [...prev, ...filteredVideos]);
@@ -177,12 +250,14 @@ const VideoPlayerScreen = ({ navigation }: any) => {
   const handleVoiceSearch = (text: string) => {
     setSearchQuery(text);
     setHasSearched(true);
+    setFilteredCount(0); // Reset filtered count for new search
     fetchVideos(text);
   };
 
   const handleTextSearch = () => {
     if (searchQuery.trim()) {
       setHasSearched(true);
+      setFilteredCount(0); // Reset filtered count for new search
       fetchVideos(searchQuery.trim());
     }
   };
@@ -196,6 +271,7 @@ const VideoPlayerScreen = ({ navigation }: any) => {
   const handleSuggestedSearch = (suggestion: string) => {
     setSearchQuery(suggestion);
     setHasSearched(true);
+    setFilteredCount(0); // Reset filtered count for new search
     fetchVideos(suggestion);
   };
 
@@ -329,7 +405,15 @@ const VideoPlayerScreen = ({ navigation }: any) => {
               <Text style={styles.sectionTitle}>
                 Kết quả tìm kiếm: "{searchQuery}"
               </Text>
-              <Text style={styles.sectionSubtitle}>{filteredVideos.length} video</Text>
+              <View style={styles.sectionSubtitleContainer}>
+                <Text style={styles.sectionSubtitle}>{filteredVideos.length} video</Text>
+                {filteredCount > 0 && userRestrictedContent.length > 0 && (
+                  <View style={styles.filteredIndicator}>
+                    <Feather name="shield" size={14} color="#10B981" />
+                    <Text style={styles.filteredText}>Đã bảo vệ</Text>
+                  </View>
+                )}
+              </View>
             </View>
             {filteredVideos.map(renderVideoCard)}
             
@@ -533,6 +617,25 @@ const styles = StyleSheet.create({
   sectionSubtitle: {
     fontSize: 14,
     color: '#8E8E93',
+  },
+  sectionSubtitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  filteredIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D1FAE5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  filteredText: {
+    fontSize: 12,
+    color: '#065F46',
+    fontWeight: '600',
   },
   videoCard: {
     backgroundColor: '#FFFFFF',

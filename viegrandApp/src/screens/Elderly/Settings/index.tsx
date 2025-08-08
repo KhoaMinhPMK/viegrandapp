@@ -297,6 +297,15 @@ const ElderlySettingsScreen = () => {
                             onPress={() => navigation.navigate('EmergencyCallSettings')}
                         />
                     </SettingsSection>
+
+                    <SettingsSection title="Nội dung">
+                        <SettingsRow
+                            title="Nội dung hạn chế"
+                            icon="shield"
+                            type="navigation"
+                            onPress={() => navigation.navigate('RestrictedContentSettings')}
+                        />
+                    </SettingsSection>
                     
                     {/* Permission Status Indicator */}
                     <View style={styles.permissionContainer}>
