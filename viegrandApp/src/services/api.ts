@@ -548,6 +548,118 @@ export const getElderlyInPremium = async (relativeUserId: number): Promise<{
   }
 };
 
+// Remove elderly user from premium subscription API
+export const removeElderlyFromPremium = async (relativeUserId: number, elderlyPrivateKey: string): Promise<{ 
+  success: boolean; 
+  data?: {
+    removed_elderly: string;
+    elderly_count: number;
+    premium_key: string;
+  };
+  message?: string;
+}> => {
+  try {
+    const response = await apiClient.post('/remove_elderly_from_premium.php', {
+      relative_user_id: relativeUserId,
+      elderly_private_key: elderlyPrivateKey
+    });
+    
+    console.log('Remove elderly from premium API response:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } else {
+      console.log('Remove elderly from premium failed:', response.data);
+      return {
+        success: false,
+        message: response.data.message || 'Không thể xóa người thân khỏi gói premium'
+      };
+    }
+  } catch (error: any) {
+    console.error('Remove elderly from premium API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Get elderly premium information API
+export const getElderlyPremiumInfo = async (elderlyPrivateKey: string): Promise<{ 
+  success: boolean; 
+  data?: {
+    hasSubscription: boolean;
+    isActive: boolean;
+    subscription?: {
+      premiumKey: string;
+      startDate: string;
+      endDate: string;
+      status: string;
+      daysRemaining: number;
+      note: string;
+      elderlyCount: number;
+    };
+    elderly: {
+      userId: number;
+      userName: string;
+      email: string;
+      phone: string;
+      age: number;
+      gender: string;
+      private_key: string;
+    };
+    relative?: {
+      userId: number;
+      userName: string;
+      email: string;
+      phone: string;
+      age: number;
+      gender: string;
+      private_key: string;
+    };
+    allElderlyUsers?: Array<{
+      userId: number;
+      userName: string;
+      email: string;
+      phone: string;
+      age: number;
+      gender: string;
+      private_key: string;
+    }>;
+  };
+  message?: string;
+}> => {
+  try {
+    const response = await apiClient.get(`/get_elderly_premium_info.php?elderly_private_key=${elderlyPrivateKey}`);
+    
+    console.log('Get elderly premium info API response:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } else {
+      console.log('Get elderly premium info failed:', response.data);
+      return {
+        success: false,
+        message: response.data.message || 'Không thể lấy thông tin Premium'
+      };
+    }
+  } catch (error: any) {
+    console.error('Get elderly premium info API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
 // Update user data API
 export const updateUserData = async (email: string, updateData: any): Promise<{ success: boolean; user?: any; message?: string }> => {
   try {
@@ -1857,3 +1969,5 @@ export const updateUserRestrictedContent = async (
     };
   }
 };
+
+

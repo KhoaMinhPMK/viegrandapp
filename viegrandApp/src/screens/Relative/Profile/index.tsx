@@ -7,16 +7,59 @@ import {
   TouchableOpacity,
   ImageBackground,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const RelativeProfileScreen = ({ navigation }: any) => {
+  const { logout } = useAuth();
+  
   const profileItems = [
     { id: 1, title: 'Thông tin cá nhân', icon: 'user', action: 'edit' },
     { id: 2, title: 'Danh sách người cao tuổi', icon: 'user', action: 'elderly' },
     { id: 3, title: 'Liên hệ khẩn cấp', icon: 'phone', action: 'emergency' },
     { id: 4, title: 'Lịch sử theo dõi', icon: 'file', action: 'history' },
   ];
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Đăng xuất',
+      'Bạn có chắc chắn muốn đăng xuất không? Tất cả dữ liệu sẽ bị xóa.',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        { 
+          text: 'Đăng xuất', 
+          style: 'destructive', 
+          onPress: async () => {
+            try {
+              console.log('🔄 User confirmed logout from profile');
+              
+              // Thực hiện logout
+              await logout();
+              
+              // Navigate về root level và chọn Auth route với Login screen
+              navigation.reset({
+                index: 0,
+                routes: [{ 
+                  name: 'Auth',
+                  params: {
+                    screen: 'Login'
+                  }
+                }],
+              });
+              
+              console.log('✅ Logout completed and navigated to Login');
+            } catch (error) {
+              console.error('Error during logout:', error);
+              Alert.alert('Lỗi', 'Có lỗi xảy ra khi đăng xuất');
+            }
+          }
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   return (
     <ImageBackground
@@ -51,7 +94,7 @@ const RelativeProfileScreen = ({ navigation }: any) => {
             ))}
           </View>
 
-          <TouchableOpacity style={styles.logoutButton}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Feather name="log-out" size={24} color="#FF6B6B" />
             <Text style={styles.logoutText}>Đăng xuất</Text>
           </TouchableOpacity>

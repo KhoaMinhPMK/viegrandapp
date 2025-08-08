@@ -15,8 +15,8 @@ const PremiumUpgradeCard = memo(({ isPremium, daysRemaining }: PremiumUpgradeCar
 
   const handleNavigate = useCallback(() => {
     if (isPremium) {
-      // Navigate to Premium management screen for active users
-      navigation.navigate('PremiumManagement');
+      // Navigate to Elderly Premium Info screen for active users
+      navigation.navigate('ElderlyPremiumInfo');
     } else {
       // Show alert for elderly users trying to upgrade
       showElderlyPremiumAlert();

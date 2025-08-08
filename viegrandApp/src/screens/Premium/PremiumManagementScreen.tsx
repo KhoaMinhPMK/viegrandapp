@@ -14,7 +14,7 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Feather from 'react-native-vector-icons/Feather';
-import { getPremiumSubscription, addElderlyToPremium, getElderlyInPremium, autoFriendProcess, getUserData } from '../../services/api';
+import { getPremiumSubscription, addElderlyToPremium, getElderlyInPremium, removeElderlyFromPremium, autoFriendProcess, getUserData } from '../../services/api';
 // QR detect from image
 import RNQRGenerator from 'rn-qr-generator';
 import {launchImageLibrary, launchCamera, ImageLibraryOptions, CameraOptions} from 'react-native-image-picker';
@@ -63,6 +63,7 @@ const PremiumManagementScreen = () => {
   } | null>(null);
   const [loadingElderly, setLoadingElderly] = useState(false);
   const [elderlyUsers, setElderlyUsers] = useState<ElderlyUser[]>([]);
+  const [removingElderly, setRemovingElderly] = useState<string | null>(null);
   // Remove live scanner; use image-based detection
 
   // Load premium subscription details
@@ -177,6 +178,49 @@ const PremiumManagementScreen = () => {
     setElderlyPrivateKey('');
     loadPremiumSubscription();
     loadElderlyUsers();
+  };
+
+  // Remove elderly user from premium subscription
+  const removeElderlyUser = async (elderlyPrivateKey: string) => {
+    try {
+      setRemovingElderly(elderlyPrivateKey);
+
+      // Get current user ID from cache
+      const userDataStr = await AsyncStorage.getItem('user');
+      if (!userDataStr) {
+        Alert.alert('Lỗi', 'Không thể tìm thấy thông tin người dùng');
+        return;
+      }
+
+      const userData = JSON.parse(userDataStr);
+
+      const result = await removeElderlyFromPremium(userData.id || userData.userId, elderlyPrivateKey);
+
+      if (result.success) {
+        console.log('✅ Elderly user removed successfully');
+        Alert.alert(
+          'Thành công', 
+          `Đã xóa người thân khỏi gói Premium.\n\nTổng số người thân: ${result.data?.elderly_count || 0}`, 
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                loadPremiumSubscription();
+                loadElderlyUsers();
+              },
+            },
+          ]
+        );
+      } else {
+        console.log('❌ Failed to remove elderly user:', result.message);
+        Alert.alert('Lỗi', result.message || 'Không thể xóa người thân khỏi gói Premium');
+      }
+    } catch (error) {
+      console.error('Error removing elderly user:', error);
+      Alert.alert('Lỗi', 'Không thể kết nối đến máy chủ');
+    } finally {
+      setRemovingElderly(null);
+    }
   };
 
   // Custom Success Modal Component
@@ -319,7 +363,16 @@ const PremiumManagementScreen = () => {
           ]);
         }
       } else {
-        Alert.alert('Lỗi', result.message || 'Không thể thêm người thân vào gói Premium');
+        // Check if it's the specific error about elderly already in another family
+        if (result.message && result.message.includes('đã thuộc về gia đình khác')) {
+          Alert.alert(
+            'Không thể thêm người thân', 
+            result.message,
+            [{ text: 'OK', style: 'default' }]
+          );
+        } else {
+          Alert.alert('Lỗi', result.message || 'Không thể thêm người thân vào gói Premium');
+        }
       }
     } catch (error) {
       console.error('Error adding elderly user:', error);
@@ -556,7 +609,36 @@ const PremiumManagementScreen = () => {
                         >
                           <Text style={styles.elderlyKeyText}>{elderlyKey}</Text>
                         </TouchableOpacity>
-                        <Feather name="user-check" size={16} color="#32CD32" />
+                        <View style={styles.elderlyKeyActions}>
+                          <Feather name="user-check" size={16} color="#32CD32" />
+                          <TouchableOpacity
+                            style={[
+                              styles.removeButton,
+                              removingElderly === elderlyKey && styles.removeButtonDisabled
+                            ]}
+                            onPress={() => {
+                              Alert.alert(
+                                'Xác nhận xóa',
+                                'Bạn có chắc chắn muốn xóa người thân này khỏi gói Premium?',
+                                [
+                                  { text: 'Hủy', style: 'cancel' },
+                                  { 
+                                    text: 'Xóa', 
+                                    style: 'destructive',
+                                    onPress: () => removeElderlyUser(elderlyKey)
+                                  }
+                                ]
+                              );
+                            }}
+                            disabled={removingElderly === elderlyKey}
+                          >
+                            {removingElderly === elderlyKey ? (
+                              <ActivityIndicator size="small" color="#FF3B30" />
+                            ) : (
+                              <Feather name="trash-2" size={16} color="#FF3B30" />
+                            )}
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     ))}
                   </View>
@@ -879,6 +961,19 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontFamily: 'monospace',
     textDecorationLine: 'underline',
+  },
+  elderlyKeyActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  removeButton: {
+    padding: 4,
+    borderRadius: 4,
+    backgroundColor: '#FFE8E8',
+  },
+  removeButtonDisabled: {
+    opacity: 0.5,
   },
   elderlyIcon: {
     marginLeft: 12,

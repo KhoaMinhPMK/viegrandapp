@@ -5,7 +5,8 @@ import RelativeBottomTabNavigator from './RelativeBottomTabNavigator';
 import PremiumNavigator from './PremiumNavigator';
 import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 import PremiumManagementScreen from '../screens/Premium/PremiumManagementScreen';
-import AddReminderScreen from '../screens/Relative/AddReminderScreen'
+import AddReminderScreen from '../screens/Relative/AddReminderScreen';
+import RelativeNotificationsScreen from '../screens/Relative/Notifications';
 
 const Stack = createStackNavigator();
 
@@ -28,6 +29,11 @@ const RelativeNavigator = () => {
         }} 
       />
       <Stack.Screen name="AddReminder" component={AddReminderScreen} />
+      <Stack.Screen 
+        name="Notifications" 
+        component={RelativeNotificationsScreen}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
   );
 };

@@ -20,6 +20,7 @@ import BookBookmarkScreen from '../screens/Elderly/Entertainment/BookBookmarkScr
 import PremiumNavigator from './PremiumNavigator';
 import PremiumManagementScreen from '../screens/Premium/PremiumManagementScreen';
 import RestrictedContentSettingsScreen from '../screens/Elderly/Settings/RestrictedContentSettingsScreen';
+import ElderlyPremiumInfoScreen from '../screens/Elderly/Settings/ElderlyPremiumInfoScreen';
 
 const Stack = createStackNavigator();
 
@@ -107,9 +108,14 @@ const ElderlyNavigator = () => {
       />
       
       {/* Restricted Content Settings Screen */}
-      <Stack.Screen 
-        name="RestrictedContentSettings" 
-        component={RestrictedContentSettingsScreen} 
+            <Stack.Screen
+        name="RestrictedContentSettings"
+        component={RestrictedContentSettingsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ElderlyPremiumInfo"
+        component={ElderlyPremiumInfoScreen}
         options={{ headerShown: false }}
       />
       

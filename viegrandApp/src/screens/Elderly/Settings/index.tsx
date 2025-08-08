@@ -171,8 +171,8 @@ const ElderlySettingsScreen = () => {
 
     const handlePremiumPress = () => {
         if (isPremium) {
-            // If user is already premium, navigate to management screen
-            navigation.navigate('PremiumManagement');
+            // If user is already premium, navigate to elderly premium info screen
+            navigation.navigate('ElderlyPremiumInfo');
         } else {
             // If user is not premium, show the elderly alert
             showElderlyPremiumAlert();
@@ -295,6 +295,15 @@ const ElderlySettingsScreen = () => {
                             type="navigation"
                             value={emergencyCallService.getEmergencyInfo().number}
                             onPress={() => navigation.navigate('EmergencyCallSettings')}
+                        />
+                    </SettingsSection>
+
+                    <SettingsSection title="Premium">
+                        <SettingsRow
+                            title="Thông tin Premium"
+                            icon="star"
+                            type="navigation"
+                            onPress={() => navigation.navigate('ElderlyPremiumInfo')}
                         />
                     </SettingsSection>
 

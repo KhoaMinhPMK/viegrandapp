@@ -116,7 +116,7 @@ const RelativeHomeScreen = ({ navigation }: any) => {
   }
 
   // Socket Context for notifications
-  const { notifications: socketNotifications, unreadCount } = useSocket();
+  const { notifications: socketNotifications, unreadCount, markAsRead } = useSocket();
   
   // Convert notifications to match NotificationDropdown format
   const notifications = socketNotifications.map(notif => ({
@@ -324,9 +324,10 @@ const RelativeHomeScreen = ({ navigation }: any) => {
       .map((notif: any) => notif.id);
     
     if (readIds.length > 0) {
-      // Handle mark as read
+      // Call the markAsRead function from SocketContext
+      markAsRead(readIds);
     }
-  }, [formattedNotifications]);
+  }, [formattedNotifications, markAsRead]);
 
   // Callback to refresh conversations list
   const handleConversationsRefresh = useCallback(() => {
