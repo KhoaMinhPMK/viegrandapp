@@ -160,7 +160,14 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       }
 
       console.log(`🚀 SocketContext: Connecting for phone ${userPhone}...`);
-      const newSocket = io('https://chat.viegrand.site', { forceNew: true, reconnectionAttempts: 5, timeout: 10000 });
+      const newSocket = io('https://chat.viegrand.site', {
+        forceNew: true,
+        reconnection: true,
+        reconnectionAttempts: 10,
+        timeout: 20000,
+        // transports: ['websocket'], // allow fallback to polling if WS is blocked by proxy
+        auth: { phone: userPhone },
+      });
 
       newSocket.on('connect', () => {
         console.log(`✅ SocketContext: Connected with ID ${newSocket.id}. Registering phone...`);
@@ -178,20 +185,21 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       });
 
       newSocket.on('connect_error', (error) => {
-        console.error('❌ SocketContext: Connection Error', error);
+        console.error('❌ SocketContext: Connection Error', {
+          message: error?.message,
+          name: error?.name,
+          description: (error as any)?.description,
+          context: (error as any)?.context,
+        });
       });
 
       newSocket.on('notification', (newNotification: Notification) => {
         console.log('📧 SocketContext: New notification received via socket:', newNotification);
-        // Thêm vào đầu danh sách để hiển thị mới nhất
-        setNotifications(prev => {
-          console.log('🔄 SocketContext: Adding notification to list. Current count:', prev.length);
-          return [newNotification, ...prev];
-        });
+        setNotifications(prev => [newNotification, ...prev]);
       });
 
       socketRef.current = newSocket;
-      setSocketState(newSocket); // <-- expose via state so consumers re-render
+      setSocketState(newSocket);
 
       return () => { 
         console.log('🧹 SocketContext: Cleanup - disconnecting socket');

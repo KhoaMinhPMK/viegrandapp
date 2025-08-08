@@ -268,15 +268,17 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
 
     try {
       const tempId = Date.now();
+      const messageText = inputText.trim();
+      const sentAtIso = new Date().toISOString();
       const newMessage: Message = {
         id: tempId,
         conversationId,
         senderPhone: userPhone,
         receiverPhone,
-        messageText: inputText.trim(),
+        messageText,
         messageType: 'text',
         isRead: false,
-        sentAt: new Date().toISOString(),
+        sentAt: sentAtIso,
         requiresFriendship: true,
         friendshipStatus: 'friends',
         senderName: user?.fullName || 'Bạn',
@@ -286,11 +288,24 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       setMessages(prev => [...prev, newMessage]);
       setInputText('');
       
+      // 1) Realtime: gửi ngay lập tức qua socket (nếu có)
+      if (socket) {
+        socket.emit('send message', {
+          conversationId,
+          senderPhone: userPhone,
+          receiverPhone,
+          messageText,
+          timestamp: sentAtIso,
+          messageType: 'text',
+        });
+      }
+      
+      // 2) Persist: gửi lên backend để lưu DB và forward đảm bảo
       const messageResult = await sendMessage(
         conversationId,
         userPhone,
         receiverPhone,
-        inputText.trim(),
+        messageText,
         'text',
         undefined
       );
@@ -306,10 +321,10 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
 
         const lastMessage: LastMessage = {
           conversationId,
-          messageText: newMessage.messageText,
+          messageText,
           senderPhone: userPhone,
           receiverPhone,
-          sentAt: new Date().toISOString(),
+          sentAt: sentAtIso,
           senderName: user?.fullName || 'Bạn',
           isOwnMessage: true,
         };
@@ -339,6 +354,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       setIsUploadingImage(true);
 
       const tempId = Date.now();
+      const tempSentAt = new Date().toISOString();
       const tempMessage: Message = {
         id: tempId,
         conversationId,
@@ -348,7 +364,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
         messageType: 'image',
         fileUrl: asset.uri,
         isRead: false,
-        sentAt: new Date().toISOString(),
+        sentAt: tempSentAt,
         requiresFriendship: true,
         friendshipStatus: 'friends',
         senderName: user?.fullName || 'Bạn',
@@ -372,6 +388,20 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       const fileUrl = uploadRes.data.url;
       setMessages(prev => prev.map(m => m.id === tempId ? { ...m, messageText: '', fileUrl } : m));
 
+      // 1) Realtime: emit ngay lập tức
+      if (socket) {
+        socket.emit('send message', {
+          conversationId,
+          senderPhone: userPhone,
+          receiverPhone,
+          messageText: '',
+          timestamp: new Date().toISOString(),
+          messageType: 'image',
+          fileUrl,
+        });
+      }
+
+      // 2) Persist: gửi lên backend để lưu DB
       const messageResult = await sendMessage(
         conversationId,
         userPhone,
@@ -418,6 +448,8 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       <MessageBubble
         message={item}
         showAvatar={showAvatar}
+        avatar={avatar}
+        displayName={name}
       />
     );
   };
@@ -483,7 +515,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
           onAttachment={handleSendImage}
           onVoice={() => {}}
           placeholder={isUploadingImage ? 'Đang tải ảnh...' : 'Nhập tin nhắn...'}
-          disabled={!isConnected || isUploadingImage}
+          disabled={isUploadingImage}
         />
       </SafeAreaView>
     </KeyboardAvoidingView>

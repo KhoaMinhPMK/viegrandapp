@@ -22,6 +22,7 @@ interface MessageBubbleProps {
   showAvatar?: boolean;
   avatar?: string;
   isLastInGroup?: boolean;
+  displayName?: string; // Preferred name (from header) for initials/color
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({
@@ -29,52 +30,36 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   showAvatar = false,
   avatar,
   isLastInGroup = false,
+  displayName,
 }) => {
-  // Hàm tạo chữ viết tắt từ tên
   const getInitials = (name: string) => {
     if (!name) return '?';
-    
     const words = name.trim().split(' ');
-    if (words.length === 1) {
-      return words[0].charAt(0).toUpperCase();
-    } else {
-      return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
-    }
+    if (words.length === 1) return words[0].charAt(0).toUpperCase();
+    return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
   };
 
-  // Hàm tạo màu background cho avatar dựa trên tên
   const getAvatarColor = (name: string) => {
     const colors = [
       '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
       '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
       '#BB8FCE', '#85C1E9', '#F8C471', '#82E0AA'
     ];
-    
     let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
     return colors[Math.abs(hash) % colors.length];
   };
 
   const formatTime = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleTimeString('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return 'Vừa xong';
-    }
+      return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    } catch { return 'Vừa xong'; }
   };
 
-  const getStatusIcon = () => {
-    if (message.isRead) {
-      return <Feather name="check-circle" size={14} color="#30D158" />;
-    }
-    return <Feather name="check" size={14} color="#8E8E93" />;
-  };
+  const getStatusIcon = () => message.isRead
+    ? <Feather name="check-circle" size={14} color="#30D158" />
+    : <Feather name="check" size={14} color="#8E8E93" />;
 
   const renderContent = () => {
     if (message.messageType === 'image' && message.fileUrl) {
@@ -94,40 +79,32 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <View style={[styles.ownBubble, message.messageType === 'image' && styles.ownImageBubble]}>
             {renderContent()}
           </View>
-          
           <View style={styles.messageFooter}>
             <Text style={styles.timestamp}>{formatTime(message.sentAt)}</Text>
-            <View style={styles.statusContainer}>
-              {getStatusIcon()}
-            </View>
+            <View style={styles.statusContainer}>{getStatusIcon()}</View>
           </View>
         </View>
       </View>
     );
   }
 
+  // For other user: prefer displayName from header for initials and color
+  const otherName = displayName && displayName.trim().length > 0 ? displayName : message.senderName;
+
   return (
     <View style={styles.otherMessageContainer}>
       {showAvatar && (
-        <View style={[
-          styles.avatar,
-          { backgroundColor: getAvatarColor(message.senderName) }
-        ]}>
-          <Text style={styles.avatarText}>
-            {getInitials(message.senderName)}
-          </Text>
+        <View style={[styles.avatar, { backgroundColor: getAvatarColor(otherName) }]}>
+          <Text style={styles.avatarText}>{getInitials(otherName)}</Text>
         </View>
       )}
-      
       <View style={styles.otherMessageContent}>
         {showAvatar && (
-          <Text style={styles.senderName}>{message.senderName}</Text>
+          <Text style={styles.senderName}>{otherName}</Text>
         )}
-        
         <View style={[styles.otherBubble, message.messageType === 'image' && styles.otherImageBubble]}>
           {renderContent()}
         </View>
-        
         <View style={styles.messageFooter}>
           <Text style={styles.timestamp}>{formatTime(message.sentAt)}</Text>
         </View>
