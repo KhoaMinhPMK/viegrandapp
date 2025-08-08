@@ -15,6 +15,9 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Feather from 'react-native-vector-icons/Feather';
 import { getPremiumSubscription, addElderlyToPremium, getElderlyInPremium, autoFriendProcess, getUserData } from '../../services/api';
+// QR detect from image
+import RNQRGenerator from 'rn-qr-generator';
+import {launchImageLibrary, launchCamera, ImageLibraryOptions, CameraOptions} from 'react-native-image-picker';
 
 interface PremiumSubscriptionData {
   hasSubscription: boolean;
@@ -60,6 +63,7 @@ const PremiumManagementScreen = () => {
   } | null>(null);
   const [loadingElderly, setLoadingElderly] = useState(false);
   const [elderlyUsers, setElderlyUsers] = useState<ElderlyUser[]>([]);
+  // Remove live scanner; use image-based detection
 
   // Load premium subscription details
   const loadPremiumSubscription = async () => {
@@ -240,8 +244,11 @@ const PremiumManagementScreen = () => {
     );
   };
 
-  const addElderlyUser = async () => {
-    if (!elderlyPrivateKey.trim()) {
+  // Refactor: add optional key param to reuse for QR flow
+  const addElderlyUser = async (scannedKey?: string) => {
+    const keyToUse = (scannedKey ?? elderlyPrivateKey).trim();
+
+    if (!keyToUse) {
       Alert.alert('Lỗi', 'Vui lòng nhập mã người dùng của người thân');
       return;
     }
@@ -274,14 +281,14 @@ const PremiumManagementScreen = () => {
       console.log('✅ Relative phone number:', relativePhone);
 
       // Step 1: Add elderly to premium subscription
-      const result = await addElderlyToPremium(userData.id || userData.userId, elderlyPrivateKey.trim());
+      const result = await addElderlyToPremium(userData.id || userData.userId, keyToUse);
 
       if (result.success) {
         console.log('✅ Premium subscription updated successfully');
 
         // Step 2: Auto friend process
         console.log('🔄 Starting auto friend process...');
-        const autoFriendResult = await autoFriendProcess(relativePhone, elderlyPrivateKey.trim());
+        const autoFriendResult = await autoFriendProcess(relativePhone, keyToUse);
 
         if (autoFriendResult.success) {
           console.log('✅ Auto friend process completed successfully');
@@ -321,6 +328,61 @@ const PremiumManagementScreen = () => {
       setIsAddingElderly(false);
     }
   };
+
+  // --- QR Scan helpers ---
+  function extractPrivateKey(raw: string): string | null {
+    if (!raw) return null;
+    const text = String(raw).trim();
+    // Try parse JSON payloads
+    try {
+      const obj = JSON.parse(text);
+      const candidate = obj.privateKey || obj.private_key || obj.key || obj.id;
+      if (typeof candidate === 'string' && candidate.trim().length > 0) return candidate.trim();
+    } catch { }
+    // Fallback: assume raw string IS the key
+    if (text.length > 0) return text;
+    return null;
+  }
+
+  async function detectQRFromUri(uri?: string, base64?: string) {
+    try {
+      const res = await RNQRGenerator.detect({ uri: uri as any, base64: base64 as any });
+      const values: string[] = res?.values || [];
+      if (!values.length) {
+        Alert.alert('Không tìm thấy QR', 'Ảnh không chứa mã QR hợp lệ.');
+        return;
+      }
+      // Pick first value
+      const key = extractPrivateKey(values[0]);
+      if (!key) {
+        Alert.alert('Lỗi', 'QR không chứa private key hợp lệ.');
+        return;
+      }
+      setElderlyPrivateKey(key);
+      setTimeout(() => addElderlyUser(key), 150);
+    } catch (err) {
+      console.error('QR detect error:', err);
+      Alert.alert('Lỗi', 'Không thể đọc mã QR từ ảnh.');
+    }
+  }
+
+  async function pickImageAndDetectQR() {
+    const options: ImageLibraryOptions = { mediaType: 'photo', quality: 0.8, includeBase64: false, selectionLimit: 1 };
+    const result = await launchImageLibrary(options);
+    if (result.didCancel) return;
+    const asset = result.assets?.[0];
+    if (!asset) return;
+    await detectQRFromUri(asset.uri || undefined, undefined);
+  }
+
+  async function captureImageAndDetectQR() {
+    const options: CameraOptions = { mediaType: 'photo', quality: 0.8, includeBase64: false, saveToPhotos: false };
+    const result = await launchCamera(options);
+    if (result.didCancel) return;
+    const asset = result.assets?.[0];
+    if (!asset) return;
+    await detectQRFromUri(asset.uri || undefined, undefined);
+  }
 
   if (loading) {
     return (
@@ -510,20 +572,30 @@ const PremiumManagementScreen = () => {
                 </View>
                 <View style={styles.cardContent}>
                   <Text style={styles.addElderlyDescription}>
-                    Nhập mã người dùng của người thân để thêm vào gói Premium
+                    Nhập mã người dùng của người thân hoặc chọn/chụp ảnh QR để thêm vào gói Premium
                   </Text>
-                  <View style={styles.inputContainer}>
-                    <TextInput
-                      style={styles.textInput}
-                      placeholder="Nhập mã người dùng của người thân"
-                      value={elderlyPrivateKey}
-                      onChangeText={setElderlyPrivateKey}
-                      editable={!isAddingElderly}
-                    />
+                  <View style={styles.inputRow}>
+                    <View style={styles.inputContainer}>
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder="Nhập mã người dùng của người thân"
+                        value={elderlyPrivateKey}
+                        onChangeText={setElderlyPrivateKey}
+                        editable={!isAddingElderly}
+                      />
+                    </View>
+                    <TouchableOpacity style={styles.scanButton} onPress={pickImageAndDetectQR} disabled={isAddingElderly}>
+                      <Feather name="image" size={18} color="#FFFFFF" />
+                      <Text style={styles.scanButtonText}>Chọn ảnh</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.scanButtonAlt} onPress={captureImageAndDetectQR} disabled={isAddingElderly}>
+                      <Feather name="camera" size={18} color="#FFFFFF" />
+                      <Text style={styles.scanButtonText}>Chụp ảnh</Text>
+                    </TouchableOpacity>
                   </View>
                   <TouchableOpacity
                     style={[styles.addButton, isAddingElderly && styles.addButtonDisabled]}
-                    onPress={addElderlyUser}
+                    onPress={() => addElderlyUser()}
                     disabled={isAddingElderly}
                   >
                     {isAddingElderly ? (
@@ -712,6 +784,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: 16,
+    flex: 1,
   },
   textInput: {
     backgroundColor: '#F2F2F7',
@@ -723,6 +796,34 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E5EA',
   },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  scanButton: {
+    backgroundColor: '#34C759',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  scanButtonAlt: {
+    backgroundColor: '#5856D6',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  scanButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   addButton: {
     backgroundColor: '#007AFF',
     borderRadius: 8,
@@ -731,6 +832,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 8,
   },
   addButtonDisabled: {
     backgroundColor: '#8E8E93',
@@ -883,6 +985,58 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
+    fontWeight: '600',
+  },
+  // Scanner modal styles
+  scannerOverlay: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  scannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 40,
+    paddingBottom: 12,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  scannerTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  scannerClose: {
+    padding: 6,
+  },
+  scannerContainer: {
+    flex: 1,
+  },
+  scannerTop: {
+    flex: 0,
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  scannerBottom: {
+    flex: 0,
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  scannerHint: {
+    color: '#FFFFFF',
+    fontSize: 14,
+  },
+  scannerCancel: {
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.24)',
+  },
+  scannerCancelText: {
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '600',
   },
 });
