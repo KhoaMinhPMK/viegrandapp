@@ -8,7 +8,6 @@ import {
   SafeAreaView,
   ScrollView,
   Alert,
-  Platform,
 } from 'react-native'
 import Feather from 'react-native-vector-icons/Feather'
 import { addReminder, getElderlyInPremium } from '../../services/api'
@@ -25,6 +24,64 @@ interface ElderlyUser {
   private_key: string;
 }
 
+// Helpers: format & validate date/time without libraries
+function formatDateInput(rawValue: string): string {
+  const digits = rawValue.replace(/\D/g, '').slice(0, 8)
+  const parts: string[] = []
+  if (digits.length <= 2) return digits
+  parts.push(digits.slice(0, 2))
+  if (digits.length <= 4) return `${parts[0]}/${digits.slice(2)}`
+  parts.push(digits.slice(2, 4))
+  const year = digits.slice(4)
+  return `${parts[0]}/${parts[1]}${year ? '/' + year : ''}`
+}
+
+function formatTimeInput(rawValue: string): string {
+  const digits = rawValue.replace(/\D/g, '').slice(0, 4)
+  if (digits.length <= 2) return digits
+  return `${digits.slice(0, 2)}:${digits.slice(2)}`
+}
+
+function isValidDateInput(value: string): boolean {
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(value)) return false
+  const [ddStr, mmStr, yyyyStr] = value.split('/')
+  const dd = Number(ddStr)
+  const mm = Number(mmStr)
+  const yyyy = Number(yyyyStr)
+  if (yyyy < 1900 || yyyy > 2100) return false
+  if (mm < 1 || mm > 12) return false
+  if (dd < 1 || dd > 31) return false
+  const date = new Date(yyyy, mm - 1, dd)
+  return date.getFullYear() === yyyy && date.getMonth() === mm - 1 && date.getDate() === dd
+}
+
+function isValidTimeInput(value: string): boolean {
+  if (!/^\d{2}:\d{2}$/.test(value)) return false
+  const [hhStr, mmStr] = value.split(':')
+  const hh = Number(hhStr)
+  const mm = Number(mmStr)
+  if (hh < 0 || hh > 23) return false
+  if (mm < 0 || mm > 59) return false
+  return true
+}
+
+function toTwoDigits(n: number): string {
+  return n.toString().padStart(2, '0')
+}
+
+function buildDateTimeForApi(dateInput: string, timeInput: string): { ngay_gio: string; thoi_gian: string } {
+  const [ddStr, mmStr, yyyyStr] = dateInput.split('/')
+  const [hhStr, miStr] = timeInput.split(':')
+  const yyyy = Number(yyyyStr)
+  const mm = Number(mmStr)
+  const dd = Number(ddStr)
+  const hh = Number(hhStr)
+  const mi = Number(miStr)
+  const ngay_gio = `${yyyy}-${toTwoDigits(mm)}-${toTwoDigits(dd)} ${toTwoDigits(hh)}:${toTwoDigits(mi)}:00`
+  const thoi_gian = `${toTwoDigits(hh)}:${toTwoDigits(mi)}:00`
+  return { ngay_gio, thoi_gian }
+}
+
 const reminderTypes = [
   { key: 'medicine', label: 'Uống thuốc', icon: 'package' },
   { key: 'water', label: 'Uống nước', icon: 'droplet' },
@@ -37,7 +94,8 @@ function AddReminderScreen({ navigation }: any) {
   const [selectedElderly, setSelectedElderly] = useState<string>('')
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  const [dateTime, setDateTime] = useState('')
+  const [dateInput, setDateInput] = useState('')
+  const [timeInput, setTimeInput] = useState('')
   const [type, setType] = useState(reminderTypes[0].key)
   const [loading, setLoading] = useState(false)
   const [loadingElderly, setLoadingElderly] = useState(true)
@@ -74,20 +132,28 @@ function AddReminderScreen({ navigation }: any) {
   }
 
   const handleSave = async () => {
-    if (!selectedElderly || !title || !content || !dateTime) {
+    if (!selectedElderly || !title || !content || !dateInput || !timeInput) {
       Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ thông tin')
       return
     }
+
+    if (!isValidDateInput(dateInput)) {
+      Alert.alert('Lỗi', 'Ngày không hợp lệ. Định dạng dd/mm/yyyy')
+      return
+    }
+
+    if (!isValidTimeInput(timeInput)) {
+      Alert.alert('Lỗi', 'Giờ không hợp lệ. Định dạng HH:MM (00-23:00-59)')
+      return
+    }
+
     setLoading(true)
     try {
       const elderly = elderlyList.find(e => e.userId.toString() === selectedElderly)
       if (!elderly) throw new Error('Không tìm thấy người cao tuổi')
-      
-      // Parse dateTime string to format for API
-      const date = new Date(dateTime)
-      const ngay_gio = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}:00`
-      const thoi_gian = `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}:00`
-      
+
+      const { ngay_gio, thoi_gian } = buildDateTimeForApi(dateInput, timeInput)
+
       const payload = {
         email: elderly.email,
         ten_nguoi_dung: elderly.userName,
@@ -164,14 +230,31 @@ function AddReminderScreen({ navigation }: any) {
           onChangeText={setContent}
           multiline
         />
-        {/* Thời gian */}
-        <Text style={styles.label}>Thời gian</Text>
+        {/* Ngày & Giờ */}
+        <Text style={styles.label}>Ngày</Text>
         <TextInput
           style={styles.input}
-          placeholder="Nhập ngày giờ (VD: 2024-01-15 08:30)"
-          value={dateTime}
-          onChangeText={setDateTime}
+          placeholder="dd/mm/yyyy"
+          value={dateInput}
+          onChangeText={(text) => setDateInput(formatDateInput(text))}
+          keyboardType="numeric"
+          maxLength={10}
+          autoCorrect={false}
+          autoCapitalize="none"
         />
+
+        <Text style={styles.label}>Giờ</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="HH:MM"
+          value={timeInput}
+          onChangeText={(text) => setTimeInput(formatTimeInput(text))}
+          keyboardType="numeric"
+          maxLength={5}
+          autoCorrect={false}
+          autoCapitalize="none"
+        />
+
         {/* Loại nhắc nhở */}
         <Text style={styles.label}>Loại nhắc nhở</Text>
         <View style={styles.selectBox}>
