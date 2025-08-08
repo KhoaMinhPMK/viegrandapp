@@ -13,7 +13,7 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Feather from 'react-native-vector-icons/Feather';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getPremiumSubscription, addElderlyToPremium, getElderlyInPremium } from '../../services/api';
+import { getPremiumSubscription, addElderlyToPremium } from '../../services/api';
 
 interface PremiumSubscriptionData {
   hasSubscription: boolean;
@@ -34,22 +34,10 @@ interface PremiumSubscriptionData {
   };
 }
 
-interface ElderlyUser {
-  userId: number;
-  userName: string;
-  email: string;
-  phone: string;
-  age: number;
-  gender: string;
-  private_key: string;
-}
-
 const PremiumManagementScreen = () => {
   const navigation = useNavigation<any>();
   const [loading, setLoading] = useState(true);
   const [subscriptionData, setSubscriptionData] = useState<PremiumSubscriptionData | null>(null);
-  const [elderlyUsers, setElderlyUsers] = useState<ElderlyUser[]>([]);
-  const [loadingElderly, setLoadingElderly] = useState(false);
   const [elderlyPrivateKey, setElderlyPrivateKey] = useState('');
   const [isAddingElderly, setIsAddingElderly] = useState(false);
 
@@ -85,40 +73,10 @@ const PremiumManagementScreen = () => {
     }
   };
 
-  // Load elderly users in premium subscription
-  const loadElderlyUsers = async () => {
-    try {
-      setLoadingElderly(true);
-      
-      // Get current user ID from cache
-      const userDataStr = await AsyncStorage.getItem('user');
-      if (!userDataStr) {
-        console.error('No user data found in cache');
-        return;
-      }
-      
-      const userData = JSON.parse(userDataStr);
-      const result = await getElderlyInPremium(userData.userId);
-      
-      if (result.success && result.data) {
-        setElderlyUsers(result.data);
-      } else {
-        console.error('Failed to load elderly users:', result.message);
-        setElderlyUsers([]);
-      }
-    } catch (error) {
-      console.error('Error loading elderly users:', error);
-      setElderlyUsers([]);
-    } finally {
-      setLoadingElderly(false);
-    }
-  };
-
   // Reload data when screen focuses
   useFocusEffect(
     React.useCallback(() => {
       loadPremiumSubscription();
-      loadElderlyUsers();
     }, [])
   );
 
@@ -180,7 +138,6 @@ const PremiumManagementScreen = () => {
               onPress: () => {
                 setElderlyPrivateKey('');
                 loadPremiumSubscription(); // Refresh subscription data
-                loadElderlyUsers(); // Refresh elderly users list
               }
             }
           ]
@@ -341,50 +298,29 @@ const PremiumManagementScreen = () => {
               </View>
             )}
 
-            {/* Elderly Users List Card */}
-            {subscriptionData.hasSubscription && (
+            {/* Elderly Keys List */}
+            {subscriptionData.hasSubscription && subscriptionData.subscription && subscriptionData.subscription.elderlyKeys.length > 0 && (
               <View style={styles.card}>
                 <View style={styles.cardHeader}>
                   <Feather name="users" size={20} color="#32CD32" />
-                  <Text style={styles.cardTitle}>Danh sách người thân</Text>
+                  <Text style={styles.cardTitle}>Danh sách mã người thân</Text>
                 </View>
                 <View style={styles.cardContent}>
-                  {loadingElderly ? (
-                    <View style={styles.elderlyLoadingContainer}>
-                      <ActivityIndicator size="small" color="#007AFF" />
-                      <Text style={styles.elderlyLoadingText}>Đang tải danh sách...</Text>
+                  <Text style={styles.elderlyDescription}>
+                    Các mã người thân trong gói Premium ({subscriptionData.subscription.elderlyKeys.length} người):
+                  </Text>
+                  {subscriptionData.subscription.elderlyKeys.map((elderlyKey, index) => (
+                    <View key={index} style={styles.elderlyKeyItem}>
+                      <Text style={styles.elderlyKeyNumber}>{index + 1}.</Text>
+                      <TouchableOpacity 
+                        style={styles.elderlyKeyContainer}
+                        onPress={() => copyToClipboard(elderlyKey, `Mã người thân ${index + 1}`)}
+                      >
+                        <Text style={styles.elderlyKeyText}>{elderlyKey}</Text>
+                      </TouchableOpacity>
+                      <Feather name="user-check" size={16} color="#32CD32" />
                     </View>
-                  ) : elderlyUsers.length > 0 ? (
-                    <>
-                      <Text style={styles.elderlyDescription}>
-                        Những người thân đang được bảo hiểm trong gói Premium:
-                      </Text>
-                      {elderlyUsers.map((elderly, index) => (
-                        <View key={elderly.userId} style={styles.elderlyItem}>
-                          <View style={styles.elderlyInfo}>
-                            <Text style={styles.elderlyName}>{elderly.userName}</Text>
-                            <Text style={styles.elderlyDetails}>
-                              {elderly.age} tuổi • {elderly.gender === 'male' ? 'Nam' : 'Nữ'}
-                            </Text>
-                            <TouchableOpacity onPress={() => copyToClipboard(elderly.private_key, 'Mã người dùng')}>
-                              <Text style={styles.elderlyKey}>{elderly.private_key}</Text>
-                            </TouchableOpacity>
-                          </View>
-                          <View style={styles.elderlyIcon}>
-                            <Feather name="user-check" size={20} color="#32CD32" />
-                          </View>
-                        </View>
-                      ))}
-                    </>
-                  ) : (
-                    <View style={styles.emptyElderlyState}>
-                      <Feather name="user-x" size={32} color="#C7C7CC" />
-                      <Text style={styles.emptyElderlyTitle}>Chưa có người thân nào</Text>
-                      <Text style={styles.emptyElderlySubtitle}>
-                        Thêm người thân để họ được bảo hiểm bởi gói Premium
-                      </Text>
-                    </View>
-                  )}
+                  ))}
                 </View>
               </View>
             )}
@@ -630,74 +566,37 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
   },
-  elderlyLoadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 20,
-  },
-  elderlyLoadingText: {
-    marginLeft: 12,
-    fontSize: 14,
-    color: '#8E8E93',
-  },
   elderlyDescription: {
     fontSize: 14,
     color: '#8E8E93',
     marginBottom: 16,
     lineHeight: 20,
   },
-  elderlyItem: {
+  elderlyKeyItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     backgroundColor: '#F8F9FA',
     borderRadius: 8,
     marginBottom: 8,
   },
-  elderlyInfo: {
-    flex: 1,
-  },
-  elderlyName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1D1D1F',
-    marginBottom: 4,
-  },
-  elderlyDetails: {
+  elderlyKeyNumber: {
     fontSize: 14,
+    fontWeight: '600',
     color: '#8E8E93',
-    marginBottom: 4,
+    marginRight: 12,
+    minWidth: 20,
   },
-  elderlyKey: {
-    fontSize: 12,
+  elderlyKeyContainer: {
+    flex: 1,
+    marginRight: 12,
+  },
+  elderlyKeyText: {
+    fontSize: 14,
     color: '#007AFF',
     fontFamily: 'monospace',
     textDecorationLine: 'underline',
-  },
-  elderlyIcon: {
-    marginLeft: 12,
-  },
-  emptyElderlyState: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  emptyElderlyTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1D1D1F',
-    marginTop: 12,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptyElderlySubtitle: {
-    fontSize: 14,
-    color: '#8E8E93',
-    textAlign: 'center',
-    lineHeight: 20,
-    maxWidth: 280,
   },
 });
 
