@@ -33,6 +33,7 @@ export type RelativeStackParamList = {
 
 export type RelativeBottomTabParamList = {
   Home: undefined;
+  Message: undefined;
   Settings: undefined;
 };
 

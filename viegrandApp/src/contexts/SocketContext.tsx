@@ -125,14 +125,19 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState) => {
       if (nextAppState === 'active') {
-        console.log('App has come to the foreground, refetching notifications.');
+        console.log('App has come to the foreground, refetching notifications and re-registering phone.');
         fetchNotifications();
+        // Re-register phone to ensure mapping is fresh
+        if (socketRef.current && socketRef.current.connected && userPhone) {
+          console.log('🔁 Re-registering phone on foreground:', userPhone);
+          socketRef.current.emit('register', userPhone);
+        }
       }
     });
     return () => {
       subscription.remove();
     };
-  }, [fetchNotifications]);
+  }, [fetchNotifications, userPhone]);
 
   // Quản lý socket connection
   useEffect(() => {
@@ -149,6 +154,12 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       newSocket.on('connect', () => {
         console.log(`✅ SocketContext: Connected with ID ${newSocket.id}. Registering phone...`);
         newSocket.emit('register', userPhone);
+      });
+
+      // Re-register on reconnect
+      newSocket.on('reconnect', (attempt) => {
+        console.log(`🔁 SocketContext: Reconnected after ${attempt} attempts. Re-registering phone...`);
+        if (userPhone) newSocket.emit('register', userPhone);
       });
 
       newSocket.on('notification', (newNotification: Notification) => {
