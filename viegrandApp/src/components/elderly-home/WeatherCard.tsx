@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { getWeatherIcon } from '../../utils/assetUtils';
+import { WEATHER_API_KEY } from '../../config/secrets';
 
 interface WeatherCardProps {
   isPremium: boolean;
@@ -18,8 +19,8 @@ const WeatherCard = memo(({ isPremium }: WeatherCardProps) => {
 
   const fetchWeatherData = async () => {
     try {
-      // It's better to hide API keys in environment variables
-      const API_KEY = 'e88c3624f6ac265634567a3ff20c41e3';
+      // Read from local secrets (not committed)
+      const API_KEY = WEATHER_API_KEY;
       const city = 'Ho Chi Minh City';
       
       const currentResponse = await fetch(

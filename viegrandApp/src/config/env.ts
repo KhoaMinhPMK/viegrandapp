@@ -1,6 +1,8 @@
 // Environment configuration
-// In a real app, you would use react-native-dotenv or similar
-// For now, we'll use a simple configuration object
+// Sử dụng file secrets nội bộ, không cần @env
+// Không bao giờ hardcode API keys trực tiếp trong repo
+
+import { GROQ_API_KEY as SECRET_GROQ_API_KEY } from './secrets';
 
 interface EnvironmentConfig {
   GROQ_API_KEY: string;
@@ -9,7 +11,7 @@ interface EnvironmentConfig {
 }
 
 const config: EnvironmentConfig = {
-  GROQ_API_KEY: process.env.GROQ_API_KEY || '',
+  GROQ_API_KEY: SECRET_GROQ_API_KEY || '',
   // API cho Groq service
   API_BASE_URL: 'https://chat.viegrand.site',
   // API cho backend services
