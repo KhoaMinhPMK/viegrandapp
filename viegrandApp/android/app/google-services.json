@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "824858619479",
+    "project_id": "viegrand-487bd",
+    "storage_bucket": "viegrand-487bd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:824858619479:android:90a771d6282ee0ad917d12",
+        "android_client_info": {
+          "package_name": "com.viegrandapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDAALndmc4P6h9zaZVqZbUX5sBR3IoW-uA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

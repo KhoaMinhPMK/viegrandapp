@@ -1,0 +1,5 @@
+---
+description: Sử dụng khi làm những việc liên quan đến api
+alwaysApply: false
+---
+hãy đọc tệp database_schema.sql để biết cấu trúc dữ liệu để có thể hiểu cấu trúc dữ liệu để làm api cho chính xác 

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Cho phép tất cả kết nối HTTP và HTTPS -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system"/>
+            <certificates src="user"/>
+        </trust-anchors>
+    </base-config>
+    
+    <!-- Cấu hình cụ thể cho các domain -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">192.168.137.1</domain>
+        <domain includeSubdomains="true">viegrand.site</domain>
+        <domain includeSubdomains="true">chat.viegrand.site</domain>
+        <domain includeSubdomains="true">*.viegrand.site</domain>
+    </domain-config>
+</network-security-config> 

@@ -1,0 +1,713 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{setspace}
+
+% Cấu hình geometry
+\geometry{
+    left=3cm,
+    right=2.5cm,
+    top=2.5cm,
+    bottom=2.5cm
+}
+
+% Cấu hình màu sắc cho code
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+% Cấu hình hyperref
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={VieGrandApp - Product Design Script},
+    pdfpagemode=FullScreen,
+}
+
+% Cấu hình header và footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textbf{VieGrandApp - PD Script}}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Cấu hình section style
+\titleformat{\section}{\Large\bfseries\color{blue}}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries\color{darkgray}}{\thesubsection}{1em}{}
+
+% Cấu hình spacing
+\onehalfspacing
+
+% Định nghĩa các ký tự Unicode
+\DeclareUnicodeCharacter{2713}{$\checkmark$}
+\DeclareUnicodeCharacter{2717}{$\times$}
+\DeclareUnicodeCharacter{25B3}{$\triangle$}
+
+% Tiêu đề
+\title{\textbf{VieGrandApp - Product Design Script}\\
+\large Ứng dụng hỗ trợ người cao tuổi thông minh\\
+\vspace{0.5cm}
+\large \textit{Phiên bản 1.0 - Tháng 08/2025}}
+\author{\textbf{Nhóm phát triển VieGrandApp}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{center}
+\vspace{1cm}
+\textbf{\large Tài liệu này mô tả chi tiết về ứng dụng VieGrandApp - một giải pháp công nghệ toàn diện dành cho người cao tuổi}
+\vspace{1cm}
+\end{center}
+
+\tableofcontents
+\newpage
+
+\section{Tổng quan ứng dụng}
+
+\subsection{Giới thiệu}
+VieGrandApp là một ứng dụng di động được thiết kế đặc biệt cho người cao tuổi (từ 60 tuổi trở lên), cung cấp các tính năng hỗ trợ toàn diện bao gồm giao tiếp, giải trí, theo dõi sức khỏe và các tiện ích khác. Ứng dụng được phát triển với mục tiêu tăng cường chất lượng cuộc sống cho người cao tuổi thông qua công nghệ hiện đại nhưng dễ sử dụng.
+
+\subsection{Mục tiêu chính}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Tính dễ sử dụng}: Giao diện đơn giản, trực quan với font chữ lớn và icon rõ ràng, phù hợp với khả năng tiếp cận công nghệ của người cao tuổi
+    \item \textbf{Giao tiếp}: Kết nối người cao tuổi với người thân và bạn bè thông qua tin nhắn, gọi điện và chia sẻ hình ảnh
+    \item \textbf{Giải trí}: Cung cấp các hoạt động giải trí phù hợp lứa tuổi như đọc sách, chơi game và xem video
+    \item \textbf{Theo dõi sức khỏe}: Giám sát các chỉ số sức khỏe cơ bản như huyết áp, cân nặng và nhắc nhở uống thuốc
+    \item \textbf{An toàn khẩn cấp}: Hệ thống gọi khẩn cấp một chạm khi cần thiết, kết nối với người thân và dịch vụ khẩn cấp
+\end{itemize}
+
+\subsection{Đối tượng người dùng}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Người dùng chính}: Người cao tuổi từ 60-85 tuổi, có smartphone cơ bản
+    \item \textbf{Người dùng phụ}: Con cái, cháu, người chăm sóc muốn theo dõi và kết nối với người cao tuổi
+    \item \textbf{Đặc điểm}: Cần hỗ trợ trong cuộc sống hàng ngày, muốn kết nối với gia đình nhưng có thể gặp khó khăn với công nghệ phức tạp
+\end{itemize}
+
+\section{Công nghệ sử dụng}
+
+\subsection{Công nghệ phía ứng dụng (Frontend)}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{4cm}|p{3cm}|p{8cm}|}
+\hline
+\textbf{Công nghệ} & \textbf{Phiên bản} & \textbf{Mục đích sử dụng} \\
+\hline
+React Native (Framework phát triển ứng dụng di động) & 0.80.1 & Công cụ chính để tạo ứng dụng chạy trên cả iPhone và Android \\
+\hline
+TypeScript (Ngôn ngữ lập trình) & 5.0.4 & Giúp viết code an toàn hơn, ít lỗi hơn \\
+\hline
+React Navigation (Quản lý màn hình) & 7.x & Điều khiển việc chuyển đổi giữa các màn hình trong ứng dụng \\
+\hline
+React Native Vector Icons (Thư viện biểu tượng) & 10.2.0 & Cung cấp các biểu tượng đẹp và dễ hiểu \\
+\hline
+React Native Voice (Nhận diện giọng nói) & 3.2.4 & Cho phép người dùng điều khiển ứng dụng bằng giọng nói \\
+\hline
+\end{tabular}
+\caption{Công nghệ phía ứng dụng di động}
+\end{table}
+
+\subsection{Công nghệ phía máy chủ (Backend)}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{4cm}|p{3cm}|p{8cm}|}
+\hline
+\textbf{Công nghệ} & \textbf{Phiên bản} & \textbf{Mục đích sử dụng} \\
+\hline
+PHP (Ngôn ngữ lập trình máy chủ) & 8.x & Xử lý các yêu cầu từ ứng dụng, quản lý dữ liệu người dùng \\
+\hline
+MySQL (Cơ sở dữ liệu) & 8.x & Lưu trữ thông tin người dùng, tin nhắn, dữ liệu sức khỏe \\
+\hline
+Socket.io (Giao tiếp thời gian thực) & 4.8.1 & Cho phép tin nhắn được gửi và nhận ngay lập tức \\
+\hline
+JWT (Bảo mật đăng nhập) & - & Đảm bảo an toàn khi người dùng đăng nhập vào ứng dụng \\
+\hline
+\end{tabular}
+\caption{Công nghệ phía máy chủ}
+\end{table}
+
+\subsection{Dịch vụ bổ sung (Third-party Services)}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{AsyncStorage}: Lưu trữ thông tin tạm thời trên điện thoại người dùng
+    \item \textbf{Axios}: Công cụ gửi và nhận dữ liệu giữa ứng dụng và máy chủ
+    \item \textbf{React Native Image Picker}: Cho phép người dùng chọn và gửi ảnh
+    \item \textbf{React Native Video}: Phát video trong ứng dụng
+    \item \textbf{React Native WebView}: Hiển thị nội dung web trong ứng dụng
+\end{itemize}
+
+\section{Kiến trúc hệ thống}
+
+\subsection{Tổng quan kiến trúc}
+Hệ thống VieGrandApp được xây dựng theo mô hình client-server với các thành phần chính:
+
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Ứng dụng di động (Client)}: Chạy trên điện thoại iPhone và Android, cung cấp giao diện người dùng
+    \item \textbf{Máy chủ xử lý (Server)}: Xử lý các yêu cầu từ ứng dụng, quản lý dữ liệu và logic nghiệp vụ
+    \item \textbf{Cơ sở dữ liệu (Database)}: Lưu trữ thông tin người dùng, tin nhắn, dữ liệu sức khỏe
+    \item \textbf{Dịch vụ giao tiếp thời gian thực}: Cho phép tin nhắn được gửi và nhận ngay lập tức
+\end{itemize}
+
+\subsection{Luồng xử lý dữ liệu}
+Khi người dùng thực hiện một hành động trong ứng dụng:
+
+\begin{enumerate}[leftmargin=2cm]
+    \item \textbf{Bước 1}: Người dùng thực hiện hành động (ví dụ: gửi tin nhắn)
+    \item \textbf{Bước 2}: Ứng dụng xử lý và chuẩn bị dữ liệu
+    \item \textbf{Bước 3}: Kiểm tra xem có cần gửi dữ liệu lên máy chủ hay không
+    \item \textbf{Bước 4}: Nếu cần, gửi yêu cầu lên máy chủ PHP
+    \item \textbf{Bước 5}: Máy chủ xử lý và lưu vào cơ sở dữ liệu MySQL
+    \item \textbf{Bước 6}: Máy chủ trả về kết quả cho ứng dụng
+    \item \textbf{Bước 7}: Ứng dụng cập nhật giao diện và hiển thị kết quả
+    \item \textbf{Bước 8}: Người dùng nhận được phản hồi (thông báo thành công)
+\end{enumerate}
+
+\section{Chức năng dành cho người cao tuổi}
+
+\subsection{Màn hình chính (Home Screen)}
+Màn hình đầu tiên mà người dùng thấy khi mở ứng dụng, được thiết kế đơn giản và dễ sử dụng:
+
+\subsubsection{Thẻ thông tin thời tiết}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Cung cấp thông tin thời tiết hiện tại để người dùng có thể lên kế hoạch cho ngày
+    \item \textbf{Tính năng}: Hiển thị nhiệt độ, điều kiện thời tiết với biểu tượng trực quan
+    \item \textbf{Khuyến nghị sức khỏe}: Đưa ra lời khuyên dựa trên thời tiết (ví dụ: trời mưa thì nên ở nhà)
+    \item \textbf{Cập nhật tự động}: Thông tin được cập nhật theo vị trí hiện tại của người dùng
+\end{itemize}
+
+\subsubsection{Nút gọi khẩn cấp}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Cung cấp cách gọi khẩn cấp nhanh nhất khi cần thiết
+    \item \textbf{Thiết kế}: Nút lớn màu đỏ nổi bật, dễ nhìn và dễ chạm
+    \item \textbf{Cách sử dụng}: Chỉ cần chạm một lần để gọi người thân hoặc dịch vụ khẩn cấp
+    \item \textbf{Tính năng bổ sung}: Tự động gửi vị trí hiện tại khi gọi khẩn cấp
+\end{itemize}
+
+\subsubsection{Lưới chức năng chính}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Bố cục}: Các tính năng quan trọng được sắp xếp theo lưới 3x3, dễ tìm và sử dụng
+    \item \textbf{Icon lớn}: Mỗi chức năng có icon lớn, rõ ràng, dễ nhận biết
+    \item \textbf{Tên chức năng}: Text mô tả ngắn gọn, dễ hiểu
+    \item \textbf{Màu sắc phân biệt}: Mỗi chức năng có màu sắc riêng để dễ nhớ
+\end{itemize}
+
+\subsubsection{Tiến độ đọc sách}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Theo dõi tiến độ đọc sách để khuyến khích thói quen đọc
+    \item \textbf{Hiển thị}: Phần trăm hoàn thành cuốn sách đang đọc
+    \item \textbf{Bookmark tự động}: Lưu trang đang đọc để tiếp tục sau
+    \item \textbf{Thống kê}: Hiển thị số trang đã đọc trong ngày/tuần
+\end{itemize}
+
+\subsubsection{Chuyển đổi giọng nói}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Cho phép người dùng điều khiển ứng dụng bằng giọng nói
+    \item \textbf{Hiển thị}: Văn bản được chuyển đổi từ giọng nói của người dùng
+    \item \textbf{Độ chính xác}: Sử dụng AI để nhận diện giọng nói tiếng Việt
+    \item \textbf{Tính năng}: Có thể dùng để gửi tin nhắn, tìm kiếm, điều khiển ứng dụng
+\end{itemize}
+
+\subsection{Giao tiếp (Message)}
+Hệ thống tin nhắn được thiết kế đặc biệt cho người cao tuổi:
+
+\subsubsection{Giao diện chat đơn giản}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Tạo giao diện chat dễ sử dụng cho người cao tuổi
+    \item \textbf{Font chữ lớn}: Text dễ đọc, không cần đeo kính
+    \item \textbf{Ít tính năng phức tạp}: Tập trung vào gửi/nhận tin nhắn cơ bản
+    \item \textbf{Màu sắc tương phản}: Đảm bảo dễ đọc trong mọi điều kiện ánh sáng
+\end{itemize}
+
+\subsubsection{Tin nhắn giọng nói}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Cho phép gửi tin nhắn bằng cách nói thay vì gõ chữ
+    \item \textbf{Cách sử dụng}: Nhấn nút microphone, nói tin nhắn, nhả nút để gửi
+    \item \textbf{Chuyển đổi tự động}: Giọng nói được chuyển thành text ngay lập tức
+    \item \textbf{Hỗ trợ tiếng Việt}: Tối ưu cho nhận diện giọng nói tiếng Việt
+\end{itemize}
+
+\subsubsection{Chia sẻ hình ảnh}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Dễ dàng gửi ảnh cho người thân
+    \item \textbf{Cách sử dụng}: Nhấn nút camera, chọn ảnh từ thư viện hoặc chụp mới
+    \item \textbf{Nén ảnh tự động}: Giảm kích thước ảnh để gửi nhanh hơn
+    \item \textbf{Xem trước}: Hiển thị ảnh trước khi gửi để kiểm tra
+\end{itemize}
+
+\subsubsection{Cập nhật thời gian thực}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Tin nhắn mới xuất hiện ngay lập tức, không cần làm mới màn hình
+    \item \textbf{Công nghệ}: Sử dụng Socket.io để kết nối thời gian thực
+    \item \textbf{Thông báo}: Hiển thị thông báo khi có tin nhắn mới
+    \item \textbf{Trạng thái đã đọc}: Hiển thị khi người khác đã đọc tin nhắn
+\end{itemize}
+
+\subsubsection{Quản lý danh bạ}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Danh sách người thân được sắp xếp theo thứ tự ưu tiên
+    \item \textbf{Ảnh đại diện}: Hiển thị ảnh người thân để dễ nhận biết
+    \item \textbf{Trạng thái online}: Hiển thị ai đang online để chat
+    \item \textbf{Tìm kiếm nhanh}: Có thể tìm kiếm theo tên hoặc số điện thoại
+\end{itemize}
+
+\subsection{Giải trí (Entertainment)}
+Các hoạt động giải trí phù hợp với lứa tuổi:
+
+\subsubsection{Đọc sách}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Cung cấp thư viện sách phù hợp với người cao tuổi
+    \item \textbf{Font chữ lớn}: Có thể điều chỉnh kích thước chữ từ 16px đến 24px
+    \item \textbf{Bookmark tự động}: Lưu trang đang đọc để tiếp tục sau
+    \item \textbf{Thư viện đa dạng}: Sách văn học, sức khỏe, kỹ năng sống
+    \item \textbf{Chế độ đọc ban đêm}: Giảm độ sáng màn hình để bảo vệ mắt
+\end{itemize}
+
+\subsubsection{Xem video}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Cung cấp nội dung video giải trí và giáo dục
+    \item \textbf{Điều khiển đơn giản}: Nút play/pause lớn, dễ nhấn
+    \item \textbf{Tự động phát tiếp}: Tự động phát video tiếp theo trong playlist
+    \item \textbf{Chất lượng tùy chỉnh}: Tự động điều chỉnh chất lượng theo kết nối mạng
+    \item \textbf{Nội dung phù hợp}: Video về sức khỏe, nấu ăn, du lịch
+\end{itemize}
+
+\subsubsection{Trò chơi}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Cung cấp các game rèn luyện trí não và giải trí
+    \item \textbf{Sudoku}: Game logic với nhiều cấp độ từ dễ đến khó
+    \item \textbf{Dò mìn}: Game trí tuệ giúp rèn luyện tư duy logic
+    \item \textbf{Tìm từ}: Game tìm từ trong bảng chữ cái
+    \item \textbf{Ghép hình}: Game ghép hình với hình ảnh đẹp
+    \item \textbf{Điều chỉnh độ khó}: Tự động điều chỉnh theo khả năng người chơi
+\end{itemize}
+
+\subsubsection{Nghe nhạc}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Cung cấp âm nhạc giải trí và thư giãn
+    \item \textbf{Playlist có sẵn}: Danh sách nhạc được tạo sẵn theo chủ đề
+    \item \textbf{Điều khiển đơn giản}: Nút play/pause, next/previous lớn
+    \item \textbf{Chế độ lặp}: Có thể lặp lại một bài hoặc toàn bộ playlist
+    \item \textbf{Nhạc phù hợp}: Nhạc truyền thống, nhạc vàng, nhạc thư giãn
+\end{itemize}
+
+\subsection{Sức khỏe (Health)}
+Theo dõi và quản lý sức khỏe:
+
+\subsubsection{Kiểm tra sức khỏe}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Ghi chép các chỉ số sức khỏe cơ bản
+    \item \textbf{Huyết áp}: Ghi chép huyết áp tâm thu và tâm trương
+    \item \textbf{Nhịp tim}: Theo dõi nhịp tim khi nghỉ ngơi
+    \item \textbf{Cân nặng}: Ghi chép cân nặng định kỳ
+    \item \textbf{Biểu đồ theo dõi}: Hiển thị xu hướng thay đổi theo thời gian
+    \item \textbf{Cảnh báo thông minh}: Thông báo khi chỉ số vượt ngưỡng an toàn
+\end{itemize}
+
+\subsubsection{Theo dõi huyết áp}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Ghi chép huyết áp tâm thu và tâm trương, hiển thị biểu đồ theo thời gian
+    \item \textbf{Cách ghi chép}: Nhập số đo từ máy đo huyết áp
+    \item \textbf{Phân loại}: Tự động phân loại huyết áp (bình thường, cao, thấp)
+    \item \textbf{Nhắc nhở đo}: Lịch trình nhắc nhở đo huyết áp định kỳ
+    \item \textbf{Chia sẻ với bác sĩ}: Có thể gửi báo cáo cho bác sĩ
+\end{itemize}
+
+\subsubsection{Theo dõi cân nặng}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Ghi chép cân nặng định kỳ, hiển thị xu hướng thay đổi
+    \item \textbf{Ghi chép đơn giản}: Chỉ cần nhập số cân nặng
+    \item \textbf{Biểu đồ trực quan}: Hiển thị thay đổi cân nặng theo tuần/tháng
+    \item \textbf{Mục tiêu cân nặng}: Đặt mục tiêu và theo dõi tiến độ
+    \item \textbf{Lời khuyên}: Đưa ra lời khuyên dựa trên thay đổi cân nặng
+\end{itemize}
+
+\subsubsection{Nhắc nhở uống thuốc}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Hệ thống nhắc nhở thông minh cho việc uống thuốc đúng giờ
+    \item \textbf{Lập lịch}: Tạo lịch uống thuốc theo đơn của bác sĩ
+    \item \textbf{Thông báo đa dạng}: Âm thanh, rung, thông báo push
+    \item \textbf{Xác nhận uống thuốc}: Người dùng xác nhận đã uống thuốc
+    \item \textbf{Báo cáo cho người thân}: Tự động thông báo cho người thân nếu quên uống
+    \item \textbf{Lịch sử uống thuốc}: Theo dõi lịch sử uống thuốc để báo cáo bác sĩ
+\end{itemize}
+
+\subsection{Nhắc nhở (Reminders)}
+Quản lý công việc và lịch trình hàng ngày:
+
+\subsubsection{Quản lý công việc}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Tạo danh sách việc cần làm với mô tả chi tiết
+    \item \textbf{Tạo nhắc nhở đơn giản}: Chỉ cần nhập tiêu đề và thời gian
+    \item \textbf{Phân loại công việc}: Sắp xếp theo loại (cá nhân, sức khỏe, gia đình)
+    \item \textbf{Đánh dấu hoàn thành}: Tap để đánh dấu công việc đã hoàn thành
+    \item \textbf{Lặp lại}: Có thể lặp lại nhắc nhở hàng ngày, tuần, tháng
+\end{itemize}
+
+\subsubsection{Tích hợp lịch}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Hiển thị lịch với các sự kiện quan trọng
+    \item \textbf{Xem lịch theo ngày/tuần/tháng}: Nhiều cách xem lịch khác nhau
+    \item \textbf{Sự kiện quan trọng}: Đánh dấu các sự kiện như sinh nhật, hẹn bác sĩ
+    \item \textbf{Đồng bộ với lịch điện thoại}: Tích hợp với lịch có sẵn trên điện thoại
+    \item \textbf{Thông báo trước}: Nhắc nhở trước sự kiện 1 giờ, 1 ngày
+\end{itemize}
+
+\subsubsection{Hệ thống thông báo}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Nhắc nhở bằng âm thanh và rung khi đến giờ
+    \item \textbf{Âm thanh đa dạng}: Nhiều loại âm thanh khác nhau cho từng loại nhắc nhở
+    \item \textbf{Cường độ rung}: Có thể điều chỉnh cường độ rung
+    \item \textbf{Thông báo push}: Gửi thông báo ngay cả khi app đang tắt
+    \item \textbf{Lặp lại thông báo}: Thông báo lặp lại nếu người dùng không phản hồi
+\end{itemize}
+
+\subsubsection{Phân loại ưu tiên}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Sắp xếp công việc theo mức độ quan trọng
+    \item \textbf{3 mức độ ưu tiên}: Cao, trung bình, thấp
+    \item \textbf{Màu sắc phân biệt}: Mỗi mức độ có màu sắc riêng
+    \item \textbf{Sắp xếp tự động}: Hiển thị công việc quan trọng trước
+    \item \textbf{Lọc theo ưu tiên}: Có thể lọc chỉ xem công việc ưu tiên cao
+\end{itemize}
+
+\subsection{Cài đặt (Settings)}
+Tùy chỉnh ứng dụng theo nhu cầu cá nhân:
+
+\subsubsection{Cài đặt khẩn cấp}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Thêm/sửa số điện thoại người thân, cấu hình gọi khẩn cấp
+    \item \textbf{Danh sách liên lạc}: Thêm tối đa 5 số điện thoại khẩn cấp
+    \item \textbf{Thứ tự ưu tiên}: Sắp xếp theo thứ tự gọi khi khẩn cấp
+    \item \textbf{Thử nghiệm gọi}: Kiểm tra kết nối với số điện thoại đã lưu
+    \item \textbf{Tự động gửi vị trí}: Tự động gửi vị trí khi gọi khẩn cấp
+\end{itemize}
+
+\subsubsection{Khả năng tiếp cận}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Tăng/giảm kích thước chữ, thay đổi màu sắc, bật/tắt âm thanh
+    \item \textbf{Kích thước chữ}: 3 mức độ (nhỏ, vừa, lớn)
+    \item \textbf{Độ tương phản}: Tăng độ tương phản để dễ đọc
+    \item \textbf{Âm thanh}: Bật/tắt âm thanh thông báo
+    \item \textbf{Rung}: Bật/tắt rung khi tương tác
+    \item \textbf{Hướng dẫn bằng giọng nói}: Bật/tắt hướng dẫn bằng giọng nói
+\end{itemize}
+
+\subsubsection{Kiểm soát quyền riêng tư}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Quản lý quyền truy cập camera, microphone, vị trí
+    \item \textbf{Quyền camera}: Cho phép chụp ảnh và gửi tin nhắn hình ảnh
+    \item \textbf{Quyền microphone}: Cho phép ghi âm tin nhắn giọng nói
+    \item \textbf{Quyền vị trí}: Cho phép chia sẻ vị trí khi khẩn cấp
+    \item \textbf{Quyền thông báo}: Cho phép gửi thông báo push
+    \item \textbf{Xóa dữ liệu}: Tùy chọn xóa dữ liệu cá nhân
+\end{itemize}
+
+\subsubsection{Tùy chỉnh ứng dụng}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Mục đích}: Thay đổi giao diện, âm thanh, thông báo
+    \item \textbf{Chủ đề giao diện}: Chọn màu sắc chủ đạo của ứng dụng
+    \item \textbf{Âm thanh thông báo}: Chọn âm thanh cho từng loại thông báo
+    \item \textbf{Tần suất thông báo}: Điều chỉnh tần suất nhận thông báo
+    \item \textbf{Ngôn ngữ}: Chọn ngôn ngữ hiển thị (hiện tại chỉ có tiếng Việt)
+    \item \textbf{Xuất dữ liệu}: Xuất dữ liệu sức khỏe để chia sẻ với bác sĩ
+\end{itemize}
+
+\section{So sánh với các ứng dụng khác}
+
+\subsection{Bảng so sánh tính năng với các ứng dụng thực tế}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{3.5cm}|c|c|c|c|}
+\hline
+\textbf{Tính năng} & \textbf{VieGrandApp} & \textbf{Zalo} & \textbf{Facebook} & \textbf{Health App} \\
+\hline
+Giao diện thân thiện với người cao tuổi & $\checkmark$ & $\times$ & $\times$ & $\triangle$ \\
+\hline
+Gọi khẩn cấp một chạm & $\checkmark$ & $\times$ & $\times$ & $\times$ \\
+\hline
+Nhận diện giọng nói tiếng Việt & $\checkmark$ & $\triangle$ & $\times$ & $\times$ \\
+\hline
+Đọc sách với font lớn & $\checkmark$ & $\times$ & $\times$ & $\times$ \\
+\hline
+Theo dõi sức khỏe toàn diện & $\checkmark$ & $\times$ & $\times$ & $\checkmark$ \\
+\hline
+Chat thời gian thực & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\times$ \\
+\hline
+Trò chơi cho người cao tuổi & $\checkmark$ & $\times$ & $\triangle$ & $\times$ \\
+\hline
+Nhắc nhở thông minh & $\checkmark$ & $\times$ & $\triangle$ & $\triangle$ \\
+\hline
+
+\hline
+Hỗ trợ khẩn cấp tích hợp & $\checkmark$ & $\times$ & $\times$ & $\times$ \\
+\hline
+Theo dõi vị trí an toàn & $\checkmark$ & $\triangle$ & $\triangle$ & $\times$ \\
+\hline
+Báo cáo sức khỏe tự động & $\checkmark$ & $\times$ & $\times$ & $\triangle$ \\
+\hline
+\end{tabular}
+\caption{So sánh tính năng với các ứng dụng thực tế ($\checkmark$: Có đầy đủ, $\triangle$: Có một phần, $\times$: Không có)}
+\end{table}
+
+\subsection{Giải thích chi tiết bảng so sánh}
+
+\subsubsection{Zalo - Ứng dụng chat phổ biến nhất Việt Nam}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Giao diện thân thiện với người cao tuổi}: $\times$ - Giao diện phức tạp, nhiều menu, font nhỏ, không tối ưu cho người cao tuổi
+    \item \textbf{Gọi khẩn cấp một chạm}: $\times$ - Không có tính năng gọi khẩn cấp tích hợp
+    \item \textbf{Nhận diện giọng nói tiếng Việt}: $\triangle$ - Có ghi âm tin nhắn nhưng không chuyển đổi thành text
+    \item \textbf{Đọc sách với font lớn}: $\times$ - Không có tính năng đọc sách
+    \item \textbf{Theo dõi sức khỏe toàn diện}: $\times$ - Không có tính năng theo dõi sức khỏe
+    \item \textbf{Chat thời gian thực}: $\checkmark$ - Chat real-time, gửi ảnh, video, file
+    \item \textbf{Trò chơi cho người cao tuổi}: $\times$ - Không có game phù hợp lứa tuổi
+    \item \textbf{Nhắc nhở thông minh}: $\times$ - Không có hệ thống nhắc nhở
+
+    \item \textbf{Hỗ trợ khẩn cấp tích hợp}: $\times$ - Không có tính năng khẩn cấp
+    \item \textbf{Theo dõi vị trí an toàn}: $\triangle$ - Có chia sẻ vị trí nhưng không tự động
+    \item \textbf{Báo cáo sức khỏe tự động}: $\times$ - Không có tính năng báo cáo sức khỏe
+\end{itemize}
+
+\subsubsection{Facebook - Mạng xã hội toàn cầu}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Giao diện thân thiện với người cao tuổi}: $\times$ - Giao diện phức tạp, nhiều quảng cáo, thông tin rối rắm
+    \item \textbf{Gọi khẩn cấp một chạm}: $\times$ - Không có tính năng gọi khẩn cấp
+    \item \textbf{Nhận diện giọng nói tiếng Việt}: $\times$ - Không hỗ trợ tiếng Việt tốt
+    \item \textbf{Đọc sách với font lớn}: $\times$ - Không có tính năng đọc sách
+    \item \textbf{Theo dõi sức khỏe toàn diện}: $\times$ - Không có tính năng theo dõi sức khỏe
+    \item \textbf{Chat thời gian thực}: $\checkmark$ - Messenger có chat real-time
+    \item \textbf{Trò chơi cho người cao tuổi}: $\triangle$ - Có game nhưng không phù hợp lứa tuổi
+    \item \textbf{Nhắc nhở thông minh}: $\triangle$ - Có nhắc nhở sự kiện nhưng không thông minh
+
+    \item \textbf{Hỗ trợ khẩn cấp tích hợp}: $\times$ - Không có tính năng khẩn cấp
+    \item \textbf{Theo dõi vị trí an toàn}: $\triangle$ - Có check-in vị trí nhưng không an toàn
+    \item \textbf{Báo cáo sức khỏe tự động}: $\times$ - Không có tính năng báo cáo sức khỏe
+\end{itemize}
+
+\subsubsection{Health App - Ứng dụng sức khỏe chuyên nghiệp}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Giao diện thân thiện với người cao tuổi}: $\triangle$ - Giao diện đẹp nhưng phức tạp, không tối ưu cho người cao tuổi
+    \item \textbf{Gọi khẩn cấp một chạm}: $\times$ - Không có tính năng gọi khẩn cấp
+    \item \textbf{Nhận diện giọng nói tiếng Việt}: $\times$ - Không hỗ trợ tiếng Việt
+    \item \textbf{Đọc sách với font lớn}: $\times$ - Không có tính năng đọc sách
+    \item \textbf{Theo dõi sức khỏe toàn diện}: $\checkmark$ - Theo dõi đa chỉ số sức khỏe chuyên nghiệp
+    \item \textbf{Chat thời gian thực}: $\times$ - Không có tính năng chat
+    \item \textbf{Trò chơi cho người cao tuổi}: $\times$ - Không có game
+    \item \textbf{Nhắc nhở thông minh}: $\triangle$ - Có nhắc nhở uống thuốc cơ bản
+
+    \item \textbf{Hỗ trợ khẩn cấp tích hợp}: $\times$ - Không có tính năng khẩn cấp
+    \item \textbf{Theo dõi vị trí an toàn}: $\times$ - Không có tính năng theo dõi vị trí
+    \item \textbf{Báo cáo sức khỏe tự động}: $\triangle$ - Có báo cáo sức khỏe nhưng không tự động gửi
+\end{itemize}
+
+\subsubsection{VieGrandApp - Ứng dụng chuyên biệt cho người cao tuổi}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Giao diện thân thiện với người cao tuổi}: $\checkmark$ - Font lớn (16-24px), icon rõ ràng, ít menu, màu sắc tương phản cao
+    \item \textbf{Gọi khẩn cấp một chạm}: $\checkmark$ - Nút lớn màu đỏ, gọi tự động 5 số ưu tiên, gửi vị trí tự động
+    \item \textbf{Nhận diện giọng nói tiếng Việt}: $\checkmark$ - Tối ưu cho tiếng Việt, hỗ trợ phương ngữ các vùng miền
+    \item \textbf{Đọc sách với font lớn}: $\checkmark$ - Thư viện sách đa dạng, font lớn, bookmark thông minh
+    \item \textbf{Theo dõi sức khỏe toàn diện}: $\checkmark$ - Huyết áp, nhịp tim, cân nặng, nhiệt độ, oxy trong máu
+    \item \textbf{Chat thời gian thực}: $\checkmark$ - Chat đơn giản, gửi ảnh, voice message, real-time
+    \item \textbf{Trò chơi cho người cao tuổi}: $\checkmark$ - Sudoku, Dò mìn, Tìm từ, Ghép hình với độ khó tự động điều chỉnh
+    \item \textbf{Nhắc nhở thông minh}: $\checkmark$ - Nhắc nhở uống thuốc, công việc, sự kiện với thông báo đa dạng
+
+    \item \textbf{Hỗ trợ khẩn cấp tích hợp}: $\checkmark$ - Hệ thống đa lớp: gọi điện, SMS, vị trí, thông báo người thân
+    \item \textbf{Theo dõi vị trí an toàn}: $\checkmark$ - Chia sẻ vị trí khi khẩn cấp, theo dõi an toàn cho người thân
+    \item \textbf{Báo cáo sức khỏe tự động}: $\checkmark$ - Tự động gửi báo cáo hàng tuần cho người thân và bác sĩ
+\end{itemize}
+
+\subsection{Điểm mạnh vượt trội của VieGrandApp}
+
+\subsubsection{Tính năng chuyên biệt cho người cao tuổi}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Giao diện được thiết kế đặc biệt}: Font chữ lớn (16-24px), icon rõ ràng, màu sắc tương phản cao, ít menu phức tạp
+    \item \textbf{Hệ thống gọi khẩn cấp tích hợp}: Nút lớn màu đỏ nổi bật, gọi tự động với 5 số liên lạc ưu tiên, gửi vị trí tự động
+    \item \textbf{Nhận diện giọng nói tiếng Việt tối ưu}: Độ chính xác cao cho giọng nói người Việt, hỗ trợ phương ngữ các vùng miền
+    \item \textbf{Trò chơi rèn luyện trí não}: Sudoku, Dò mìn, Tìm từ được thiết kế đặc biệt cho người cao tuổi với độ khó điều chỉnh tự động
+\end{itemize}
+
+
+
+\subsubsection{Tính năng sức khỏe toàn diện}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Theo dõi đa chỉ số}: Huyết áp, nhịp tim, cân nặng, nhiệt độ, oxy trong máu
+    \item \textbf{Nhắc nhở thuốc thông minh}: Nhận diện thuốc qua camera, nhắc nhở theo đơn bác sĩ
+\end{itemize}
+
+\subsubsection{Tính năng an toàn và khẩn cấp}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Hệ thống khẩn cấp đa lớp}: Gọi điện, gửi SMS, gửi vị trí, thông báo cho người thân
+    \item \textbf{Phát hiện té ngã}: Sử dụng cảm biến điện thoại để phát hiện té ngã và tự động gọi khẩn cấp
+    \item \textbf{Chế độ khẩn cấp offline}: Hoạt động ngay cả khi không có mạng internet
+    \item \textbf{Kết nối với dịch vụ khẩn cấp}: Tích hợp với số khẩn cấp 115 và các dịch vụ y tế địa phương
+\end{itemize}
+
+\subsubsection{Tính năng giải trí và học tập}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Thư viện sách đa dạng}: Sách văn học, sức khỏe, kỹ năng sống với font lớn và bookmark thông minh
+    \item \textbf{Video giáo dục}: Nội dung video về sức khỏe, nấu ăn, tập thể dục phù hợp lứa tuổi
+    \item \textbf{Trò chơi rèn luyện trí não}: Độ khó tự động điều chỉnh theo khả năng người chơi
+    \item \textbf{Nhạc thư giãn}: Playlist nhạc truyền thống, nhạc vàng, nhạc thư giãn được tuyển chọn
+\end{itemize}
+
+\subsubsection{Tính năng hỗ trợ và tiếp cận}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Hướng dẫn bằng giọng nói}: Hướng dẫn sử dụng ứng dụng bằng giọng nói tiếng Việt
+    \item \textbf{Chế độ tiếp cận nâng cao}: Tăng/giảm font, độ tương phản, âm thanh, rung
+    \item \textbf{Hỗ trợ từ xa}: Người thân có thể điều khiển ứng dụng từ xa để hỗ trợ
+    \item \textbf{Chế độ đơn giản hóa}: Ẩn các tính năng phức tạp, chỉ hiển thị chức năng cơ bản
+\end{itemize}
+
+\subsection{So sánh chi tiết với từng ứng dụng}
+
+\subsubsection{So sánh với Zalo}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Điểm mạnh của Zalo}: Chat phổ biến, nhiều người dùng, tính năng chat đa dạng
+    \item \textbf{Điểm yếu của Zalo}: Giao diện phức tạp, nhiều tính năng không cần thiết cho người cao tuổi
+    \item \textbf{VieGrandApp vượt trội}: Giao diện đơn giản, tính năng khẩn cấp, theo dõi sức khỏe, giải trí
+\end{itemize}
+
+\subsubsection{So sánh với Facebook}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Điểm mạnh của Facebook}: Kết nối xã hội rộng, nội dung đa dạng
+    \item \textbf{Điểm yếu của Facebook}: Giao diện phức tạp, nhiều quảng cáo, thông tin không kiểm soát
+    \item \textbf{VieGrandApp vượt trội}: Tập trung vào gia đình, nội dung kiểm soát, tính năng sức khỏe
+\end{itemize}
+
+\subsubsection{So sánh với Health App}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Điểm mạnh của Health App}: Theo dõi sức khỏe chuyên nghiệp, tích hợp với thiết bị Apple
+    \item \textbf{Điểm yếu của Health App}: Chỉ có trên iOS, giao diện phức tạp, thiếu tính năng giao tiếp
+    \item \textbf{VieGrandApp vượt trội}: Đa nền tảng, giao diện thân thiện, tích hợp giao tiếp và giải trí
+\end{itemize}
+
+\subsection{Lợi thế cạnh tranh của VieGrandApp}
+
+\subsubsection{Tính toàn diện}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Giải pháp một ứng dụng}: Bao gồm tất cả nhu cầu cơ bản của người cao tuổi
+    \item \textbf{Tích hợp liền mạch}: Các tính năng hoạt động cùng nhau, không cần chuyển đổi ứng dụng
+    \item \textbf{Dữ liệu thống nhất}: Tất cả thông tin được lưu trữ và đồng bộ trong một hệ thống
+\end{itemize}
+
+\subsubsection{Tính chuyên biệt}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Thiết kế cho người cao tuổi}: Mọi chi tiết đều được tối ưu cho đối tượng mục tiêu
+    \item \textbf{Hiểu biết văn hóa Việt Nam}: Tính năng phù hợp với văn hóa và thói quen người Việt
+    \item \textbf{Hỗ trợ tiếng Việt hoàn toàn}: Giao diện, hướng dẫn, nhận diện giọng nói đều bằng tiếng Việt
+\end{itemize}
+
+\subsubsection{Tính an toàn và tin cậy}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Hệ thống khẩn cấp đáng tin cậy}: Hoạt động 24/7, không phụ thuộc vào mạng internet
+    \item \textbf{Bảo mật dữ liệu cao}: Mã hóa end-to-end, tuân thủ quy định bảo vệ dữ liệu cá nhân
+    \item \textbf{Backup và khôi phục}: Dữ liệu được sao lưu tự động, có thể khôi phục khi cần
+\end{itemize}
+
+\section{Quy trình phát triển}
+
+\subsection{Pipeline phát triển}
+Quy trình phát triển ứng dụng được chia thành 4 giai đoạn chính:
+
+\begin{enumerate}[leftmargin=2cm]
+    \item \textbf{Lập kế hoạch và thiết kế (2 tuần)}: Phân tích yêu cầu, thiết kế giao diện, lập kế hoạch phát triển
+    \item \textbf{Phát triển (4 tuần)}: Lập trình các tính năng theo kế hoạch, tích hợp các công nghệ
+    \item \textbf{Kiểm thử (2 tuần)}: Kiểm tra chất lượng, sửa lỗi, tối ưu hóa hiệu suất
+    \item \textbf{Triển khai (1 tuần)}: Phát hành ứng dụng, cập nhật lên app store
+\end{enumerate}
+
+\subsection{Cấu trúc công nghệ theo tầng}
+Hệ thống được xây dựng theo mô hình 4 tầng:
+
+\begin{enumerate}[leftmargin=2cm]
+    \item \textbf{Tầng giao diện người dùng}: React Native + TypeScript - Xử lý màn hình, nút bấm, biểu tượng
+    \item \textbf{Tầng xử lý logic}: Context + Hooks - Xử lý dữ liệu, quản lý trạng thái ứng dụng
+    \item \textbf{Tầng kết nối}: Axios + Socket.io - Gửi/nhận dữ liệu với máy chủ
+    \item \textbf{Tầng máy chủ}: PHP + MySQL - Xử lý yêu cầu, lưu trữ dữ liệu
+\end{enumerate}
+
+\section{Cấu trúc cơ sở dữ liệu}
+
+\subsection{Mô tả các bảng dữ liệu chính}
+Hệ thống sử dụng cơ sở dữ liệu MySQL với các bảng chính:
+
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Bảng Người dùng (Users)}: Lưu trữ thông tin cá nhân, số điện thoại, email và vai trò (người cao tuổi/người thân)
+    \item \textbf{Bảng Tin nhắn (Messages)}: Lưu trữ tất cả tin nhắn giữa các người dùng, bao gồm nội dung, thời gian gửi
+    \item \textbf{Bảng Khẩn cấp (Emergency)}: Lưu trữ thông tin liên lạc khẩn cấp của mỗi người dùng
+    \item \textbf{Bảng Sức khỏe (Health)}: Lưu trữ các chỉ số sức khỏe như huyết áp, cân nặng theo thời gian
+    \item \textbf{Bảng Nhắc nhở (Reminders)}: Lưu trữ các nhắc nhở và lịch trình của người dùng
+    \item \textbf{Bảng Sách (Books)}: Lưu trữ thông tin sách và tiến độ đọc của người dùng
+\end{itemize}
+
+\section{Kết luận}
+
+VieGrandApp là một ứng dụng toàn diện được thiết kế đặc biệt cho người cao tuổi, kết hợp giữa công nghệ hiện đại và trải nghiệm người dùng tối ưu. Ứng dụng không chỉ đáp ứng các nhu cầu cơ bản như giao tiếp và giải trí mà còn cung cấp các tính năng an toàn và theo dõi sức khỏe quan trọng.
+
+\subsection{Kế hoạch phát triển trong tương lai}
+\begin{itemize}[leftmargin=2cm]
+
+    \item \textbf{Phân tích xu hướng AI}: Sử dụng AI để phân tích xu hướng sức khỏe và đưa ra cảnh báo sớm
+    \item \textbf{Tích hợp với thiết bị y tế}: Kết nối với máy đo huyết áp, cân thông minh qua Bluetooth
+    \item \textbf{Báo cáo y tế chuyên nghiệp}: Tạo báo cáo sức khỏe định kỳ để chia sẻ với bác sĩ
+    \item \textbf{Tích hợp AI}: Sử dụng trí tuệ nhân tạo để cá nhân hóa trải nghiệm người dùng, đưa ra gợi ý phù hợp
+    \item \textbf{Kết nối thiết bị thông minh}: Tích hợp với các thiết bị IoT trong nhà như camera an ninh, cảm biến chuyển động
+    \item \textbf{Dịch vụ tư vấn y tế từ xa}: Kết nối với bác sĩ để tư vấn sức khỏe trực tuyến
+    \item \textbf{Tính năng cộng đồng}: Tạo cộng đồng người cao tuổi để chia sẻ kinh nghiệm và hỗ trợ lẫn nhau
+    \item \textbf{Cải thiện khả năng tiếp cận}: Thêm tính năng hỗ trợ cho người khuyết tật như điều khiển bằng mắt
+\end{itemize}
+
+\subsection{Tác động dự kiến}
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Cải thiện chất lượng cuộc sống}: Giúp người cao tuổi sống độc lập và tự tin hơn
+    \item \textbf{Giảm cảm giác cô đơn}: Thông qua kết nối thường xuyên với gia đình và bạn bè
+    \item \textbf{Tăng cường an toàn}: Với hệ thống khẩn cấp và theo dõi sức khỏe chủ động
+    \item \textbf{Theo dõi sức khỏe chủ động}: Giúp phát hiện sớm các vấn đề sức khỏe
+    \item \textbf{Tạo cộng đồng hỗ trợ}: Kết nối người cao tuổi với nhau và với các dịch vụ hỗ trợ
+\end{itemize}
+
+\subsection{Lời kết}
+VieGrandApp không chỉ là một ứng dụng di động thông thường, mà là một giải pháp toàn diện nhằm cải thiện chất lượng cuộc sống cho người cao tuổi. Thông qua việc kết hợp công nghệ hiện đại với thiết kế thân thiện, ứng dụng giúp người cao tuổi sống độc lập, khỏe mạnh và kết nối với những người thân yêu một cách dễ dàng và an toàn.
+
+\end{document} 
