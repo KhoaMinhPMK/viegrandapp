@@ -133,8 +133,8 @@ const ElderlyNavigator = () => {
         />
       </Stack.Navigator>
       
-      {/* Voice Button - Always visible on all elderly screens */}
-      <FloatingVoiceButton />
+      {/* Voice Button - Center docked like tab action button */}
+      <FloatingVoiceButton variant="centerDocked" />
     </>
   );
 };

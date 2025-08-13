@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
+import LinearGradient from 'react-native-linear-gradient';
 import { useVoiceNavigation } from '../../contexts/VoiceNavigationContext';
 import { useNavigation } from '@react-navigation/native';
 import { processVoiceCommand } from '../../services/voiceNavigationService';
@@ -19,9 +20,10 @@ const { width, height } = Dimensions.get('window');
 
 interface FloatingVoiceButtonProps {
   visible?: boolean;
+  variant?: 'floating' | 'centerDocked';
 }
 
-const FloatingVoiceButton: React.FC<FloatingVoiceButtonProps> = ({ visible = true }) => {
+const FloatingVoiceButton: React.FC<FloatingVoiceButtonProps> = ({ visible = true, variant = 'floating' }) => {
   const navigation = useNavigation<any>();
   const { isListening, startListening, stopListening, results, error, clearResults } = useVoiceNavigation();
   const [modalVisible, setModalVisible] = useState(false);
@@ -30,31 +32,9 @@ const FloatingVoiceButton: React.FC<FloatingVoiceButtonProps> = ({ visible = tru
   
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const breatheAnim = useRef(new Animated.Value(1)).current;
+  // Removed breathing animation per UX request
 
-  // Breathing animation for better visibility
-  useEffect(() => {
-    const breathingAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(breatheAnim, {
-          toValue: 1.05,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(breatheAnim, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    
-    breathingAnimation.start();
-    
-    return () => {
-      breathingAnimation.stop();
-    };
-  }, [breatheAnim]);
+  // Breathing animation removed
 
   useEffect(() => {
     if (isListening) {
@@ -189,31 +169,38 @@ const FloatingVoiceButton: React.FC<FloatingVoiceButtonProps> = ({ visible = tru
   // Always render the voice button - never hide it
   return (
     <>
-      {/* Floating Voice Button - Always Visible */}
-      <Animated.View 
+      {/* Floating/Center-docked Voice Button */}
+      <Animated.View
+        pointerEvents="box-none"
         style={[
-          styles.floatingButton,
-          {
-            transform: [
-              { scale: isListening ? pulseAnim : breatheAnim }
-            ]
-          }
+          variant === 'centerDocked' ? styles.centerDockedContainer : styles.floatingButton,
+          { transform: [{ scale: isListening ? pulseAnim : new Animated.Value(1) }] }
         ]}
       >
-        <TouchableOpacity
-          style={[
-            styles.voiceButton,
-            isListening && styles.voiceButtonListening
-          ]}
-          onPress={handleVoicePress}
-          activeOpacity={0.8}
-        >
-          <Feather 
-            name={isListening ? "mic" : "mic"} 
-            size={28} 
-            color="#FFFFFF" 
-          />
-        </TouchableOpacity>
+        {variant === 'centerDocked' ? (
+          <TouchableOpacity
+            style={styles.centerTouchableHitbox}
+            onPress={handleVoicePress}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#0EA5E9', '#0369A1']}
+              style={[styles.voiceGradient, isListening && styles.voiceGradientListening]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Feather name="mic" size={26} color="#FFFFFF" />
+            </LinearGradient>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[styles.voiceButton, isListening && styles.voiceButtonListening]}
+            onPress={handleVoicePress}
+            activeOpacity={0.8}
+          >
+            <Feather name="mic" size={28} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
       </Animated.View>
 
       {/* Voice Recognition Modal */}
@@ -319,11 +306,44 @@ const styles = StyleSheet.create({
     right: 20,
     zIndex: 9999, // Very high z-index to ensure it's always on top
   },
+  centerDockedContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 35,
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  // White cushion matches tab bar background, gives the "dock" look
+  centerTouchableHitbox: {
+    width: 72,
+    height: 72,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#1E293B',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  // Inner gradient uses the same palette/style as the active tab icon but slightly bigger
+  voiceGradient: {
+    width: 58,
+    height: 58,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  voiceGradientListening: {
+    opacity: 0.95,
+  },
   voiceButton: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#007AFF', // Beautiful blue color
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -331,12 +351,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
-    borderWidth: 2,
-    borderColor: '#FFFFFF', // White border for elegance
+    borderWidth: 0,
+  },
+  voiceButtonCenterLift: {
+    marginBottom: 12,
+    backgroundColor: '#007AFF',
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
   },
   voiceButtonListening: {
-    backgroundColor: '#0D4C92', // Darker blue when listening
-    borderColor: '#5AC8FA', // Light blue border when listening
+    backgroundColor: '#0D4C92',
   },
   modalOverlay: {
     flex: 1,
