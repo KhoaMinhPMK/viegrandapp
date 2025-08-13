@@ -12,6 +12,7 @@ import {
   PermissionsAndroid,
   Platform,
   StatusBar,
+  ScrollView,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { launchCamera, launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
@@ -307,7 +308,11 @@ const HealthCheckScreen = () => {
         <View style={styles.headerSpacer} />
       </View>
 
-      <View style={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         {!capturedImage ? (
           <View style={styles.cameraContainer}>
             <View style={styles.cameraPlaceholder}>
@@ -455,7 +460,7 @@ const HealthCheckScreen = () => {
             </View>
           </View>
         )}
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -503,8 +508,8 @@ const styles = StyleSheet.create({
     width: 44,
   },
   content: {
-    flex: 1,
     padding: 20,
+    paddingBottom: 40,
   },
   cameraContainer: {
     flex: 1,
@@ -611,9 +616,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '600',
   },
-  resultContainer: {
-    flex: 1,
-  },
+  resultContainer: {},
   imageContainer: {
     position: 'relative',
     marginBottom: 20,
