@@ -49,11 +49,22 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: any) => {
   // Ẩn tab bar khi đang ở trong Message tab hoặc các màn hình đọc sách/game
   // để có trải nghiệm full-screen tốt hơn
   const currentRouteName = state.routes[state.index].name;
-
+  
   // Lấy route hiện tại từ HomeStack để kiểm tra các màn hình con
   const currentRoute = state.routes.find((route: any) => route.name === 'HomeStack');
-  const currentScreen = currentRoute?.state?.routes?.[currentRoute.state.index]?.name;
-
+  const homeScreenName = currentRoute?.state?.routes?.[currentRoute.state.index]?.name;
+  
+  // Lấy route hiện tại từ Message tab để kiểm tra chat
+  const messageRoute = state.routes.find((route: any) => route.name === 'Message');
+  const messageScreenName = messageRoute?.state?.routes?.[messageRoute.state.index]?.name;
+  
+  // Debug log để kiểm tra
+  console.log('📱 TabBar Debug:', {
+    currentRouteName,
+    homeScreenName,
+    messageScreenName
+  });
+  
   // Danh sách các màn hình cần ẩn tab bar
   const hideTabBarScreens = [
     'Chat', // Chỉ ẩn khi ở trong chat conversation, không ẩn MessageList
@@ -67,9 +78,9 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: any) => {
     'GameHub', // Ẩn tab bar khi ở GameHub
     'HealthCheck' // Ẩn tab bar khi ở màn hình health check chi tiết
   ];
-
+  
   // Kiểm tra nếu đang ở các màn hình cần ẩn tab bar
-  if (hideTabBarScreens.includes(currentScreen)) {
+  if (hideTabBarScreens.includes(homeScreenName) || hideTabBarScreens.includes(messageScreenName)) {
     return null;
   }
 

@@ -35,6 +35,14 @@ const FloatingVoiceButton: React.FC<FloatingVoiceButtonProps> = ({ visible = tru
   const { isVisible: contextVisible } = useVoiceButton();
   const isVoiceButtonVisible = visible && contextVisible;
   
+  // Debug log to check visibility states
+  console.log('🎤 VoiceButton Debug:', {
+    visible,
+    contextVisible,
+    isVoiceButtonVisible,
+    variant
+  });
+
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   // Removed breathing animation per UX request

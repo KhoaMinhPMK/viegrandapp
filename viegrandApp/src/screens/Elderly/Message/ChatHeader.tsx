@@ -48,8 +48,15 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
       style={styles.container}
     >
       <View style={styles.content}>
-        {/* User Info - Now takes full space */}
-        <TouchableOpacity style={styles.userInfo} onPress={onMenu}>
+        {/* Back Button */}
+        {onBack && (
+          <TouchableOpacity style={styles.backButton} onPress={onBack}>
+            <Feather name="arrow-left" size={24} color="#007AFF" />
+          </TouchableOpacity>
+        )}
+
+        {/* User Info */}
+        <View style={styles.userInfo}>
           <View style={styles.avatarContainer}>
             <Avatar 
               name={name} 
@@ -67,9 +74,9 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
               {getStatusText()}
             </Text>
           </View>
-        </TouchableOpacity>
+        </View>
 
-        {/* Action Buttons */}
+        {/* Action Buttons - Bỏ nút 3 chấm */}
         <View style={styles.actionButtons}>
           {onCall && (
             <TouchableOpacity style={styles.actionButton} onPress={onCall}>
@@ -80,12 +87,6 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           {onVideoCall && (
             <TouchableOpacity style={styles.actionButton} onPress={onVideoCall}>
               <Feather name="video" size={20} color="#007AFF" />
-            </TouchableOpacity>
-          )}
-          
-          {onMenu && (
-            <TouchableOpacity style={styles.actionButton} onPress={onMenu}>
-              <Feather name="more-vertical" size={20} color="#007AFF" />
             </TouchableOpacity>
           )}
         </View>
@@ -105,11 +106,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
+    paddingLeft: 8, // Dời content sang phải một chút
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   userInfo: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    marginLeft: 8, // Dời sang phải thêm một chút
   },
   avatarContainer: {
     position: 'relative',

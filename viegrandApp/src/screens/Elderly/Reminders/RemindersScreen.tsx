@@ -379,6 +379,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
+    paddingTop: Platform.OS === 'android' ? 40 : 16, // Thêm padding top cho Android
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
     shadowColor: '#000',

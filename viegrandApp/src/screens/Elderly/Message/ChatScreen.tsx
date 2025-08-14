@@ -143,6 +143,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
   useFocusEffect(
     React.useCallback(() => {
       // Hide voice button when entering chat
+      console.log('📱 ChatScreen: Hiding voice button');
       setIsVisible(false);
       
       if (userPhone) {
@@ -153,6 +154,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
       
       // Show voice button when leaving chat
       return () => {
+        console.log('📱 ChatScreen: Showing voice button on cleanup');
         setIsVisible(true);
       };
     }, [userPhone, conversationId, setIsVisible])
@@ -634,7 +636,6 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
           onBack={() => navigation.goBack()}
           onCall={() => Alert.alert('Gọi điện', 'Tính năng gọi điện sẽ được thêm sau')}
           onVideoCall={() => Alert.alert('Video call', 'Tính năng video call sẽ được thêm sau')}
-          onMenu={() => Alert.alert('Menu', 'Tính năng menu sẽ được thêm sau')}
         />
 
         <FlatList
