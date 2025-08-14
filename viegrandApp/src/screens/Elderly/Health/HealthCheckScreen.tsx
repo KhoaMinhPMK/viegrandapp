@@ -370,6 +370,18 @@ const HealthCheckScreen = () => {
                 <Text style={styles.galleryButtonText}>Chọn ảnh</Text>
               </TouchableOpacity>
             </View>
+            
+            <TouchableOpacity 
+              style={styles.chartButtonInitial} 
+              onPress={() => {
+                // Navigate to chart screen
+                const nav = navigation as any;
+                nav.navigate('HealthChart');
+              }}
+            >
+              <Feather name="bar-chart-2" size={20} color="#007AFF" style={styles.buttonIcon} />
+              <Text style={styles.chartButtonText}>Biểu đồ sức khỏe</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.resultContainer}>
@@ -859,6 +871,25 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontSize: 17,
     fontWeight: '600',
+  },
+  chartButtonInitial: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginTop: 16,
+    alignItems: 'center',
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
 });
 
