@@ -16,7 +16,7 @@ const AboutAppScreen: React.FC = () => {
   const navigation = useNavigation();
 
   const appInfo = {
-    name: 'VieGrand App',
+    name: process.env.VIEGRAND_APP_NAME,
     version: '1.0.0',
     build: '1',
     description: 'Ứng dụng chăm sóc sức khỏe và kết nối gia đình cho người cao tuổi',

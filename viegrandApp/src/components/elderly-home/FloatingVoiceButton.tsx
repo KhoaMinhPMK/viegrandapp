@@ -91,69 +91,50 @@ const FloatingVoiceButton: React.FC<FloatingVoiceButtonProps> = ({ visible = tru
     }
   };
 
-  const handleProcessVoice = async () => {
-    if (results.length === 0) {
-      Alert.alert('Không có lệnh', 'Vui lòng nói lại lệnh của bạn');
-      return;
-    }
-
-    const command = results[0];
-    setIsProcessing(true);
-    setProcessedCommand(command);
-
-    try {
-      const result = processVoiceCommand(command, navigation);
-      
-      if (result.success && result.action) {
-        Alert.alert(
-          'Thực hiện lệnh',
-          `Đang thực hiện: "${command}"`,
-          [
-            {
-              text: 'Hủy',
-              style: 'cancel',
-              onPress: () => {
-                setIsProcessing(false);
-                setProcessedCommand('');
-              }
-            },
-            {
-              text: 'Thực hiện',
-              onPress: () => {
-                if (result.action) {
-                  result.action();
-                }
-                setIsProcessing(false);
-                setProcessedCommand('');
-                setModalVisible(false);
-                stopListening();
-              }
-            }
-          ]
-        );
-      } else {
-        Alert.alert(
-          'Không hiểu lệnh',
-          'Bạn có thể thử các lệnh sau:\n\n• "Mở tin nhắn"\n• "Xem thời tiết"\n• "Kiểm tra sức khỏe"\n• "Xem nhắc nhở"\n• "Mở giải trí"\n• "Chơi game"\n• "Đọc sách"\n• "Cài đặt"\n• "Trợ giúp"',
-          [
-            {
-              text: 'Hủy',
-              style: 'cancel',
-              onPress: () => {
-                setIsProcessing(false);
-                setProcessedCommand('');
-              }
-            }
-          ]
-        );
+      const handleProcessVoice = async () => {
+      if (results.length === 0) {
+        Alert.alert('Không có lệnh', 'Vui lòng nói lại lệnh của bạn');
+        return;
       }
-    } catch (error) {
-      console.error('Error processing voice command:', error);
-      Alert.alert('Lỗi', 'Có lỗi xảy ra khi xử lý lệnh');
-      setIsProcessing(false);
+
+      const command = results[0];
+      setIsProcessing(true);
       setProcessedCommand('');
-    }
-  };
+
+      try {
+        const result = processVoiceCommand(command, navigation);
+        
+        if (result.success && result.action) {
+          // Directly execute the command without confirmation
+          if (result.action) {
+            result.action();
+          }
+          setModalVisible(false);
+          stopListening();
+        } else {
+          Alert.alert(
+            'Không hiểu lệnh',
+            'Bạn có thể thử các lệnh sau:\n\n• "Mở tin nhắn"\n• "Xem thời tiết"\n• "Kiểm tra sức khỏe"\n• "Xem nhắc nhở"\n• "Mở giải trí"\n• "Chơi game"\n• "Đọc sách"\n• "Cài đặt"\n• "Trợ giúp"',
+            [
+              {
+                text: 'Hủy',
+                style: 'cancel',
+                onPress: () => {
+                  setIsProcessing(false);
+                  setProcessedCommand('');
+                }
+              }
+            ]
+          );
+        }
+      } catch (error) {
+        console.error('Error processing voice command:', error);
+        Alert.alert('Lỗi', 'Có lỗi xảy ra khi xử lý lệnh');
+      } finally {
+        setIsProcessing(false);
+        setProcessedCommand('');
+      }
+    };
 
   const handleCancelVoice = () => {
     stopListening();
@@ -288,27 +269,7 @@ const FloatingVoiceButton: React.FC<FloatingVoiceButtonProps> = ({ visible = tru
               </View>
             )}
 
-            {/* Quick Command Suggestions */}
-            <View style={styles.suggestionsContainer}>
-              <Text style={styles.suggestionsTitle}>Lệnh nhanh:</Text>
-              <View style={styles.suggestionsGrid}>
-                {['Tin nhắn', 'Thời tiết', 'Sức khỏe', 'Nhắc nhở'].map((command, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.suggestionChip}
-                    onPress={() => {
-                      const mockResult = processVoiceCommand(command, navigation);
-                      if (mockResult.success && mockResult.action) {
-                        mockResult.action();
-                        setModalVisible(false);
-                      }
-                    }}
-                  >
-                    <Text style={styles.suggestionText}>"{command}"</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
+
           </View>
         </View>
       </Modal>
@@ -516,33 +477,11 @@ const styles = StyleSheet.create({
     color: '#FF9500',
     fontWeight: '500',
   },
-  suggestionsContainer: {
-    marginTop: 20,
-  },
-  suggestionsTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#0D4C92',
-    marginBottom: 16,
-  },
-  suggestionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  suggestionChip: {
-    backgroundColor: '#E0E7FF',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
-  },
-  suggestionText: {
-    fontSize: 14,
-    color: '#0D4C92',
-    fontWeight: '500',
-  },
+
+
+
+
+
 });
 
 export default FloatingVoiceButton; 
