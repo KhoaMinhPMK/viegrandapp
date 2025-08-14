@@ -13,6 +13,8 @@ import SupportCenterScreen from '../screens/Elderly/Settings/SupportCenterScreen
 import TermsOfServiceScreen from '../screens/Elderly/Settings/TermsOfServiceScreen';
 import PrivacyPolicyScreen from '../screens/Elderly/Settings/PrivacyPolicyScreen';
 import VoiceHelpScreen from '../screens/Elderly/Settings/VoiceHelpScreen';
+import MonitoringScreen from '../screens/Relative/Monitoring';
+import ElderlyHealthChartScreen from '../screens/Relative/Monitoring/ElderlyHealthChartScreen';
 
 const Stack = createStackNavigator();
 
@@ -68,6 +70,16 @@ const RelativeNavigator = () => {
       <Stack.Screen 
         name="VoiceHelp" 
         component={VoiceHelpScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="Monitoring" 
+        component={MonitoringScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="ElderlyHealthChart" 
+        component={ElderlyHealthChartScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>
