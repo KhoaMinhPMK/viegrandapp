@@ -660,6 +660,78 @@ export const getElderlyPremiumInfo = async (elderlyPrivateKey: string): Promise<
   }
 };
 
+// Get vital signs data API
+export const getVitalSignsData = async (privateKey: string, period: string): Promise<{ 
+  success: boolean; 
+  data?: {
+    vital_signs: any[];
+    period: string;
+    start_date: string;
+    total_records: number;
+  }; 
+  message?: string 
+}> => {
+  try {
+    const response = await apiClient.get(`/get_vital_signs.php?private_key=${encodeURIComponent(privateKey)}&period=${period}`);
+
+    console.log('Get vital signs API response:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data || []
+      };
+    } else {
+      console.log('Get vital signs failed:', response.data);
+      return {
+        success: false,
+        message: response.data.message || 'Không thể lấy dữ liệu sức khỏe'
+      };
+    }
+  } catch (error: any) {
+    console.error('Get vital signs API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.error?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Save vital signs data API
+export const saveVitalSigns = async (privateKey: string, vitalSignsData: {
+  blood_pressure_systolic: number;
+  blood_pressure_diastolic: number;
+  heart_rate: number;
+}): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const response = await apiClient.post('/save_vital_signs.php', {
+      private_key: privateKey,
+      ...vitalSignsData
+    });
+
+    console.log('Save vital signs API response:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        message: response.data.message || 'Lưu dữ liệu sức khỏe thành công'
+      };
+    } else {
+      console.log('Save vital signs failed:', response.data);
+      return {
+        success: false,
+        message: response.data.message || 'Lưu dữ liệu sức khỏe thất bại'
+      };
+    }
+  } catch (error: any) {
+    console.error('Save vital signs API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.error?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
 // Update user data API
 export const updateUserData = async (email: string, updateData: any): Promise<{ success: boolean; user?: any; message?: string }> => {
   try {

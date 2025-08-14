@@ -19,12 +19,14 @@ import { launchCamera, launchImageLibrary, ImagePickerResponse } from 'react-nat
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import groqApiService, { HealthReadings } from '../../../services/groqApi';
-import { updateUserData } from '../../../services/api';
+import { updateUserData, saveVitalSigns } from '../../../services/api';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
 const HealthCheckScreen = () => {
   const navigation = useNavigation();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -248,6 +250,14 @@ const HealthCheckScreen = () => {
         return;
       }
 
+      // Lấy private key từ user object
+      const privateKey = user?.privateKey;
+      if (!privateKey) {
+        console.log('❌ No private key found in user object');
+        Alert.alert('Lỗi', 'Không tìm thấy mã người dùng. Vui lòng đăng nhập lại.');
+        return;
+      }
+
       // Chuẩn bị dữ liệu để gửi lên server
       const updateData = {
         blood_pressure_systolic: parseInt(readings.huyet_ap_tam_thu),
@@ -256,20 +266,38 @@ const HealthCheckScreen = () => {
         last_health_check: new Date().toISOString()
       };
 
+      // Chuẩn bị dữ liệu cho vital_signs table
+      const vitalSignsData = {
+        blood_pressure_systolic: parseInt(readings.huyet_ap_tam_thu),
+        blood_pressure_diastolic: parseInt(readings.huyet_ap_tam_truong),
+        heart_rate: parseInt(readings.nhip_tim)
+      };
+
       console.log('📤 Sending health data to server:', updateData);
       console.log('📧 User email:', userEmail);
+      console.log('🔑 User private key:', privateKey);
 
-      // Gọi API cập nhật thông tin user
-      const response = await updateUserData(userEmail, updateData);
+      // Gọi API cập nhật thông tin user (existing functionality)
+      const userUpdateResponse = await updateUserData(userEmail, updateData);
 
-      if (response.success) {
+      // Gọi API lưu dữ liệu vào vital_signs table (new functionality)
+      const vitalSignsResponse = await saveVitalSigns(privateKey, vitalSignsData);
+
+      if (userUpdateResponse.success && vitalSignsResponse.success) {
         Alert.alert(
           'Thành công', 
-          'Thông tin huyết áp đã được cập nhật thành công!',
+          'Thông tin huyết áp đã được cập nhật và ghi nhận thành công!',
           [{ text: 'OK', onPress: () => navigation.goBack() }]
         );
       } else {
-        setError('Không thể cập nhật thông tin. Vui lòng thử lại.');
+        // Check which operation failed
+        if (!userUpdateResponse.success) {
+          setError(`Không thể cập nhật thông tin user: ${userUpdateResponse.message}`);
+        } else if (!vitalSignsResponse.success) {
+          setError(`Không thể ghi nhận dữ liệu sức khỏe: ${vitalSignsResponse.message}`);
+        } else {
+          setError('Không thể cập nhật thông tin. Vui lòng thử lại.');
+        }
       }
     } catch (error) {
       console.error('Update health data error:', error);
@@ -424,20 +452,34 @@ const HealthCheckScreen = () => {
 
             <View style={styles.buttonContainer}>
               {readings && (
-                <TouchableOpacity 
-                  style={[styles.updateButton, isUpdating && styles.disabledButton]} 
-                  onPress={updateHealthData}
-                  disabled={isUpdating}
-                >
-                  {isUpdating ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <>
-                      <Feather name="upload" size={20} color="#FFFFFF" style={styles.buttonIcon} />
-                      <Text style={styles.updateButtonText}>Cập nhật thông tin</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
+                <>
+                  <TouchableOpacity 
+                    style={[styles.updateButton, isUpdating && styles.disabledButton]} 
+                    onPress={updateHealthData}
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <>
+                        <Feather name="upload" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+                        <Text style={styles.updateButtonText}>Ghi nhận kết quả</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.chartButton} 
+                    onPress={() => {
+                      // Navigate to chart screen
+                      const nav = navigation as any;
+                      nav.navigate('HealthChart');
+                    }}
+                  >
+                    <Feather name="bar-chart-2" size={20} color="#007AFF" style={styles.buttonIcon} />
+                    <Text style={styles.chartButtonText}>Biểu đồ</Text>
+                  </TouchableOpacity>
+                </>
               )}
               
               <View style={styles.retakeButtonRow}>
@@ -789,6 +831,31 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   retakeButtonText: {
+    color: '#007AFF',
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  chartButton: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 40,
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginTop: 12,
+    minWidth: 200,
+    alignItems: 'center',
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  chartButtonText: {
     color: '#007AFF',
     fontSize: 17,
     fontWeight: '600',

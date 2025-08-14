@@ -6,6 +6,7 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import ElderlyBottomTabNavigator from './ElderlyBottomTabNavigator';
 import HealthCheckScreen from '../screens/Elderly/Health/HealthCheckScreen';
+import HealthChartScreen from '../screens/Elderly/Health/HealthChartScreen';
 import RemindersScreen from '../screens/Elderly/Reminders';
 import VideoPlayerScreen from '../screens/Elderly/Entertainment/VideoPlayerScreen';
 import VideoDetailScreen from '../screens/Elderly/Entertainment/VideoDetailScreen';
@@ -40,6 +41,11 @@ const ElderlyNavigator = () => {
         <Stack.Screen 
           name="HealthCheck" 
           component={HealthCheckScreen} 
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="HealthChart" 
+          component={HealthChartScreen} 
           options={{ headerShown: false }}
         />
         <Stack.Screen 
