@@ -16,6 +16,7 @@ import { useVoiceNavigation } from '../../contexts/VoiceNavigationContext';
 import { useNavigation } from '@react-navigation/native';
 import { processVoiceCommand } from '../../services/voiceNavigationService';
 import { useVoiceButton } from '../../contexts/VoiceButtonContext';
+import MicrophoneIndicator from './MicrophoneIndicator';
 
 const { width, height } = Dimensions.get('window');
 
@@ -30,6 +31,7 @@ const FloatingVoiceButton: React.FC<FloatingVoiceButtonProps> = ({ visible = tru
   const [modalVisible, setModalVisible] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processedCommand, setProcessedCommand] = useState<string>('');
+  const [currentAmplitude, setCurrentAmplitude] = useState<number>(0);
   
   // Use VoiceButton context to control visibility
   const { isVisible: contextVisible } = useVoiceButton();
@@ -51,11 +53,11 @@ const FloatingVoiceButton: React.FC<FloatingVoiceButtonProps> = ({ visible = tru
 
   useEffect(() => {
     if (isListening) {
-      // Start pulse animation when listening
+      // Simple pulse animation
       Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
-            toValue: 1.2,
+            toValue: 1.1,
             duration: 1000,
             useNativeDriver: true,
           }),
@@ -225,6 +227,9 @@ const FloatingVoiceButton: React.FC<FloatingVoiceButtonProps> = ({ visible = tru
                 {getStatusText()}
               </Text>
             </View>
+
+            {/* Microphone Indicator */}
+            <MicrophoneIndicator isListening={isListening} />
 
             {/* Transcript */}
             {results.length > 0 && (
