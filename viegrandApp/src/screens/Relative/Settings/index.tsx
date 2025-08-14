@@ -252,7 +252,6 @@ const RelativeSettingsScreen = ({ navigation }: any) => {
               title="Premium"
               value="Đang tải..."
               onPress={() => {}}
-              isLast
             />
           ) : isPremium ? (
             <SettingsRow
@@ -262,7 +261,6 @@ const RelativeSettingsScreen = ({ navigation }: any) => {
               title="Premium Active"
               value={daysRemaining ? `Còn ${daysRemaining} ngày` : 'Đang hoạt động'}
               onPress={handlePremiumNavigation}
-              isLast
             />
           ) : (
             <SettingsRow
@@ -272,9 +270,34 @@ const RelativeSettingsScreen = ({ navigation }: any) => {
               title="Nâng cấp Premium"
               value="Xem chi tiết gói"
               onPress={handlePremiumNavigation}
-              isLast
             />
           )}
+        </SettingsSection>
+
+        {/* Support Section */}
+        <SettingsSection title="Hỗ trợ">
+          <SettingsRow
+            type="navigation"
+            icon="info"
+            iconBackgroundColor="#007AFF"
+            title="Trung tâm hỗ trợ"
+            onPress={() => navigation.navigate('SupportCenter')}
+          />
+          <SettingsRow
+            type="navigation"
+            icon="file"
+            iconBackgroundColor="#8E8E93"
+            title="Điều khoản dịch vụ"
+            onPress={() => navigation.navigate('TermsOfService')}
+          />
+          <SettingsRow
+            type="navigation"
+            icon="lock"
+            iconBackgroundColor="#34C759"
+            title="Chính sách bảo mật"
+            onPress={() => navigation.navigate('PrivacyPolicy')}
+            isLast
+          />
         </SettingsSection>
 
         {/* Logout Section */}

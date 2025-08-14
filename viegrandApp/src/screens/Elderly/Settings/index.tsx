@@ -334,19 +334,19 @@ const ElderlySettingsScreen = () => {
                             title="Trung tâm hỗ trợ"
                             icon="info"
                             type="navigation"
-                            onPress={() => { /* Navigate to Help Center */ }}
+                            onPress={() => navigation.navigate('SupportCenter')}
                         />
                         <SettingsRow
                             title="Điều khoản dịch vụ"
                             icon="file"
                             type="navigation"
-                            onPress={() => { /* Navigate to ToS */ }}
+                            onPress={() => navigation.navigate('TermsOfService')}
                         />
                         <SettingsRow
                             title="Chính sách bảo mật"
                             icon="lock"
                             type="navigation"
-                            onPress={() => { /* Navigate to Privacy Policy */ }}
+                            onPress={() => navigation.navigate('PrivacyPolicy')}
                         />
                     </SettingsSection>
 
