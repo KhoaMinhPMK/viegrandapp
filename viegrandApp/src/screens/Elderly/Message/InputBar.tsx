@@ -21,6 +21,7 @@ interface InputBarProps {
   onVoice?: () => void;
   placeholder?: string;
   disabled?: boolean;
+  enableVoiceMode?: boolean; // New prop to control voice mode toggle
 }
 
 const InputBar: React.FC<InputBarProps> = ({
@@ -32,8 +33,9 @@ const InputBar: React.FC<InputBarProps> = ({
   onVoice,
   placeholder = 'Nhập tin nhắn...',
   disabled = false,
+  enableVoiceMode = true, // Default true for elderly (backward compatibility)
 }) => {
-  const [isVoiceMode, setIsVoiceMode] = useState(true); // Default to voice mode
+  const [isVoiceMode, setIsVoiceMode] = useState(enableVoiceMode); // Use enableVoiceMode as initial state
   const [isVoiceModalVisible, setIsVoiceModalVisible] = useState(false);
 
   const handleSend = () => {
@@ -50,8 +52,10 @@ const InputBar: React.FC<InputBarProps> = ({
   const handleVoiceResult = (text: string) => {
     onChangeText(text);
     setIsVoiceModalVisible(false);
-    // Switch to text mode after voice input
-    setIsVoiceMode(false);
+    // Switch to text mode after voice input (only if voice mode is enabled)
+    if (enableVoiceMode) {
+      setIsVoiceMode(false);
+    }
   };
 
   const handleVoiceClose = () => {
@@ -72,21 +76,23 @@ const InputBar: React.FC<InputBarProps> = ({
         <View style={styles.content}>
           {/* Left side - Mode toggle and main action */}
           <View style={styles.leftSection}>
-            {/* Mode Toggle Button */}
-            <TouchableOpacity 
-              style={styles.modeToggle}
-              onPress={toggleMode}
-              disabled={disabled}
-            >
-              <Feather 
-                name={isVoiceMode ? "type" : "mic"} 
-                size={20} 
-                color="#8E8E93" 
-              />
-            </TouchableOpacity>
+            {/* Mode Toggle Button - Only show if voice mode is enabled */}
+            {enableVoiceMode && (
+              <TouchableOpacity 
+                style={styles.modeToggle}
+                onPress={toggleMode}
+                disabled={disabled}
+              >
+                <Feather 
+                  name={isVoiceMode ? "type" : "mic"} 
+                  size={20} 
+                  color="#8E8E93" 
+                />
+              </TouchableOpacity>
+            )}
 
             {/* Main Input/Voice Area */}
-            {isVoiceMode ? (
+            {enableVoiceMode && isVoiceMode ? (
               <TouchableOpacity
                 style={styles.voiceButton}
                 onPress={handleVoicePress}
@@ -128,8 +134,8 @@ const InputBar: React.FC<InputBarProps> = ({
               </TouchableOpacity>
             )}
 
-            {/* Send Button (only show when there's text) */}
-            {!isVoiceMode && canSend && (
+            {/* Send Button - Show when there's text OR when voice mode is disabled */}
+            {((!enableVoiceMode && canSend) || (enableVoiceMode && !isVoiceMode && canSend)) && (
               <TouchableOpacity
                 style={styles.sendButton}
                 onPress={handleSend}

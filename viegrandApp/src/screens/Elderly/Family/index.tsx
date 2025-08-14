@@ -308,6 +308,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 15,
+    paddingTop: '5%', // Thêm padding top 5%
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     marginHorizontal: 15,
     marginTop: 10,

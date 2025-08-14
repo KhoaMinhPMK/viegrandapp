@@ -691,6 +691,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
           onVoice={() => {}}
           placeholder={isUploadingImage ? 'Đang tải ảnh...' : 'Nhập tin nhắn...'}
           disabled={isUploadingImage}
+          enableVoiceMode={user?.role === 'elderly'} // Only enable voice mode for elderly users
         />
       </SafeAreaView>
     </KeyboardAvoidingView>
