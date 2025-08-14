@@ -9,6 +9,9 @@ import RelativeSettingsScreen from '../screens/Relative/Settings';
 import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 import ElderlyProfileScreen from '../screens/Elderly/Profile';
 import EmergencyCallSettingsScreen from '../screens/Elderly/Settings/EmergencyCallSettingsScreen';
+import SupportCenterScreen from '../screens/Elderly/Settings/SupportCenterScreen';
+import TermsOfServiceScreen from '../screens/Elderly/Settings/TermsOfServiceScreen';
+import PrivacyPolicyScreen from '../screens/Elderly/Settings/PrivacyPolicyScreen';
 
 export type SettingsStackParamList = {
   ElderlySettings: undefined;
@@ -16,6 +19,9 @@ export type SettingsStackParamList = {
   EditProfile: undefined;
   ElderlyProfile: undefined;
   EmergencyCallSettings: undefined;
+  SupportCenter: undefined;
+  TermsOfService: undefined;
+  PrivacyPolicy: undefined;
 };
 
 const Stack = createStackNavigator<SettingsStackParamList>();
@@ -72,6 +78,21 @@ const SettingsNavigator = ({ initialRouteName }: SettingsNavigatorProps) => {
       <Stack.Screen
         name="EmergencyCallSettings"
         component={EmergencyCallSettingsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="SupportCenter"
+        component={SupportCenterScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TermsOfService"
+        component={TermsOfServiceScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PrivacyPolicy"
+        component={PrivacyPolicyScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

@@ -19,11 +19,11 @@ const isIOS = Platform.OS === 'ios';
 
 // --- Tách các component con ra ngoài và sử dụng React.memo ---
 
-const TabBarItem = memo(({ 
-  isFocused, 
-  icon 
-}: { 
-  isFocused: boolean; 
+const TabBarItem = memo(({
+  isFocused,
+  icon
+}: {
+  isFocused: boolean;
   icon: string;
 }) => {
   return (
@@ -48,16 +48,16 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: any) => {
   // Ẩn tab bar khi đang ở trong Message tab hoặc các màn hình đọc sách/game
   // để có trải nghiệm full-screen tốt hơn
   const currentRouteName = state.routes[state.index].name;
-  
+
   // Lấy route hiện tại từ HomeStack để kiểm tra các màn hình con
   const currentRoute = state.routes.find((route: any) => route.name === 'HomeStack');
   const currentScreen = currentRoute?.state?.routes?.[currentRoute.state.index]?.name;
-  
+
   // Danh sách các màn hình cần ẩn tab bar
   const hideTabBarScreens = [
     'Message',
     'BookLibrary',
-    'BookDetail', 
+    'BookDetail',
     'BookReader',
     'BookSettings',
     'BookBookmark',
@@ -65,7 +65,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: any) => {
     'EntertainmentHub', // Ẩn tab bar khi ở EntertainmentHub để có trải nghiệm tốt hơn
     'GameHub' // Ẩn tab bar khi ở GameHub
   ];
-  
+
   // Kiểm tra nếu đang ở Message tab hoặc các màn hình cần ẩn tab bar
   if (currentRouteName === 'Message' || currentRouteName === 'Message2' || hideTabBarScreens.includes(currentScreen)) {
     return null;
@@ -124,7 +124,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: any) => {
   );
 });
 
-const SOSButton = memo(({onPress}: {onPress: () => void}) => (
+const SOSButton = memo(({ onPress }: { onPress: () => void }) => (
   <TouchableOpacity style={styles.sosButtonContainer} onPress={onPress}>
     <View style={styles.sosButton}>
       <Feather name="shield" size={32} color="#FFFFFF" />
@@ -141,8 +141,8 @@ const renderSettingsNavigator = () => <SettingsNavigator initialRouteName="Elder
 
 const ElderlyBottomTabNavigator = () => {
 
-  const renderTabBarIcon = useCallback((iconName: string) => 
-    ({ focused }: { focused: boolean }) => 
+  const renderTabBarIcon = useCallback((iconName: string) =>
+    ({ focused }: { focused: boolean }) =>
       <TabBarItem isFocused={focused} icon={iconName} />,
     []
   );
@@ -154,15 +154,15 @@ const ElderlyBottomTabNavigator = () => {
         headerShown: false,
       }}
     >
-      <Tab.Screen 
+      <Tab.Screen
         name="HomeStack" // Renamed from "Home" to reflect it's a stack
         component={HomeNavigator}
         options={{
           tabBarIcon: renderTabBarIcon('home')
         }}
       />
-      <Tab.Screen 
-        name="Message" 
+      <Tab.Screen
+        name="Message"
         component={MessageNavigator} // Replace MessageScreen with MessageNavigator
         options={{
           tabBarIcon: renderTabBarIcon('message-square'),
@@ -175,14 +175,14 @@ const ElderlyBottomTabNavigator = () => {
           tabBarIcon: () => null
         }}
       />
-      <Tab.Screen 
-        name="Message2" 
+      <Tab.Screen
+        name="Message2"
         component={MessageNavigator} // Second message tab for the new position
         options={{
           tabBarIcon: renderTabBarIcon('message-circle'),
         }}
       />
-      <Tab.Screen 
+      <Tab.Screen
         name="Settings"
         options={{
           tabBarIcon: renderTabBarIcon('settings')
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 12,
     shadowColor: '#FF3B30',
-    shadowOffset: {width: 0, height: 8},
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
     borderWidth: 3,
