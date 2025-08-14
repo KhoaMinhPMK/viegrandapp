@@ -10,7 +10,6 @@ import {
   Dimensions,
   Alert,
   Image,
-  Animated,
   Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -87,9 +86,9 @@ const RelativeHomeScreen = ({ navigation }: any) => {
     },
   ];
   
-  // Animation states for menu items
-  const fadeAnim = useRef(menuItems.map(() => new Animated.Value(0))).current;
-  const scaleAnim = useRef(menuItems.map(() => new Animated.Value(1))).current;
+  // Animation states for menu items - REMOVED
+  // const fadeAnim = useRef(menuItems.map(() => new Animated.Value(0))).current;
+  // const scaleAnim = useRef(menuItems.map(() => new Animated.Value(1))).current;
   
   // Premium Context - with error handling
   let premiumStatus = null;
@@ -164,28 +163,28 @@ const RelativeHomeScreen = ({ navigation }: any) => {
     loadPremiumDataFromCache();
   }, []);
 
-  // Enhanced animation for menu items
-  useEffect(() => {
-    const animations = menuItems.map((_, index) => {
-      return Animated.parallel([
-        Animated.timing(fadeAnim[index], {
-          toValue: 1,
-          duration: 500,
-          delay: index * 150,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleAnim[index], {
-          toValue: 1,
-          tension: 60,
-          friction: 8,
-          delay: index * 150,
-          useNativeDriver: true,
-        })
-      ]);
-    });
-    
-    Animated.stagger(100, animations).start();
-  }, []);
+  // Enhanced animation for menu items - REMOVED
+  // useEffect(() => {
+  //   const animations = menuItems.map((_, index) => {
+  //     return Animated.parallel([
+  //       Animated.timing(fadeAnim[index], {
+  //         toValue: 1,
+  //         duration: 500,
+  //         delay: index * 150,
+  //         useNativeDriver: true,
+  //       }),
+  //       Animated.spring(scaleAnim[index], {
+  //         toValue: 1,
+  //         tension: 60,
+  //         friction: 8,
+  //         delay: index * 150,
+  //         useNativeDriver: true,
+  //       })
+  //     ]);
+  //   });
+  //   
+  //   Animated.stagger(100, animations).start();
+  // }, []);
 
   const loadUserProfile = async () => {
     try {
@@ -331,19 +330,19 @@ const RelativeHomeScreen = ({ navigation }: any) => {
       // iOS haptic feedback would go here
     }
     
-    // Animate button press
-    Animated.sequence([
-      Animated.timing(scaleAnim[index], {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim[index], {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    // Animate button press - REMOVED
+    // Animated.sequence([
+    //   Animated.timing(scaleAnim[index], {
+    //     toValue: 0.95,
+    //     duration: 100,
+    //     useNativeDriver: true,
+    //   }),
+    //   Animated.timing(scaleAnim[index], {
+    //     toValue: 1,
+    //     duration: 100,
+    //     useNativeDriver: true,
+    //   }),
+    // ]).start();
     
     // Navigation based on route
     switch (item.id) {
@@ -394,15 +393,9 @@ const RelativeHomeScreen = ({ navigation }: any) => {
             <Text style={styles.sectionTitle}>Thao tác nhanh</Text>
             <View style={styles.menuGrid}>
               {menuItems.map((item, index) => (
-                <Animated.View
+                <View
                   key={item.id}
-                  style={[
-                    styles.menuItemContainer,
-                    { 
-                      opacity: fadeAnim[index],
-                      transform: [{ scale: scaleAnim[index] }]
-                    }
-                  ]}
+                  style={styles.menuItemContainer}
                 >
                   <TouchableOpacity
                     style={styles.menuItem}
@@ -435,7 +428,7 @@ const RelativeHomeScreen = ({ navigation }: any) => {
                       </View>
                     </View>
                   </TouchableOpacity>
-                </Animated.View>
+                </View>
               ))}
             </View>
           </View>
