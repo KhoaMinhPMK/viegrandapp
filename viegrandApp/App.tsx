@@ -21,6 +21,7 @@ import pushNotificationService from './src/services/pushNotification';
 import { navigationRef } from './src/navigation/navigationService';
 import FloatingVoiceButton from './src/components/elderly-home/FloatingVoiceButton';
 import { useAuth } from './src/contexts/AuthContext';
+import { VoiceButtonProvider } from './src/contexts/VoiceButtonContext';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -31,7 +32,7 @@ const ElderlyNavigatorWithVoice = () => {
 
 const AppContent = memo(() => {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       <Stack.Screen name="Auth" component={AuthNavigator} />
@@ -53,13 +54,15 @@ const App = () => {
           <SafeAreaProvider>
             <PremiumProvider>
               <SettingsProvider>
-                <VoiceProvider>
-                  <VoiceNavigationProvider>
-                    <NavigationContainer ref={navigationRef}>
-                      <AppContent />
-                    </NavigationContainer>
-                  </VoiceNavigationProvider>
-                </VoiceProvider>
+                <VoiceButtonProvider>
+                  <VoiceProvider>
+                    <VoiceNavigationProvider>
+                      <NavigationContainer ref={navigationRef}>
+                        <AppContent />
+                      </NavigationContainer>
+                    </VoiceNavigationProvider>
+                  </VoiceProvider>
+                </VoiceButtonProvider>
               </SettingsProvider>
             </PremiumProvider>
           </SafeAreaProvider>

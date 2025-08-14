@@ -9,7 +9,9 @@ interface SettingsContainerProps {
 export function SettingsContainer({ children, style }: SettingsContainerProps) {
   return (
     <ScrollView
-      style={[styles.container, style]}
+      style={[styles.container, style, {
+        marginBottom: 100,
+      }]}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.contentContainer}
     >
@@ -25,5 +27,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingVertical: 20,
+
   },
 });
