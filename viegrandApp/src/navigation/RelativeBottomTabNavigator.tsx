@@ -40,10 +40,17 @@ const TabBarItem = memo(({
 });
 
 const CustomTabBar = memo(({ state, descriptors, navigation }: any) => {
-  // For relative users, always show the tab bar
-  // Only hide when in Chat screen for better UX
+  // Ẩn tab bar khi đang ở trong Message tab để có trải nghiệm full-screen tốt hơn
   const currentRouteName = state.routes[state.index].name;
 
+  // Danh sách các màn hình cần ẩn tab bar
+  const hideTabBarScreens = [
+    // 'Message',
+    // 'Chat'
+    '',
+  ];
+
+  // For relative users, only hide tab bar when in Chat screen
   // Get the current route from MessageNavigator to check if we're in Chat
   const currentRoute = state.routes.find((route: any) => route.name === 'Message');
   const currentMessageScreen = currentRoute?.state?.routes?.[currentRoute.state.index]?.name;
@@ -123,12 +130,11 @@ const RelativeBottomTabNavigator = () => {
       />
       <Tab.Screen
         name="Settings"
+        component={RelativeSettingsScreen}
         options={{
           tabBarIcon: renderTabBarIcon('settings')
         }}
-      >
-        {() => <RelativeSettingsScreen />}
-      </Tab.Screen>
+      />
     </Tab.Navigator>
   );
 };

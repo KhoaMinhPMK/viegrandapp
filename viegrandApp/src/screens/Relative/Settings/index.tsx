@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { SettingsContainer } from '../../../components/settings/SettingsContainer';
 import { SettingsSection } from '../../../components/settings/SettingsSection';
 import { SettingsRow } from '../../../components/settings/SettingsRow';
@@ -16,8 +16,10 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { getUserData } from '../../../services/api';
 
-const RelativeSettingsScreen = ({ navigation }: any) => {
+const RelativeSettingsScreen = ({ navigation }: { navigation?: any }) => {
   const { user, logout } = useAuth();
+  const navigationHook = useNavigation<any>();
+  const nav = navigation || navigationHook;
   const { settings, updateSettings, isLoading } = useSettings();
   
   // State cho user data từ API
@@ -120,15 +122,36 @@ const RelativeSettingsScreen = ({ navigation }: any) => {
               await logout();
               
               // Navigate về root level và chọn Auth route với Login screen
-              navigation.reset({
-                index: 0,
-                routes: [{ 
-                  name: 'Auth',
-                  params: {
-                    screen: 'Login'
+              if (nav && nav.reset) {
+                nav.reset({
+                  index: 0,
+                  routes: [{ 
+                    name: 'Auth',
+                    params: {
+                      screen: 'Login'
+                    }
+                  }],
+                });
+              } else {
+                console.error('Navigation object is not available for logout');
+                // Fallback: try to navigate using the root navigator
+                try {
+                  const rootNavigation = nav?.getParent?.() || nav;
+                  if (rootNavigation?.reset) {
+                    rootNavigation.reset({
+                      index: 0,
+                      routes: [{ 
+                        name: 'Auth',
+                        params: {
+                          screen: 'Login'
+                        }
+                      }],
+                    });
                   }
-                }],
-              });
+                } catch (fallbackError) {
+                  console.error('Fallback navigation also failed:', fallbackError);
+                }
+              }
               
               console.log('✅ Logout completed and navigated to Login');
             } catch (error) {
@@ -146,10 +169,10 @@ const RelativeSettingsScreen = ({ navigation }: any) => {
   const handlePremiumNavigation = () => {
     if (isPremium) {
       // Navigate to management screen for premium users
-      navigation.navigate('PremiumManagement');
+      nav.navigate('PremiumManagement');
     } else {
       // Navigate to subscription screen for non-premium users
-      navigation.navigate('Premium');
+      nav.navigate('Premium');
     }
   };
 
@@ -181,7 +204,7 @@ const RelativeSettingsScreen = ({ navigation }: any) => {
             iconBackgroundColor="#1E90FF"
             title={userData?.userName || user?.fullName || 'Người dùng'}
             value={userData?.email || user?.email}
-            onPress={() => navigation.navigate('EditProfile')}
+            onPress={() => nav.navigate('EditProfile')}
             isLast
           />
         </SettingsSection>
@@ -281,21 +304,21 @@ const RelativeSettingsScreen = ({ navigation }: any) => {
             icon="info"
             iconBackgroundColor="#007AFF"
             title="Trung tâm hỗ trợ"
-            onPress={() => navigation.navigate('SupportCenter')}
+            onPress={() => nav.navigate('SupportCenter')}
           />
           <SettingsRow
             type="navigation"
             icon="file"
             iconBackgroundColor="#8E8E93"
             title="Điều khoản dịch vụ"
-            onPress={() => navigation.navigate('TermsOfService')}
+            onPress={() => nav.navigate('TermsOfService')}
           />
           <SettingsRow
             type="navigation"
             icon="lock"
             iconBackgroundColor="#34C759"
             title="Chính sách bảo mật"
-            onPress={() => navigation.navigate('PrivacyPolicy')}
+            onPress={() => nav.navigate('PrivacyPolicy')}
             isLast
           />
         </SettingsSection>

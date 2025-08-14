@@ -648,7 +648,22 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
       />
       
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.getParent()?.navigate('HomeStack')} style={styles.homeButton}>
+        <TouchableOpacity onPress={() => {
+          // For relative users, navigate to Home tab
+          // For elderly users, navigate to HomeStack
+          const parentNavigation = navigation.getParent();
+          if (parentNavigation) {
+            // Check if we're in relative flow by looking at the tab navigator
+            const currentRoute = parentNavigation.getState()?.routes?.find((route: any) => route.name === 'Home');
+            if (currentRoute) {
+              // We're in relative flow, navigate to Home tab
+              parentNavigation.navigate('Home');
+            } else {
+              // We're in elderly flow, navigate to HomeStack
+              parentNavigation.navigate('HomeStack');
+            }
+          }
+        }} style={styles.homeButton}>
           <Feather name="arrow-left" size={20} color="#007AFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Tin Nhắn</Text>
