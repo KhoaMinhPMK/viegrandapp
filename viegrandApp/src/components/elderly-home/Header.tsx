@@ -166,7 +166,7 @@ const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, 
           />
           <View>
             <Text style={styles.greeting}>Chào buổi sáng</Text>
-            <Text style={styles.userName}>{user?.fullName || 'Bác'}</Text>
+            <Text style={styles.userName}>{user?.fullName}</Text>
           </View>
             </View>
         <View style={styles.rightIcons}>
