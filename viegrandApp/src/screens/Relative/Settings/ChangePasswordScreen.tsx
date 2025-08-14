@@ -6,27 +6,23 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  Image,
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-  ImageBackground,
   ScrollView,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import Feather from 'react-native-vector-icons/Feather';
-import { sendPasswordChangeOTP, verifyOTPAndChangePassword } from '../../services/api';
+import { useNavigation } from '@react-navigation/native';
+import { sendPasswordChangeOTP, verifyOTPAndChangePassword } from '../../../services/api';
+import { useAuth } from '../../../contexts/AuthContext';
 
-const { width } = Dimensions.get('window');
-
-const ForgotPasswordScreen = ({ navigation }: any) => {
+const ChangePasswordScreen: React.FC = () => {
+  const navigation = useNavigation();
+  const { user } = useAuth();
   const [step, setStep] = useState<'request' | 'verify'>('request');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(user?.email || '');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [validationStatus, setValidationStatus] = useState<string>('');
@@ -146,7 +142,7 @@ const ForgotPasswordScreen = ({ navigation }: any) => {
                   [
                     {
                       text: 'OK',
-                      onPress: () => navigation.navigate('Login'),
+                      onPress: () => navigation.goBack(),
                     },
                   ]
                 );
@@ -220,59 +216,68 @@ const ForgotPasswordScreen = ({ navigation }: any) => {
   };
 
   return (
-    <ImageBackground
-      source={require('../../assets/background.png')}
-      style={styles.backgroundImage}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView contentContainerStyle={styles.scrollView}>
-          <View style={styles.formContainer}>
-            {step === 'request' ? (
-              // Step 1: Request OTP
-              <>
-                <Text style={styles.title}>Quên mật khẩu?</Text>
-                <Text style={styles.subtitle}>
-                  Đừng lo! Điều đó xảy ra. Vui lòng nhập email liên kết với tài khoản của bạn.
-                </Text>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backButtonText}>← Quay lại</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Đổi Mật Khẩu</Text>
+        </View>
 
+        {/* Content */}
+        <View style={styles.content}>
+          {step === 'request' ? (
+            // Step 1: Request OTP
+            <View style={styles.stepContainer}>
+              <Text style={styles.stepTitle}>Bước 1: Gửi mã OTP</Text>
+              <Text style={styles.description}>
+                Nhập email của bạn để nhận mã OTP đổi mật khẩu
+              </Text>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Email</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Email"
                   value={email}
                   onChangeText={setEmail}
+                  placeholder="Nhập email của bạn"
                   keyboardType="email-address"
                   autoCapitalize="none"
-                  placeholderTextColor="#757575"
+                  autoCorrect={false}
                   editable={!loading}
                 />
+              </View>
 
-                <TouchableOpacity 
-                  style={[styles.button, loading && styles.buttonDisabled]} 
-                  onPress={handleRequestOTP}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#ffffff" />
-                  ) : (
-                    <Text style={styles.buttonText}>Gửi mã OTP</Text>
-                  )}
-                </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={handleRequestOTP}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={styles.buttonText}>Gửi mã OTP</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          ) : (
+            // Step 2: Verify OTP and Change Password
+            <View style={styles.stepContainer}>
+              <Text style={styles.stepTitle}>Bước 2: Xác thực và đổi mật khẩu</Text>
+              <Text style={styles.description}>
+                Nhập mã OTP đã gửi đến email {email} và mật khẩu mới
+              </Text>
 
-                <TouchableOpacity
-                  style={styles.backButton}
-                  onPress={() => navigation.goBack()}>
-                  <Text style={styles.backButtonText}>Quay lại Đăng nhập</Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              // Step 2: Verify OTP and Change Password
-              <>
-                <Text style={styles.title}>Đặt lại mật khẩu</Text>
-                <Text style={styles.subtitle}>
-                  Nhập mã OTP đã gửi đến email {email} và mật khẩu mới
-                </Text>
-
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Mã OTP</Text>
                 <TextInput
                   style={styles.input}
                   value={otp}
@@ -280,189 +285,170 @@ const ForgotPasswordScreen = ({ navigation }: any) => {
                     setOtp(text);
                     updateValidationStatus();
                   }}
-                  placeholder="Mã OTP (6 số)"
+                  placeholder="Nhập mã 6 số"
                   keyboardType="numeric"
                   maxLength={6}
                   editable={!loading}
                 />
+              </View>
 
-                <View style={styles.passwordContainer}>
-                  <TextInput
-                    style={styles.passwordInput}
-                    value={newPassword}
-                    onChangeText={(text) => {
-                      setNewPassword(text);
-                      updateValidationStatus();
-                    }}
-                    placeholder="Mật khẩu mới (ít nhất 6 ký tự)"
-                    secureTextEntry={!isPasswordVisible}
-                    editable={!loading}
-                  />
-                  <TouchableOpacity
-                    style={styles.eyeIcon}
-                    onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
-                    <Feather
-                      name={isPasswordVisible ? 'eye-off' : 'eye'}
-                      size={22}
-                      color="#757575"
-                    />
-                  </TouchableOpacity>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Mật khẩu mới</Text>
+                <TextInput
+                  style={styles.input}
+                  value={newPassword}
+                  onChangeText={(text) => {
+                    setNewPassword(text);
+                    updateValidationStatus();
+                  }}
+                  placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)"
+                  secureTextEntry
+                  editable={!loading}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Xác nhận mật khẩu</Text>
+                <TextInput
+                  style={styles.input}
+                  value={confirmPassword}
+                  onChangeText={(text) => {
+                    setConfirmPassword(text);
+                    updateValidationStatus();
+                  }}
+                  placeholder="Nhập lại mật khẩu mới"
+                  secureTextEntry
+                  editable={!loading}
+                />
+              </View>
+
+              {/* Validation Status Display */}
+              {validationStatus && (
+                <View style={styles.validationContainer}>
+                  <Text style={styles.validationTitle}>Trạng thái kiểm tra:</Text>
+                  <Text style={styles.validationText}>{validationStatus}</Text>
                 </View>
+              )}
 
-                <View style={styles.passwordContainer}>
-                  <TextInput
-                    style={styles.passwordInput}
-                    value={confirmPassword}
-                    onChangeText={(text) => {
-                      setConfirmPassword(text);
-                      updateValidationStatus();
-                    }}
-                    placeholder="Xác nhận mật khẩu mới"
-                    secureTextEntry={!isConfirmPasswordVisible}
-                    editable={!loading}
-                  />
-                  <TouchableOpacity
-                    style={styles.eyeIcon}
-                    onPress={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)}>
-                    <Feather
-                      name={isConfirmPasswordVisible ? 'eye-off' : 'eye'}
-                      size={22}
-                      color="#757575"
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                {/* Validation Status Display */}
-                {validationStatus && (
-                  <View style={styles.validationContainer}>
-                    <Text style={styles.validationTitle}>Trạng thái kiểm tra:</Text>
-                    <Text style={styles.validationText}>{validationStatus}</Text>
-                  </View>
+              <TouchableOpacity
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={handleChangePassword}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={styles.buttonText}>Đổi mật khẩu</Text>
                 )}
+              </TouchableOpacity>
 
-                <TouchableOpacity 
-                  style={[styles.button, loading && styles.buttonDisabled]} 
-                  onPress={handleChangePassword}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#ffffff" />
-                  ) : (
-                    <Text style={styles.buttonText}>Đặt lại mật khẩu</Text>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.resendButton}
-                  onPress={handleResendOTP}
-                  disabled={loading}
-                >
-                  <Text style={styles.resendButtonText}>Gửi lại mã OTP</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.backButton}
-                  onPress={() => navigation.goBack()}>
-                  <Text style={styles.backButtonText}>Quay lại Đăng nhập</Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </ImageBackground>
+              <TouchableOpacity
+                style={styles.resendButton}
+                onPress={handleResendOTP}
+                disabled={loading}
+              >
+                <Text style={styles.resendButtonText}>Gửi lại mã OTP</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    resizeMode: 'cover',
-  },
-  scrollView: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
   },
-  formContainer: {
-    width: width * 0.85,
-    alignItems: 'center',
+  scrollContainer: {
+    flexGrow: 1,
   },
-  title: {
-    fontSize: 26,
-    fontWeight: '600',
-    color: '#0D4C92',
-    marginBottom: 15,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#757575',
-    textAlign: 'center',
-    marginBottom: 40,
-    lineHeight: 24,
-  },
-  input: {
-    width: '100%',
-    height: 50,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    color: '#333333',
-  },
-  passwordContainer: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+  },
+  backButton: {
+    marginRight: 15,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#667eea',
+    fontWeight: '500',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+  },
+  stepContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  stepTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  description: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  inputContainer: {
     marginBottom: 20,
   },
-  passwordInput: {
-    flex: 1,
-    height: 50,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    color: '#333333',
+  label: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 8,
   },
-  eyeIcon: {
-    position: 'absolute',
-    right: 15,
-    height: 50,
-    justifyContent: 'center',
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    backgroundColor: 'white',
   },
   button: {
-    width: '100%',
-    height: 50,
-    backgroundColor: '#0D4C92',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#667eea',
     borderRadius: 8,
-    shadowColor: '#0D4C92',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 8,
   },
   buttonDisabled: {
-    backgroundColor: '#B0B0B0',
-    shadowOpacity: 0,
-    elevation: 0,
+    backgroundColor: '#ccc',
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   resendButton: {
     marginTop: 16,
@@ -470,27 +456,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   resendButtonText: {
-    color: '#0D4C92',
+    color: '#667eea',
     fontSize: 14,
-    fontWeight: '600',
-  },
-  backButton: {
-    marginTop: 40,
-  },
-  backButtonText: {
-    fontSize: 14,
-    color: '#0D4C92',
-    fontWeight: 'bold',
+    fontWeight: '500',
   },
   validationContainer: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#f8f9fa',
     borderRadius: 8,
     padding: 16,
     marginTop: 16,
     marginBottom: 16,
     borderLeftWidth: 4,
-    borderLeftColor: '#0D4C92',
-    width: '100%',
+    borderLeftColor: '#667eea',
   },
   validationTitle: {
     fontSize: 14,
@@ -506,4 +483,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ForgotPasswordScreen;
+export default ChangePasswordScreen; 

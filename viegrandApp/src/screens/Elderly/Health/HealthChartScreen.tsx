@@ -22,7 +22,6 @@ type Category = 'blood_pressure' | 'heart_rate' | 'all';
 type Period = '1d' | '7d' | '30d' | '90d' | '1y';
 
 interface VitalSignsData {
-  id: number;
   private_key: string;
   blood_pressure_systolic: number;
   blood_pressure_diastolic: number;
@@ -130,13 +129,13 @@ const HealthChartScreen = () => {
           {
             data: filteredData.map(item => item.blood_pressure_systolic),
             color: (opacity = 1) => `rgba(255, 59, 48, ${opacity})`,
-            strokeWidth: 2,
+            strokeWidth: 3,
             legend: 'Tâm thu',
           },
           {
             data: filteredData.map(item => item.blood_pressure_diastolic),
             color: (opacity = 1) => `rgba(255, 149, 0, ${opacity})`,
-            strokeWidth: 2,
+            strokeWidth: 3,
             legend: 'Tâm trương',
           },
         ],
@@ -148,7 +147,7 @@ const HealthChartScreen = () => {
           {
             data: filteredData.map(item => item.heart_rate),
             color: (opacity = 1) => `rgba(88, 86, 214, ${opacity})`,
-            strokeWidth: 2,
+            strokeWidth: 3,
             legend: 'Nhịp tim',
           },
         ],
@@ -161,19 +160,19 @@ const HealthChartScreen = () => {
           {
             data: filteredData.map(item => item.blood_pressure_systolic),
             color: (opacity = 1) => `rgba(255, 59, 48, ${opacity})`,
-            strokeWidth: 2,
+            strokeWidth: 3,
             legend: 'Tâm thu',
           },
           {
             data: filteredData.map(item => item.blood_pressure_diastolic),
             color: (opacity = 1) => `rgba(255, 149, 0, ${opacity})`,
-            strokeWidth: 2,
+            strokeWidth: 3,
             legend: 'Tâm trương',
           },
           {
             data: filteredData.map(item => item.heart_rate),
             color: (opacity = 1) => `rgba(88, 86, 214, ${opacity})`,
-            strokeWidth: 2,
+            strokeWidth: 3,
             legend: 'Nhịp tim',
           },
         ],
@@ -183,19 +182,25 @@ const HealthChartScreen = () => {
 
   const getChartConfig = () => {
     const baseConfig = {
-      backgroundColor: '#FFFFFF',
-      backgroundGradientFrom: '#FFFFFF',
-      backgroundGradientTo: '#FFFFFF',
+      backgroundColor: 'transparent',
+      backgroundGradientFrom: '#F8F9FA',
+      backgroundGradientTo: '#F8F9FA',
       decimalPlaces: 0,
       color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-      labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+      labelColor: (opacity = 1) => `rgba(108, 117, 125, ${opacity})`,
       style: {
-        borderRadius: 16,
+        borderRadius: 20,
       },
       propsForDots: {
-        r: '4',
-        strokeWidth: '2',
-        stroke: '#007AFF',
+        r: '6',
+        strokeWidth: '3',
+        stroke: '#FFFFFF',
+        fill: '#007AFF',
+      },
+      propsForBackgroundLines: {
+        strokeDasharray: '',
+        strokeWidth: 1,
+        stroke: 'rgba(0, 0, 0, 0.05)',
       },
     };
 
@@ -203,11 +208,21 @@ const HealthChartScreen = () => {
       return {
         ...baseConfig,
         color: (opacity = 1) => `rgba(255, 59, 48, ${opacity})`,
+        propsForDots: {
+          ...baseConfig.propsForDots,
+          stroke: '#FFFFFF',
+          fill: '#FF3B30',
+        },
       };
     } else if (selectedCategory === 'heart_rate') {
       return {
         ...baseConfig,
         color: (opacity = 1) => `rgba(88, 86, 214, ${opacity})`,
+        propsForDots: {
+          ...baseConfig.propsForDots,
+          stroke: '#FFFFFF',
+          fill: '#5856D6',
+        },
       };
     }
 
@@ -322,23 +337,29 @@ const HealthChartScreen = () => {
 
     return (
       <View style={styles.chartContainer}>
-        <LineChart
-          data={chartData}
-          width={width - 40}
-          height={height * 0.4}
-          chartConfig={chartConfig}
-          bezier
-          style={styles.chart}
-          withDots={true}
-          withShadow={false}
-          withInnerLines={true}
-          withOuterLines={true}
-          withVerticalLines={false}
-          withHorizontalLines={true}
-          withVerticalLabels={true}
-          withHorizontalLabels={true}
-          fromZero={false}
-        />
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chartScrollContainer}
+        >
+          <LineChart
+            data={chartData}
+            width={Math.max(width - 40, chartData.labels.length * 80)}
+            height={height * 0.4}
+            chartConfig={chartConfig}
+            bezier
+            style={styles.chart}
+            withDots={true}
+            withShadow={false}
+            withInnerLines={true}
+            withOuterLines={true}
+            withVerticalLines={false}
+            withHorizontalLines={true}
+            withVerticalLabels={true}
+            withHorizontalLabels={true}
+            fromZero={false}
+          />
+        </ScrollView>
         
         {/* Legend */}
         {selectedCategory === 'blood_pressure' && (
@@ -390,7 +411,10 @@ const HealthChartScreen = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Feather name="chevron-left" size={24} color="#007AFF" />
         </TouchableOpacity>
-        <Text style={styles.title}>Biểu đồ sức khỏe</Text>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>Biểu đồ sức khỏe</Text>
+          <Text style={styles.subtitle}>Theo dõi sức khỏe của bạn</Text>
+        </View>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -481,6 +505,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#000000',
   },
+  titleContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  subtitle: {
+    fontSize: 12,
+    color: '#8E8E93',
+    fontWeight: '400',
+    marginTop: 2,
+  },
   headerSpacer: {
     width: 44,
   },
@@ -503,17 +537,33 @@ const styles = StyleSheet.create({
   selectorButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 24,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderWidth: 1.5,
+    borderColor: '#E9ECEF',
     marginRight: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   selectorButtonActive: {
     backgroundColor: '#007AFF',
     borderColor: '#007AFF',
+    shadowColor: '#007AFF',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   selectorButtonText: {
     fontSize: 14,
@@ -526,43 +576,61 @@ const styles = StyleSheet.create({
   },
   chartContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 24,
+    padding: 24,
     marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   chart: {
     borderRadius: 16,
+  },
+  chartScrollContainer: {
+    paddingHorizontal: 10,
   },
   legendContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     flexWrap: 'wrap',
-    marginTop: 16,
+    marginTop: 20,
+    paddingHorizontal: 10,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 8,
-    marginVertical: 4,
+    marginHorizontal: 12,
+    marginVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+    borderRadius: 16,
   },
   legendDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 6,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    marginRight: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
   legendText: {
-    fontSize: 12,
-    color: '#8E8E93',
-    fontWeight: '500',
+    fontSize: 13,
+    color: '#495057',
+    fontWeight: '600',
   },
   loadingContainer: {
     alignItems: 'center',
@@ -617,17 +685,19 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 24,
+    padding: 24,
     marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   statsTitle: {
     fontSize: 16,
@@ -642,10 +712,12 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 20,
     backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    marginHorizontal: 4,
+    borderRadius: 16,
+    marginHorizontal: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.03)',
   },
   statLabel: {
     fontSize: 12,
