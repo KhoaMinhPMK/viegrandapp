@@ -251,16 +251,16 @@ const RelativeSettingsScreen = ({ navigation }: { navigation?: any }) => {
           <SettingsRow
             type="navigation"
             icon="lock"
-            iconBackgroundColor="#6A5ACD"
+            iconBackgroundColor="#FF9500"
             title="Bảo mật"
-            onPress={() => Alert.alert('Tính năng đang phát triển')}
+            onPress={() => nav.navigate('ChangePassword')}
           />
           <SettingsRow
             type="navigation"
             icon="info"
-            iconBackgroundColor="#708090"
+            iconBackgroundColor="#007AFF"
             title="Về ứng dụng"
-            onPress={() => Alert.alert('Tính năng đang phát triển')}
+            onPress={() => nav.navigate('AboutApp')}
             isLast
           />
         </SettingsSection>
@@ -301,22 +301,29 @@ const RelativeSettingsScreen = ({ navigation }: { navigation?: any }) => {
         <SettingsSection title="Hỗ trợ">
           <SettingsRow
             type="navigation"
-            icon="info"
+            icon="mic"
             iconBackgroundColor="#007AFF"
+            title="Lệnh thoại"
+            onPress={() => nav.navigate('VoiceHelp')}
+          />
+          <SettingsRow
+            type="navigation"
+            icon="info"
+            iconBackgroundColor="#34C759"
             title="Trung tâm hỗ trợ"
             onPress={() => nav.navigate('SupportCenter')}
           />
           <SettingsRow
             type="navigation"
             icon="file"
-            iconBackgroundColor="#8E8E93"
+            iconBackgroundColor="#FF9500"
             title="Điều khoản dịch vụ"
             onPress={() => nav.navigate('TermsOfService')}
           />
           <SettingsRow
             type="navigation"
             icon="lock"
-            iconBackgroundColor="#34C759"
+            iconBackgroundColor="#5856D6"
             title="Chính sách bảo mật"
             onPress={() => nav.navigate('PrivacyPolicy')}
             isLast

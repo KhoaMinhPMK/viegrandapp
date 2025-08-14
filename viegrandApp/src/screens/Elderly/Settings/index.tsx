@@ -262,12 +262,16 @@ const ElderlySettingsScreen = () => {
                         <SettingsRow
                             title="Thông tin cá nhân"
                             icon="user"
+                            iconColor="#FFFFFF"
+                            iconBackgroundColor="#007AFF"
                             type="navigation"
                             onPress={() => navigation.navigate('ElderlyProfile')}
                         />
                         <SettingsRow
                             title="Bảo mật"
                             icon="lock"
+                            iconColor="#FFFFFF"
+                            iconBackgroundColor="#FF9500"
                             type="navigation"
                             onPress={() => navigation.navigate('ChangePassword')}
                         />
@@ -277,12 +281,16 @@ const ElderlySettingsScreen = () => {
                         <SettingsRow
                             title="Thiết bị đã kết nối"
                             icon="monitor"
+                            iconColor="#FFFFFF"
+                            iconBackgroundColor="#34C759"
                             type="navigation"
                             onPress={() => { /* Navigate to Connected Devices */ }}
                         />
                         <SettingsRow
                             title="Quản lý thông báo"
                             icon="bell"
+                            iconColor="#FFFFFF"
+                            iconBackgroundColor="#FF3B30"
                             type="navigation"
                             onPress={() => { /* Navigate to Notification Settings */ }}
                         />
@@ -292,6 +300,8 @@ const ElderlySettingsScreen = () => {
                         <SettingsRow
                             title="Cài đặt số khẩn cấp"
                             icon="phone"
+                            iconColor="#FFFFFF"
+                            iconBackgroundColor="#FF3B30"
                             type="navigation"
                             value={emergencyCallService.getEmergencyInfo().number}
                             onPress={() => navigation.navigate('EmergencyCallSettings')}
@@ -302,6 +312,8 @@ const ElderlySettingsScreen = () => {
                         <SettingsRow
                             title="Thông tin Premium"
                             icon="star"
+                            iconColor="#FFFFFF"
+                            iconBackgroundColor="#FFD700"
                             type="navigation"
                             onPress={() => navigation.navigate('ElderlyPremiumInfo')}
                         />
@@ -311,6 +323,8 @@ const ElderlySettingsScreen = () => {
                         <SettingsRow
                             title="Nội dung hạn chế"
                             icon="shield"
+                            iconColor="#FFFFFF"
+                            iconBackgroundColor="#5856D6"
                             type="navigation"
                             onPress={() => navigation.navigate('RestrictedContentSettings')}
                         />
@@ -327,24 +341,32 @@ const ElderlySettingsScreen = () => {
                         <SettingsRow
                             title="Lệnh thoại"
                             icon="mic"
+                            iconColor="#FFFFFF"
+                            iconBackgroundColor="#007AFF"
                             type="navigation"
                             onPress={() => navigation.navigate('VoiceHelp')}
                         />
                         <SettingsRow
                             title="Trung tâm hỗ trợ"
                             icon="info"
+                            iconColor="#FFFFFF"
+                            iconBackgroundColor="#34C759"
                             type="navigation"
                             onPress={() => navigation.navigate('SupportCenter')}
                         />
                         <SettingsRow
                             title="Điều khoản dịch vụ"
                             icon="file"
+                            iconColor="#FFFFFF"
+                            iconBackgroundColor="#FF9500"
                             type="navigation"
                             onPress={() => navigation.navigate('TermsOfService')}
                         />
                         <SettingsRow
                             title="Chính sách bảo mật"
                             icon="lock"
+                            iconColor="#FFFFFF"
+                            iconBackgroundColor="#5856D6"
                             type="navigation"
                             onPress={() => navigation.navigate('PrivacyPolicy')}
                         />
