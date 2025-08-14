@@ -56,7 +56,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: any) => {
 
   // Danh sách các màn hình cần ẩn tab bar
   const hideTabBarScreens = [
-    'Message',
+    'Chat', // Chỉ ẩn khi ở trong chat conversation, không ẩn MessageList
     'BookLibrary',
     'BookDetail',
     'BookReader',
@@ -68,8 +68,8 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: any) => {
     'HealthCheck' // Ẩn tab bar khi ở màn hình health check chi tiết
   ];
 
-  // Kiểm tra nếu đang ở Message tab hoặc các màn hình cần ẩn tab bar
-  if (currentRouteName === 'Message' || hideTabBarScreens.includes(currentScreen)) {
+  // Kiểm tra nếu đang ở các màn hình cần ẩn tab bar
+  if (hideTabBarScreens.includes(currentScreen)) {
     return null;
   }
 

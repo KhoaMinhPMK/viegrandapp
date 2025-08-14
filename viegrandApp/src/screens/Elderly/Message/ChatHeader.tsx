@@ -8,13 +8,14 @@ import {
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
+import Avatar from '../../../components/Avatar';
 
 interface ChatHeaderProps {
   name: string;
   avatar: string;
   isOnline?: boolean;
   lastSeen?: string;
-  onBack: () => void;
+  onBack?: () => void; // Make optional since we're removing it
   onCall?: () => void;
   onVideoCall?: () => void;
   onMenu?: () => void;
@@ -47,15 +48,14 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
       style={styles.container}
     >
       <View style={styles.content}>
-        {/* Back Button */}
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Feather name="arrow-left" size={24} color="#007AFF" />
-        </TouchableOpacity>
-
-        {/* User Info */}
+        {/* User Info - Now takes full space */}
         <TouchableOpacity style={styles.userInfo} onPress={onMenu}>
           <View style={styles.avatarContainer}>
-            <Image source={{ uri: avatar }} style={styles.avatar} />
+            <Avatar 
+              name={name} 
+              size={40}
+              style={styles.avatar}
+            />
             <View style={[styles.statusIndicator, { backgroundColor: getStatusColor() }]} />
           </View>
           
@@ -106,15 +106,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
   },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0, 122, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
   userInfo: {
     flex: 1,
     flexDirection: 'row',
@@ -125,9 +116,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    // Avatar component sẽ tự handle size
     borderWidth: 2,
     borderColor: '#FFFFFF',
   },
