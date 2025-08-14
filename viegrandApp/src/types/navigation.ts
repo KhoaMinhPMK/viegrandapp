@@ -34,6 +34,15 @@ export type RelativeStackParamList = {
 export type RelativeBottomTabParamList = {
   Home: undefined;
   Message: undefined;
+  Health: undefined;
+  Settings: undefined;
+};
+
+export type ElderlyBottomTabParamList = {
+  HomeStack: undefined;
+  Message: undefined;
+  CenterAction: undefined;
+  Health: undefined;
   Settings: undefined;
 };
 

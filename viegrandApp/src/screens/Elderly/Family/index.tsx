@@ -15,6 +15,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import Feather from 'react-native-vector-icons/Feather';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getPremiumFamilyMembers } from '../../../services/api';
+import Avatar from '../../../components/Avatar';
 
 interface FamilyMember {
   userId: number;
@@ -133,17 +134,7 @@ const FamilyScreen = ({ navigation }: any) => {
     return '#6C757D'; // Gray for others
   };
 
-  const getAvatarText = (name: string, avatar?: string) => {
-    if (avatar) {
-      return avatar;
-    }
-    
-    const words = name.trim().split(' ');
-    if (words.length >= 2) {
-      return (words[0][0] + words[words.length - 1][0]).toUpperCase();
-    }
-    return name.slice(0, 2).toUpperCase();
-  };
+
 
   if (loading) {
     return (
@@ -250,11 +241,11 @@ const FamilyScreen = ({ navigation }: any) => {
                 {familyMembers.map((member, index) => (
                   <View key={member.userId} style={styles.familyMemberCard}>
                     <View style={styles.memberInfo}>
-                      <View style={styles.avatarContainer}>
-                        <Text style={styles.avatarText}>
-                          {getAvatarText(member.userName, member.avatar)}
-                        </Text>
-                      </View>
+                      <Avatar 
+                        name={member.userName} 
+                        size={60}
+                        style={styles.avatarContainer}
+                      />
                       <View style={styles.memberDetails}>
                         <View style={styles.nameRow}>
                           <Text style={styles.memberName}>{member.userName}</Text>
@@ -393,18 +384,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   avatarContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#0D4C92',
-    justifyContent: 'center',
-    alignItems: 'center',
     marginRight: 12,
-  },
-  avatarText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
+    // Avatar component sẽ tự handle size và styling
   },
   memberDetails: {
     flex: 1,

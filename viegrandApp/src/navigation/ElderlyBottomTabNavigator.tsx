@@ -9,6 +9,7 @@ import PhoneScreen from '../screens/Elderly/Phone';
 import MessageScreen from '../screens/Elderly/Message';
 import MessageNavigator from './MessageNavigator'; // Import the new navigator
 import ElderlySettingsScreen from '../screens/Elderly/Settings';
+import HealthCheckScreen from '../screens/Elderly/Health/HealthCheckScreen';
 
 import SettingsNavigator from './SettingsNavigator';
 import HomeNavigator from './HomeNavigator';
@@ -63,11 +64,12 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: any) => {
     'BookBookmark',
     'BookStats',
     'EntertainmentHub', // Ẩn tab bar khi ở EntertainmentHub để có trải nghiệm tốt hơn
-    'GameHub' // Ẩn tab bar khi ở GameHub
+    'GameHub', // Ẩn tab bar khi ở GameHub
+    'HealthCheck' // Ẩn tab bar khi ở màn hình health check chi tiết
   ];
   
   // Kiểm tra nếu đang ở Message tab hoặc các màn hình cần ẩn tab bar
-  if (currentRouteName === 'Message' || currentRouteName === 'Message2' || hideTabBarScreens.includes(currentScreen)) {
+  if (currentRouteName === 'Message' || hideTabBarScreens.includes(currentScreen)) {
     return null;
   }
 
@@ -91,8 +93,10 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: any) => {
       return null; // Removed CenterButton
     }
 
-    // Nút tin nhắn thứ 2 ở vị trí thứ 4 (sau micro)
-    if (index === 3 && route.name === 'Message2') {
+
+
+    // Nút sức khỏe ở vị trí thứ 4 (sau micro)
+    if (index === 3 && route.name === 'Health') {
       return (
         <TouchableOpacity
           key={route.key}
@@ -100,7 +104,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: any) => {
           onPress={onPress}
           activeOpacity={0.7}
         >
-          <TabBarItem isFocused={isFocused} icon="message-circle" />
+          <TabBarItem isFocused={isFocused} icon="heart" />
         </TouchableOpacity>
       );
     }
@@ -119,7 +123,15 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: any) => {
 
   return (
     <View style={styles.tabBarContainer}>
-      {state.routes.map(renderTab)}
+      <View style={styles.leftTabGroup}>
+        {state.routes.slice(0, 2).map((route: any, globalIndex: number) => renderTab(route, globalIndex))}
+      </View>
+      
+      <View style={styles.centerSpacing} />
+      
+      <View style={styles.rightTabGroup}>
+        {state.routes.slice(3).map((route: any, localIndex: number) => renderTab(route, localIndex + 3))}
+      </View>
     </View>
   );
 });
@@ -175,11 +187,12 @@ const ElderlyBottomTabNavigator = () => {
           tabBarIcon: () => null
         }}
       />
+
       <Tab.Screen 
-        name="Message2" 
-        component={MessageNavigator} // Second message tab for the new position
+        name="Health" 
+        component={HealthCheckScreen}
         options={{
-          tabBarIcon: renderTabBarIcon('message-circle'),
+          tabBarIcon: renderTabBarIcon('heart'),
         }}
       />
       <Tab.Screen 
@@ -210,20 +223,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 16,
     alignItems: 'center',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     borderTopWidth: 0,
-    paddingHorizontal: 10, // Thêm padding để các tab không quá sát nhau
+    paddingHorizontal: 20,
     ...(isIOS && {
       borderWidth: 0.5,
       borderColor: 'rgba(203, 213, 225, 0.3)',
     }),
   },
   tabButton: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     height: 60,
-    minWidth: 40, // Đảm bảo tab button có kích thước tối thiểu
+    paddingHorizontal: 12,
   },
   tabItemContainer: {
     alignItems: 'center',
@@ -288,6 +300,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
     marginTop: 2,
+  },
+  leftTabGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flex: 1,
+    paddingRight: 15, // Space before center
+  },
+  centerSpacing: {
+    width: 60, // Wider space for voice button area
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rightTabGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flex: 1,
+    paddingLeft: 15, // Space after center
   },
 });
 

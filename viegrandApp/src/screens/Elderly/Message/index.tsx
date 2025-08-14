@@ -24,6 +24,7 @@ import { useAppState } from '../../../contexts/AppStateContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { lastMessageStorage, LastMessage } from '../../../utils/lastMessageStorage';
+import Avatar from '../../../components/Avatar';
 
 // --- TYPE DEFINITIONS ---
 interface Conversation {
@@ -575,7 +576,11 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
       activeOpacity={0.7}
     >
       <View style={styles.avatarContainer}>
-        <Image source={{ uri: item.avatar }} style={styles.avatar} />
+        <Avatar 
+          name={item.name} 
+          size={60}
+          style={styles.avatar}
+        />
         <View style={styles.onlineIndicator} />
       </View>
       <View style={styles.conversationContent}>
@@ -609,9 +614,11 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
       activeOpacity={0.7}
     >
       <View style={styles.searchAvatarContainer}>
-        <View style={styles.searchAvatar}>
-          <Text style={styles.searchAvatarText}>{item.avatar}</Text>
-        </View>
+        <Avatar 
+          name={item.userName} 
+          size={50}
+          style={styles.searchAvatar}
+        />
       </View>
       <View style={styles.searchResultContent}>
         <Text style={styles.searchResultName}>{item.userName}</Text>
@@ -1022,9 +1029,7 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    // Avatar component sẽ tự handle size và borderRadius
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.9)',
   },
@@ -1097,21 +1102,10 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   searchAvatarContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#E0E0E0',
-    justifyContent: 'center',
-    alignItems: 'center',
     marginRight: 12,
   },
   searchAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
+    // Avatar component sẽ tự handle size và styling
   },
   searchAvatarText: {
     color: 'white',

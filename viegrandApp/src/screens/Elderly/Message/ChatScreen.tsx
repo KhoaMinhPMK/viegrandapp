@@ -25,6 +25,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import { useFocusEffect } from '@react-navigation/native';
 import { lastMessageStorage, LastMessage } from '../../../utils/lastMessageStorage';
 import { launchImageLibrary } from 'react-native-image-picker';
+import { useVoiceButton } from '../../../contexts/VoiceButtonContext';
 
 // Import new components
 import ChatHeader from './ChatHeader';
@@ -66,6 +67,7 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
   const { conversationId, name, avatar, receiverPhone } = route.params;
   const { user } = useAuth();
   const { socket } = useSocket();
+  const { setIsVisible } = useVoiceButton();
   
   // Debug user data
   console.log('🔍 ChatScreen - User data:', {
@@ -140,12 +142,20 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
   // Refresh messages when screen regains focus
   useFocusEffect(
     React.useCallback(() => {
+      // Hide voice button when entering chat
+      setIsVisible(false);
+      
       if (userPhone) {
         loadMessages(userPhone);
         // Reset auto-scroll flag when loading new messages
         hasAutoScrolledRef.current = false;
       }
-    }, [userPhone, conversationId])
+      
+      // Show voice button when leaving chat
+      return () => {
+        setIsVisible(true);
+      };
+    }, [userPhone, conversationId, setIsVisible])
   );
 
   // Wire socket listeners from shared socket

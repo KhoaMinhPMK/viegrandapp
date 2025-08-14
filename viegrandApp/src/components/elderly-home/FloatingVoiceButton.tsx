@@ -15,6 +15,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useVoiceNavigation } from '../../contexts/VoiceNavigationContext';
 import { useNavigation } from '@react-navigation/native';
 import { processVoiceCommand } from '../../services/voiceNavigationService';
+import { useVoiceButton } from '../../contexts/VoiceButtonContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -29,6 +30,10 @@ const FloatingVoiceButton: React.FC<FloatingVoiceButtonProps> = ({ visible = tru
   const [modalVisible, setModalVisible] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processedCommand, setProcessedCommand] = useState<string>('');
+  
+  // Use VoiceButton context to control visibility
+  const { isVisible: contextVisible } = useVoiceButton();
+  const isVoiceButtonVisible = visible && contextVisible;
   
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -166,7 +171,11 @@ const FloatingVoiceButton: React.FC<FloatingVoiceButtonProps> = ({ visible = tru
     return '#8E8E93';
   };
 
-  // Always render the voice button - never hide it
+  // Conditionally render the voice button based on visible prop
+  if (!isVoiceButtonVisible) {
+    return null;
+  }
+
   return (
     <>
       {/* Floating/Center-docked Voice Button */}
@@ -189,7 +198,7 @@ const FloatingVoiceButton: React.FC<FloatingVoiceButtonProps> = ({ visible = tru
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-              <Feather name="mic" size={26} color="#FFFFFF" />
+              <Feather name="mic" size={20} color="#FFFFFF" />
             </LinearGradient>
           </TouchableOpacity>
         ) : (
@@ -198,7 +207,7 @@ const FloatingVoiceButton: React.FC<FloatingVoiceButtonProps> = ({ visible = tru
             onPress={handleVoicePress}
             activeOpacity={0.8}
           >
-            <Feather name="mic" size={28} color="#FFFFFF" />
+            <Feather name="mic" size={22} color="#FFFFFF" />
           </TouchableOpacity>
         )}
       </Animated.View>
@@ -313,26 +322,27 @@ const styles = StyleSheet.create({
     bottom: 35,
     alignItems: 'center',
     zIndex: 9999,
+    pointerEvents: 'box-none', // Allow touches to pass through to underlying elements
   },
   // White cushion matches tab bar background, gives the "dock" look
   centerTouchableHitbox: {
-    width: 72,
-    height: 72,
-    borderRadius: 24,
+    width: 50,
+    height: 50,
+    borderRadius: 16,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#1E293B',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
-    shadowRadius: 12,
+    shadowRadius: 8,
     elevation: 10,
   },
   // Inner gradient uses the same palette/style as the active tab icon but slightly bigger
   voiceGradient: {
-    width: 58,
-    height: 58,
-    borderRadius: 16,
+    width: 42,
+    height: 42,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -340,16 +350,16 @@ const styles = StyleSheet.create({
     opacity: 0.95,
   },
   voiceButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowRadius: 5,
     elevation: 8,
     borderWidth: 0,
   },

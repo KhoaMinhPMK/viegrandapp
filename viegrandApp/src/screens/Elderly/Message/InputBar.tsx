@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Text,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
@@ -32,12 +33,13 @@ const InputBar: React.FC<InputBarProps> = ({
   placeholder = 'Nhập tin nhắn...',
   disabled = false,
 }) => {
+  const [isVoiceMode, setIsVoiceMode] = useState(true); // Default to voice mode
   const [isVoiceModalVisible, setIsVoiceModalVisible] = useState(false);
 
   const handleSend = () => {
     if (value.trim() && !disabled) {
       onSend();
-      onChangeText(''); // Clear input sau khi gửi
+      onChangeText('');
     }
   };
 
@@ -48,10 +50,16 @@ const InputBar: React.FC<InputBarProps> = ({
   const handleVoiceResult = (text: string) => {
     onChangeText(text);
     setIsVoiceModalVisible(false);
+    // Switch to text mode after voice input
+    setIsVoiceMode(false);
   };
 
   const handleVoiceClose = () => {
     setIsVoiceModalVisible(false);
+  };
+
+  const toggleMode = () => {
+    setIsVoiceMode(!isVoiceMode);
   };
 
   const canSend = value.trim().length > 0 && !disabled;
@@ -60,78 +68,84 @@ const InputBar: React.FC<InputBarProps> = ({
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <LinearGradient
-        colors={['#FFFFFF', '#F8F9FA']}
-        style={styles.container}
-      >
+      <View style={styles.container}>
         <View style={styles.content}>
-          {/* Attachment Button */}
-          {onAttachment && (
+          {/* Left side - Mode toggle and main action */}
+          <View style={styles.leftSection}>
+            {/* Mode Toggle Button */}
             <TouchableOpacity 
-              style={styles.actionButton} 
-              onPress={onAttachment}
+              style={styles.modeToggle}
+              onPress={toggleMode}
               disabled={disabled}
             >
-              <Feather name="paperclip" size={20} color="#007AFF" />
+              <Feather 
+                name={isVoiceMode ? "type" : "mic"} 
+                size={20} 
+                color="#8E8E93" 
+              />
             </TouchableOpacity>
-          )}
 
-          {/* Emoji Button */}
-          {onEmoji && (
-            <TouchableOpacity 
-              style={styles.actionButton} 
-              onPress={onEmoji}
-              disabled={disabled}
-            >
-              <Feather name="smile" size={20} color="#007AFF" />
-            </TouchableOpacity>
-          )}
-
-          {/* Input Field */}
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              value={value}
-              onChangeText={onChangeText}
-              placeholder={placeholder}
-              placeholderTextColor="#8E8E93"
-              multiline
-              maxLength={1000}
-              editable={!disabled}
-            />
+            {/* Main Input/Voice Area */}
+            {isVoiceMode ? (
+              <TouchableOpacity
+                style={styles.voiceButton}
+                onPress={handleVoicePress}
+                disabled={disabled}
+              >
+                <LinearGradient
+                  colors={['#007AFF', '#0051D5']}
+                  style={styles.voiceGradient}
+                >
+                  <Feather name="mic" size={24} color="#FFFFFF" />
+                </LinearGradient>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  value={value}
+                  onChangeText={onChangeText}
+                  placeholder={placeholder}
+                  placeholderTextColor="#8E8E93"
+                  multiline
+                  maxLength={1000}
+                  editable={!disabled}
+                />
+              </View>
+            )}
           </View>
 
-          {/* Voice Button or Send Button */}
-          {onVoice && !canSend ? (
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={handleVoicePress}
-              disabled={disabled}
-            >
-              <Feather 
-                name="mic" 
-                size={20} 
-                color="#007AFF" 
-              />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[
-                styles.sendButton,
-                canSend && styles.sendButtonActive
-              ]}
-              onPress={handleSend}
-              disabled={!canSend}
-            >
-              <Feather 
-                name="send" 
-                size={18} 
-                color={canSend ? "#FFFFFF" : "#8E8E93"} 
-              />
-            </TouchableOpacity>
-          )}
+          {/* Right side - Send/Attachment buttons */}
+          <View style={styles.rightSection}>
+            {/* Attachment Button */}
+            {onAttachment && (
+              <TouchableOpacity 
+                style={styles.attachmentButton} 
+                onPress={onAttachment}
+                disabled={disabled}
+              >
+                <Feather name="image" size={20} color="#8E8E93" />
+              </TouchableOpacity>
+            )}
+
+            {/* Send Button (only show when there's text) */}
+            {!isVoiceMode && canSend && (
+              <TouchableOpacity
+                style={styles.sendButton}
+                onPress={handleSend}
+                disabled={!canSend}
+              >
+                <LinearGradient
+                  colors={['#007AFF', '#0051D5']}
+                  style={styles.sendGradient}
+                >
+                  <Feather name="send" size={18} color="#FFFFFF" />
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-      </LinearGradient>
+      </View>
 
       {/* Voice Recognition Modal */}
       <VoiceRecognitionModal
@@ -145,6 +159,7 @@ const InputBar: React.FC<InputBarProps> = ({
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 0.5,
     borderTopColor: '#E5E5EA',
     paddingBottom: Platform.OS === 'ios' ? 20 : 10,
@@ -154,71 +169,83 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingHorizontal: 16,
     paddingTop: 12,
+    paddingBottom: 8,
   },
-  actionButton: {
+  leftSection: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 12,
+  },
+  modeToggle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    backgroundColor: '#F2F2F7',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
+    marginRight: 12,
+  },
+  voiceButton: {
+    flex: 1,
+    height: 50,
+  },
+  voiceGradient: {
+    flex: 1,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   inputContainer: {
     flex: 1,
     backgroundColor: '#F2F2F7',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    minHeight: 40,
+    borderRadius: 25,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    minHeight: 50,
     maxHeight: 100,
+    justifyContent: 'center',
   },
   input: {
-    fontSize: 18, // tăng size
+    fontSize: 16,
     color: '#000000',
     padding: 0,
-    textAlignVertical: 'top',
+    textAlignVertical: 'center',
+    lineHeight: 22,
   },
-  sendButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#007AFF',
+  attachmentButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F2F2F7',
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 8,
-},
-  sendButtonActive: {
-    backgroundColor: '#007AFF',
+    marginRight: 8,
   },
-  recordingButton: {
-    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+  sendButton: {
+    width: 40,
+    height: 40,
   },
-  clearButton: {
-    marginTop: 8,
-    backgroundColor: '#E5E5EA',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-},
-  clearButtonText: {
-    color: '#FF3B30',
-    fontSize: 15,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  useButton: {
-    marginTop: 8,
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  useButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-    textAlign: 'center',
+  sendGradient: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });
 

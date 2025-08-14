@@ -24,12 +24,13 @@ import ElderlyPremiumInfoScreen from '../screens/Elderly/Premium/ElderlyPremiumI
 import VoiceHelpScreen from '../screens/Elderly/Settings/VoiceHelpScreen';
 import ChangePasswordScreen from '../screens/Elderly/Settings/ChangePasswordScreen';
 import FloatingVoiceButton from '../components/elderly-home/FloatingVoiceButton';
+import { VoiceButtonProvider } from '../contexts/VoiceButtonContext';
 
 const Stack = createStackNavigator();
 
 const ElderlyNavigator = () => {
   return (
-    <>
+    <VoiceButtonProvider>
       <Stack.Navigator>
         <Stack.Screen 
           name="Main" 
@@ -135,7 +136,7 @@ const ElderlyNavigator = () => {
       
       {/* Voice Button - Center docked like tab action button */}
       <FloatingVoiceButton variant="centerDocked" />
-    </>
+    </VoiceButtonProvider>
   );
 };
 
