@@ -144,14 +144,12 @@ const ElderlyHealthChartScreen = () => {
           {
             data: filteredData.map(item => item.blood_pressure_systolic),
             color: (opacity = 1) => `rgba(255, 59, 48, ${opacity})`,
-            strokeWidth: 3,
-            legend: 'Tâm thu',
+            strokeWidth: 2,
           },
           {
             data: filteredData.map(item => item.blood_pressure_diastolic),
-            color: (opacity = 1) => `rgba(255, 149, 0, ${opacity})`,
-            strokeWidth: 3,
-            legend: 'Tâm trương',
+            color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
+            strokeWidth: 2,
           },
         ],
       };
@@ -161,9 +159,8 @@ const ElderlyHealthChartScreen = () => {
         datasets: [
           {
             data: filteredData.map(item => item.heart_rate),
-            color: (opacity = 1) => `rgba(88, 86, 214, ${opacity})`,
-            strokeWidth: 3,
-            legend: 'Nhịp tim',
+            color: (opacity = 1) => `rgba(52, 199, 89, ${opacity})`,
+            strokeWidth: 2,
           },
         ],
       };
@@ -175,20 +172,17 @@ const ElderlyHealthChartScreen = () => {
           {
             data: filteredData.map(item => item.blood_pressure_systolic),
             color: (opacity = 1) => `rgba(255, 59, 48, ${opacity})`,
-            strokeWidth: 3,
-            legend: 'Tâm thu',
+            strokeWidth: 2,
           },
           {
             data: filteredData.map(item => item.blood_pressure_diastolic),
-            color: (opacity = 1) => `rgba(255, 149, 0, ${opacity})`,
-            strokeWidth: 3,
-            legend: 'Tâm trương',
+            color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
+            strokeWidth: 2,
           },
           {
             data: filteredData.map(item => item.heart_rate),
-            color: (opacity = 1) => `rgba(88, 86, 214, ${opacity})`,
-            strokeWidth: 3,
-            legend: 'Nhịp tim',
+            color: (opacity = 1) => `rgba(52, 199, 89, ${opacity})`,
+            strokeWidth: 2,
           },
         ],
       };
@@ -196,52 +190,22 @@ const ElderlyHealthChartScreen = () => {
   };
 
   const getChartConfig = () => {
-    const baseConfig = {
-      backgroundColor: 'transparent',
-      backgroundGradientFrom: '#F8F9FA',
-      backgroundGradientTo: '#F8F9FA',
+    return {
+      backgroundColor: '#FFFFFF',
+      backgroundGradientFrom: '#FFFFFF',
+      backgroundGradientTo: '#FFFFFF',
       decimalPlaces: 0,
-      color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-      labelColor: (opacity = 1) => `rgba(108, 117, 125, ${opacity})`,
+      color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+      labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
       style: {
-        borderRadius: 20,
+        borderRadius: 16,
       },
       propsForDots: {
-        r: '6',
-        strokeWidth: '3',
-        stroke: '#FFFFFF',
-        fill: '#007AFF',
-      },
-      propsForBackgroundLines: {
-        strokeDasharray: '',
-        strokeWidth: 1,
-        stroke: 'rgba(0, 0, 0, 0.05)',
+        r: '4',
+        strokeWidth: '2',
+        stroke: '#007AFF',
       },
     };
-
-    if (selectedCategory === 'blood_pressure') {
-      return {
-        ...baseConfig,
-        color: (opacity = 1) => `rgba(255, 59, 48, ${opacity})`,
-        propsForDots: {
-          ...baseConfig.propsForDots,
-          stroke: '#FFFFFF',
-          fill: '#FF3B30',
-        },
-      };
-    } else if (selectedCategory === 'heart_rate') {
-      return {
-        ...baseConfig,
-        color: (opacity = 1) => `rgba(88, 86, 214, ${opacity})`,
-        propsForDots: {
-          ...baseConfig.propsForDots,
-          stroke: '#FFFFFF',
-          fill: '#5856D6',
-        },
-      };
-    }
-
-    return baseConfig;
   };
 
   const getStatistics = () => {
@@ -304,35 +268,49 @@ const ElderlyHealthChartScreen = () => {
           <LineChart
             data={chartData}
             width={Math.max(width - 40, chartData.labels.length * 80)}
-            height={height * 0.4}
+            height={220}
             chartConfig={chartConfig}
             bezier
             style={styles.chart}
-            withDots={true}
-            withShadow={false}
-            withInnerLines={true}
-            withOuterLines={true}
-            withVerticalLines={false}
-            withHorizontalLines={true}
-            withVerticalLabels={true}
-            withHorizontalLabels={true}
-            fromZero={false}
           />
         </ScrollView>
         
         {/* Legend */}
-        <View style={styles.legendContainer}>
-          {chartData.datasets.map((dataset, index) => (
-            <View key={index} style={styles.legendItem}>
-              <View 
-                style={[
-                  styles.legendDot, 
-                  { backgroundColor: dataset.color(1) }
-                ]} 
-              />
-              <Text style={styles.legendText}>{dataset.legend}</Text>
+        <View style={styles.chartLegend}>
+          {selectedCategory === 'blood_pressure' && (
+            <>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendColor, { backgroundColor: '#FF3B30' }]} />
+                <Text style={styles.legendText}>Tâm thu</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendColor, { backgroundColor: '#007AFF' }]} />
+                <Text style={styles.legendText}>Tâm trương</Text>
+              </View>
+            </>
+          )}
+          {selectedCategory === 'heart_rate' && (
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: '#34C759' }]} />
+              <Text style={styles.legendText}>Nhịp tim</Text>
             </View>
-          ))}
+          )}
+          {selectedCategory === 'all' && (
+            <>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendColor, { backgroundColor: '#FF3B30' }]} />
+                <Text style={styles.legendText}>Tâm thu</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendColor, { backgroundColor: '#007AFF' }]} />
+                <Text style={styles.legendText}>Tâm trương</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendColor, { backgroundColor: '#34C759' }]} />
+                <Text style={styles.legendText}>Nhịp tim</Text>
+              </View>
+            </>
+          )}
         </View>
       </View>
     );
@@ -625,61 +603,40 @@ const styles = StyleSheet.create({
   },
   chartContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 24,
-    marginBottom: 20,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   chartScrollContainer: {
     paddingHorizontal: 10,
   },
   chart: {
-    borderRadius: 20,
+    borderRadius: 16,
   },
-  legendContainer: {
+  chartLegend: {
     flexDirection: 'row',
     justifyContent: 'center',
-    flexWrap: 'wrap',
-    marginTop: 20,
-    paddingHorizontal: 10,
+    marginTop: 16,
+    gap: 24,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 12,
-    marginVertical: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(0, 0, 0, 0.03)',
-    borderRadius: 16,
+    gap: 8,
   },
-  legendDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    marginRight: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
+  legendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   legendText: {
-    fontSize: 13,
-    color: '#495057',
-    fontWeight: '600',
+    fontSize: 12,
+    color: '#8E8E93',
   },
   statsContainer: {
     backgroundColor: '#FFFFFF',
