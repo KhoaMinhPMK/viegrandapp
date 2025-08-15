@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
-import { getUserData, getVitalSignsData } from '../../../services/api';
+import { getUserData, getVitalSignsData, getElderlyInPremium } from '../../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
@@ -44,6 +44,20 @@ interface VitalSignsData {
   created_at: string;
 }
 
+// Sample activity data for elderly users
+interface ActivityData {
+  dailyHours: number[];
+  complianceRate: number;
+  averageHours: number;
+}
+
+// Sample medication data for elderly users
+interface MedicationData {
+  dailyCompliance: number[];
+  missedDoses: number;
+  complianceRate: number;
+}
+
 type ReportPeriod = '1d' | '7d' | '30d' | '90d' | '1y';
 type ReportType = 'health' | 'activity' | 'medication' | 'overview';
 
@@ -53,6 +67,8 @@ const ReportsScreen = ({ navigation }: any) => {
   const [selectedPeriod, setSelectedPeriod] = useState<ReportPeriod>('7d');
   const [selectedType, setSelectedType] = useState<ReportType>('overview');
   const [vitalSignsData, setVitalSignsData] = useState<VitalSignsData[]>([]);
+  const [activityData, setActivityData] = useState<ActivityData | null>(null);
+  const [medicationData, setMedicationData] = useState<MedicationData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
@@ -65,6 +81,8 @@ const ReportsScreen = ({ navigation }: any) => {
   useEffect(() => {
     if (selectedUser) {
       loadVitalSignsData();
+      loadSampleActivityData();
+      loadSampleMedicationData();
     }
   }, [selectedUser, selectedPeriod]);
 
@@ -79,47 +97,92 @@ const ReportsScreen = ({ navigation }: any) => {
         setCurrentUserId(user.id);
       }
 
-      // Get elderly users from API (this would need to be implemented)
-      // For now, using mock data
-      const mockElderlyUsers: ElderlyUser[] = [
-        {
-          userId: 1,
-          userName: 'Nguyễn Văn A',
-          email: 'elderly1@example.com',
-          phone: '0123456789',
-          age: 75,
-          gender: 'male',
-          private_key: 'key1',
-          lastHealthCheck: '2024-01-15',
-          healthStatus: 'good',
-          bloodPressure: { systolic: 120, diastolic: 80 },
-          heartRate: 72,
-        },
-        {
-          userId: 2,
-          userName: 'Trần Thị B',
-          email: 'elderly2@example.com',
-          phone: '0987654321',
-          age: 68,
-          gender: 'female',
-          private_key: 'key2',
-          lastHealthCheck: '2024-01-14',
-          healthStatus: 'warning',
-          bloodPressure: { systolic: 140, diastolic: 90 },
-          heartRate: 85,
-        },
-      ];
+      // Get elderly users from premium subscription
+      const userDataStr = await AsyncStorage.getItem('user');
+      if (!userDataStr) {
+        console.error('No user data found in cache');
+        setElderlyUsers([]);
+        return;
+      }
 
-      setElderlyUsers(mockElderlyUsers);
-      if (mockElderlyUsers.length > 0) {
-        setSelectedUser(mockElderlyUsers[0]);
+      const currentUser = JSON.parse(userDataStr);
+      const relativeUserId = currentUser.id || currentUser.userId;
+
+      console.log('🔄 Loading elderly users for relative ID:', relativeUserId);
+
+      // Get elderly users in premium subscription
+      const result = await getElderlyInPremium(relativeUserId);
+
+      if (result.success && result.data) {
+        console.log('✅ Elderly users loaded:', result.data.length, 'users');
+        
+        // Enhance elderly users with additional health data
+        const enhancedElderlyUsers = await Promise.all(
+          result.data.map(async (elderly) => {
+            try {
+              // Get additional user data using private key
+              const userDataResult = await getUserData(elderly.email);
+              if (userDataResult.success && userDataResult.user) {
+                return {
+                  ...elderly,
+                  lastHealthCheck: userDataResult.user.last_health_check || userDataResult.user.lastHealthCheck,
+                  healthStatus: getHealthStatus(userDataResult.user),
+                  bloodPressure: {
+                    systolic: userDataResult.user.blood_pressure_systolic || userDataResult.user.bloodPressureSystolic,
+                    diastolic: userDataResult.user.blood_pressure_diastolic || userDataResult.user.bloodPressureDiastolic,
+                  },
+                  heartRate: userDataResult.user.heart_rate || userDataResult.user.heartRate,
+                };
+              }
+              return elderly;
+            } catch (error) {
+              console.error('Error fetching additional data for elderly:', elderly.userName, error);
+              return elderly;
+            }
+          })
+        );
+
+        setElderlyUsers(enhancedElderlyUsers);
+        if (enhancedElderlyUsers.length > 0) {
+          setSelectedUser(enhancedElderlyUsers[0]);
+        }
+      } else {
+        console.log('❌ Failed to load elderly users:', result.message);
+        setElderlyUsers([]);
       }
     } catch (error) {
       console.error('Error loading users:', error);
       Alert.alert('Lỗi', 'Không thể tải danh sách người dùng');
+      setElderlyUsers([]);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getHealthStatus = (userData: any): 'good' | 'warning' | 'critical' => {
+    // Simple health status calculation based on blood pressure and heart rate
+    const systolic = userData.blood_pressure_systolic || userData.bloodPressureSystolic;
+    const diastolic = userData.blood_pressure_diastolic || userData.bloodPressureDiastolic;
+    const heartRate = userData.heart_rate || userData.heartRate;
+
+    if (!systolic && !diastolic && !heartRate) {
+      return 'warning'; // No data available
+    }
+
+    // Blood pressure ranges
+    if (systolic && diastolic) {
+      if (systolic >= 180 || diastolic >= 110) return 'critical';
+      if (systolic >= 140 || diastolic >= 90) return 'warning';
+      if (systolic < 90 || diastolic < 60) return 'warning';
+    }
+
+    // Heart rate ranges
+    if (heartRate) {
+      if (heartRate > 100 || heartRate < 60) return 'warning';
+      if (heartRate > 120 || heartRate < 50) return 'critical';
+    }
+
+    return 'good';
   };
 
   const loadVitalSignsData = async () => {
@@ -146,6 +209,32 @@ const ReportsScreen = ({ navigation }: any) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const loadSampleActivityData = () => {
+    // Generate sample activity data
+    const dailyHours = [8, 7.5, 9, 8.5, 7, 6.5, 8];
+    const complianceRate = 85;
+    const averageHours = dailyHours.reduce((sum, hours) => sum + hours, 0) / dailyHours.length;
+
+    setActivityData({
+      dailyHours,
+      complianceRate,
+      averageHours,
+    });
+  };
+
+  const loadSampleMedicationData = () => {
+    // Generate sample medication data
+    const dailyCompliance = [100, 95, 100, 90, 100, 85, 100];
+    const missedDoses = 2;
+    const complianceRate = Math.round(dailyCompliance.reduce((sum, rate) => sum + rate, 0) / dailyCompliance.length);
+
+    setMedicationData({
+      dailyCompliance,
+      missedDoses,
+      complianceRate,
+    });
   };
 
   const generateMockVitalSignsData = (): VitalSignsData[] => {
@@ -514,13 +603,13 @@ const ReportsScreen = ({ navigation }: any) => {
       <View style={styles.activitySummary}>
         <View style={styles.activityCard}>
           <Feather name="clock" size={24} color="#007AFF" />
-          <Text style={styles.activityValue}>8.5 giờ</Text>
+          <Text style={styles.activityValue}>{activityData?.averageHours.toFixed(1) || 'N/A'} giờ</Text>
           <Text style={styles.activityLabel}>Thời gian hoạt động TB</Text>
         </View>
         
         <View style={styles.activityCard}>
           <Feather name="trending-up" size={24} color="#34C759" />
-          <Text style={styles.activityValue}>85%</Text>
+          <Text style={styles.activityValue}>{activityData?.complianceRate || 0}%</Text>
           <Text style={styles.activityLabel}>Tỷ lệ tuân thủ</Text>
         </View>
       </View>
@@ -533,7 +622,7 @@ const ReportsScreen = ({ navigation }: any) => {
             labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
             datasets: [
               {
-                data: [8, 7.5, 9, 8.5, 7, 6.5, 8],
+                data: activityData?.dailyHours || [0, 0, 0, 0, 0, 0, 0],
               },
             ],
           }}
@@ -566,13 +655,13 @@ const ReportsScreen = ({ navigation }: any) => {
       <View style={styles.medicationSummary}>
         <View style={styles.medicationCard}>
           <Feather name="check-circle" size={24} color="#34C759" />
-          <Text style={styles.medicationValue}>95%</Text>
+          <Text style={styles.medicationValue}>{medicationData?.complianceRate || 0}%</Text>
           <Text style={styles.medicationLabel}>Tỷ lệ uống thuốc đúng giờ</Text>
         </View>
         
         <View style={styles.medicationCard}>
           <Feather name="alert-circle" size={24} color="#FF9500" />
-          <Text style={styles.medicationValue}>2</Text>
+          <Text style={styles.medicationValue}>{medicationData?.missedDoses || 0}</Text>
           <Text style={styles.medicationLabel}>Lần quên thuốc tuần này</Text>
         </View>
       </View>
@@ -585,7 +674,7 @@ const ReportsScreen = ({ navigation }: any) => {
             labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
             datasets: [
               {
-                data: [100, 95, 100, 90, 100, 85, 100],
+                data: medicationData?.dailyCompliance || [0, 0, 0, 0, 0, 0, 0],
               },
             ],
           }}
@@ -629,6 +718,39 @@ const ReportsScreen = ({ navigation }: any) => {
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
         <Text style={styles.loadingText}>Đang tải báo cáo...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (!isLoading && elderlyUsers.length === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" />
+        
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Feather name="chevron-left" size={24} color="#1C1C1E" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Báo cáo</Text>
+          <TouchableOpacity
+            style={styles.shareButton}
+            onPress={() => Alert.alert('Chia sẻ', 'Tính năng chia sẻ báo cáo')}
+          >
+            <Feather name="share-2" size={20} color="#1C1C1E" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.emptyContainer}>
+          <Feather name="users" size={64} color="#C7C7CC" />
+          <Text style={styles.emptyTitle}>Chưa có người cao tuổi</Text>
+          <Text style={styles.emptyMessage}>
+            Bạn chưa được kết nối với người cao tuổi nào để xem báo cáo sức khỏe.
+          </Text>
+        </View>
       </SafeAreaView>
     );
   }
@@ -1014,6 +1136,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#8E8E93',
     textAlign: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 60,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000000',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyMessage: {
+    fontSize: 16,
+    color: '#8E8E93',
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });
 
