@@ -62,10 +62,19 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     : <Feather name="check" size={14} color="#8E8E93" />;
 
   const renderContent = () => {
-    if (message.messageType === 'image' && message.fileUrl) {
+    if (message.messageType === 'image') {
+      const uri = message.fileUrl;
+      if (uri && typeof uri === 'string' && uri.length > 0) {
+        return (
+          <View style={styles.imageWrapper}>
+            <Image source={{ uri }} style={styles.image} resizeMode="cover" />
+          </View>
+        );
+      }
       return (
-        <View style={styles.imageWrapper}>
-          <Image source={{ uri: message.fileUrl }} style={styles.image} resizeMode="cover" />
+        <View style={[styles.imageWrapper, { alignItems: 'center', justifyContent: 'center' }]}> 
+          <Feather name="image" size={20} color="#8E8E93" />
+          <Text style={{ color: '#8E8E93', marginTop: 6 }}>Không thể hiển thị ảnh</Text>
         </View>
       );
     }

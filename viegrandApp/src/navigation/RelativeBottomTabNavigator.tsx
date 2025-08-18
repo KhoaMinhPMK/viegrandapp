@@ -7,6 +7,7 @@ import RelativeHomeScreen from '../screens/Relative/Home';
 import RelativeSettingsScreen from '../screens/Relative/Settings';
 import { RelativeBottomTabParamList } from '../types/navigation';
 import MessageNavigator from './MessageNavigator';
+import MonitoringScreen from '../screens/Relative/Monitoring';
 
 const Tab = createBottomTabNavigator<RelativeBottomTabParamList>();
 const { width } = Dimensions.get('window');
@@ -126,6 +127,13 @@ const RelativeBottomTabNavigator = () => {
         component={MessageNavigator}
         options={{
           tabBarIcon: renderTabBarIcon('message-square'),
+        }}
+      />
+      <Tab.Screen
+        name="Health"
+        component={MonitoringScreen}
+        options={{
+          tabBarIcon: renderTabBarIcon('trending-up')
         }}
       />
       <Tab.Screen

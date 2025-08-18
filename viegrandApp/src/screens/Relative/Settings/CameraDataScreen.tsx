@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,7 @@ const CameraDataScreen: React.FC = () => {
   const [loadError, setLoadError] = useState(false);
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
   const webViewRef = useRef<WebView>(null);
+  const [loadProgress, setLoadProgress] = useState(0);
 
   const validateUrl = (inputUrl: string) => {
     try {
@@ -93,6 +94,18 @@ const CameraDataScreen: React.FC = () => {
     if (timeoutId) {
       clearTimeout(timeoutId);
       setTimeoutId(null);
+    }
+  };
+
+  const handleWebViewProgress = ({ nativeEvent }: any) => {
+    const progress = nativeEvent.progress || 0;
+    setLoadProgress(progress);
+    if (progress > 0.1) {
+      setIsLoading(false);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        setTimeoutId(null);
+      }
     }
   };
 
@@ -242,6 +255,69 @@ const CameraDataScreen: React.FC = () => {
     return /\.(mp4|webm|ogg|m3u8|ts)(\?|$)/i.test(url)
   };
 
+  // JS injected into pages to signal readiness quickly (DOM interactive/complete or video can play)
+  const injectedReadyScript = `
+    (function() {
+      function post(type, payload) {
+        try { window.ReactNativeWebView.postMessage(JSON.stringify({ type, payload })); } catch (e) {}
+      }
+      function postReady(extra) { post('ready', extra); }
+      // Console capture
+      ['log','warn','error'].forEach(function(level){
+        const orig = console[level];
+        console[level] = function(){
+          try { post('console_'+level, { args: Array.from(arguments).map(String) }); } catch(e) {}
+          try { orig && orig.apply(console, arguments); } catch(e) {}
+        }
+      });
+      window.addEventListener('error', function(e){ post('page_error', { message: e.message, filename: e.filename, lineno: e.lineno }); });
+      window.addEventListener('unhandledrejection', function(e){ post('page_unhandledrejection', { reason: String(e.reason) }); });
+      if (document.readyState === 'interactive' || document.readyState === 'complete') postReady({ state: document.readyState });
+      document.addEventListener('DOMContentLoaded', function() { postReady({ event: 'DOMContentLoaded' }); });
+      const vid = document.querySelector('video');
+      if (vid) {
+        vid.addEventListener('canplay', function() { postReady({ event: 'video_canplay' }); });
+        vid.addEventListener('playing', function() { postReady({ event: 'video_playing' }); });
+      }
+      let tries = 0;
+      const iv = setInterval(function() {
+        tries++;
+        if (document.readyState === 'interactive' || document.readyState === 'complete') {
+          postReady({ tick: tries, state: document.readyState });
+          clearInterval(iv);
+        }
+        if (tries > 60) clearInterval(iv);
+      }, 500);
+    })();
+    true;
+  `;
+
+  const handleWebViewMessage = (event: any) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data || '{}');
+      if (data.type === 'ready') {
+        setIsLoading(false);
+        setLoadError(false);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          setTimeoutId(null);
+        }
+      } else if (data.type && String(data.type).startsWith('console_')) {
+        // Forward console messages for debugging
+        const level = String(data.type).replace('console_','');
+        console[level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log']('[WebView]', ...(data.payload?.args || []));
+      } else if (data.type === 'page_error' || data.type === 'page_unhandledrejection') {
+        console.error('[WebView]', data.type, data.payload);
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [timeoutId]);
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -356,13 +432,27 @@ const CameraDataScreen: React.FC = () => {
             ref={webViewRef}
             source={isVideoStream(url) ? { html: getVideoOptimizedHTML(url) } : { uri: url }}
             style={styles.webView}
+            originWhitelist={["*"]}
             onLoadStart={handleWebViewLoadStart}
             onLoadEnd={handleWebViewLoadEnd}
+            onLoadProgress={handleWebViewProgress}
+            onMessage={handleWebViewMessage}
+            injectedJavaScript={injectedReadyScript}
             onError={handleWebViewError}
             onHttpError={handleWebViewHttpError}
+            onNavigationStateChange={(nav) => {
+              if (!nav.loading) {
+                setIsLoading(false);
+                if (timeoutId) {
+                  clearTimeout(timeoutId);
+                  setTimeoutId(null);
+                }
+              }
+            }}
             javaScriptEnabled={true}
+            javaScriptCanOpenWindowsAutomatically={true}
             domStorageEnabled={true}
-            startInLoadingState={true}
+            startInLoadingState={false}
             allowsInlineMediaPlayback={true}
             mediaPlaybackRequiresUserAction={false}
             allowsFullscreenVideo={true}
@@ -381,13 +471,12 @@ const CameraDataScreen: React.FC = () => {
             contentInsetAdjustmentBehavior="never"
             setSupportMultipleWindows={true}
             onShouldStartLoadWithRequest={(request) => {
-              // Allow main https navigations and internal blob/data/about navigations
-              const allowedSchemes = ['https:', 'http:', 'blob:', 'data:', 'about:'];
+              // Allow https/http navigations and internal blob/data/about navigations
               try {
                 const u = new URL(request.url);
-                return allowedSchemes.includes(u.protocol);
+                if (u.protocol === 'https:' || u.protocol === 'http:' || u.protocol === 'blob:' || u.protocol === 'data:' || u.protocol === 'about:') return true;
+                return false;
               } catch {
-                // Fallback allow
                 return true;
               }
             }}

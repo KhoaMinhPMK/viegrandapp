@@ -2,6 +2,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import config from '../config/env';
 
+// Helper to normalize URLs to absolute
+function toAbsoluteUrl(possiblyRelativeUrl: string | undefined): string | undefined {
+  if (!possiblyRelativeUrl) return undefined;
+  const url = String(possiblyRelativeUrl).replace(/\\/g, '/');
+  if (/^https?:\/\//i.test(url)) return url;
+  // Ensure single slash join
+  const base = (config.BACKEND_API_URL || '').replace(/\/$/, '');
+  const path = url.startsWith('/') ? url : `/${url}`;
+  return `${base}${path}`;
+}
+
 // API Configuration
 const API_BASE_URL = config.BACKEND_API_URL;
 
@@ -1509,12 +1520,15 @@ export const getMessages = async (conversationId: string, userPhone: string): Pr
 
     if (responseData.success) {
       console.log('✅ getMessages - Success response data:', responseData.data);
+      const messages = (responseData.data.messages || []).map((m: any) => ({
+        ...m,
+        fileUrl: toAbsoluteUrl(m.fileUrl || m.file_url || m.filepath || m.path)
+      }));
       return {
         success: true,
-        messages: responseData.data.messages || [],
+        messages,
         conversation: responseData.data.conversation,
-        total: responseData.data.total || 0,
-        message: responseData.message
+        total: responseData.data.total_messages || messages.length
       };
     } else {
       console.log('❌ getMessages - API returned success=false:', responseData.message);
@@ -1995,7 +2009,11 @@ export const uploadChatImage = async (file: { uri: string; name: string; type: s
     const res = await nodeClient.post('/upload/chat-image', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return res.data;
+    const data = res.data || {};
+    if (data?.data?.url) {
+      data.data.url = toAbsoluteUrl(data.data.url);
+    }
+    return data;
   } catch (e: any) {
     return { success: false, message: e.response?.data?.message || e.message };
   }

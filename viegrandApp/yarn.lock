@@ -7746,7 +7746,7 @@ react-native-vision-camera@^4.7.1:
 
 react-native-webview@^13.15.0:
   version "13.15.0"
-  resolved "https://registry.npmjs.org/react-native-webview/-/react-native-webview-13.15.0.tgz"
+  resolved "https://registry.yarnpkg.com/react-native-webview/-/react-native-webview-13.15.0.tgz#b6d2f8d8dd65897db76659ddd8198d2c74ec5a79"
   integrity sha512-Vzjgy8mmxa/JO6l5KZrsTC7YemSdq+qB01diA0FqjUTaWGAGwuykpJ73MDj3+mzBSlaDxAEugHzTtkUQkQEQeQ==
   dependencies:
     escape-string-regexp "^4.0.0"

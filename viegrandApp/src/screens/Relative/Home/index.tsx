@@ -47,10 +47,10 @@ const RelativeHomeScreen = ({ navigation }: any) => {
   const menuItems = [
     { 
       id: 1, 
-      title: 'Theo dõi', 
-      subtitle: 'Giám sát sức khỏe',
-      icon: 'trending-up', 
-      route: 'Monitoring',
+      title: 'Camera', 
+      subtitle: 'Chăm sóc người thân từ xa',
+      icon: 'camera', 
+      route: 'CameraData',
       primaryColor: '#1E40AF',
       secondaryColor: '#3B82F6',
       iconBg: 'rgba(30, 64, 175, 0.12)',
@@ -355,7 +355,7 @@ const RelativeHomeScreen = ({ navigation }: any) => {
     // Navigation based on route
     switch (item.id) {
       case 1:
-        navigation.navigate('Monitoring');
+        navigation.navigate('CameraData');
         break;
       case 2:
         navigation.navigate('Reports');
