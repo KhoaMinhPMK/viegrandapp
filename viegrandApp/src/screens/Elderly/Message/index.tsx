@@ -579,6 +579,7 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
         <Avatar 
           name={item.name} 
           size={60}
+          backgroundColor="#3B82F6"
           style={styles.avatar}
         />
         <View style={styles.onlineIndicator} />
@@ -617,6 +618,7 @@ const MessageScreen = ({ navigation }: MessageScreenProps) => {
         <Avatar 
           name={item.userName} 
           size={50}
+          backgroundColor="#3B82F6"
           style={styles.searchAvatar}
         />
       </View>

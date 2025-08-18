@@ -1997,17 +1997,24 @@ export interface UploadChatImageResponse {
 }
 
 export const uploadChatImage = async (file: { uri: string; name: string; type: string }): Promise<UploadChatImageResponse> => {
+  // Normalize Android content/file URIs
+  let normalizedUri = file.uri;
+  if (normalizedUri.startsWith('content://') || normalizedUri.startsWith('file://')) {
+    // Leave as-is for RN fetch; move_uploaded_file will handle tmp path
+  }
   const form = new FormData();
   // @ts-ignore React Native FormData
   form.append('image', {
-    uri: file.uri,
+    uri: normalizedUri,
     name: file.name,
     type: file.type,
   } as any);
 
   try {
-    const res = await nodeClient.post('/upload/chat-image', form, {
+    const res = await apiClient.post('/upload_chat_image.php', form as any, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      transformRequest: (data) => data,
+      timeout: 60000,
     });
     const data = res.data || {};
     if (data?.data?.url) {
@@ -2015,6 +2022,7 @@ export const uploadChatImage = async (file: { uri: string; name: string; type: s
     }
     return data;
   } catch (e: any) {
+    console.error('uploadChatImage error:', e?.message, e?.response?.data);
     return { success: false, message: e.response?.data?.message || e.message };
   }
 };

@@ -40,14 +40,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   };
 
   const getAvatarColor = (name: string) => {
-    const colors = [
-      '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
-      '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
-      '#BB8FCE', '#85C1E9', '#F8C471', '#82E0AA'
-    ];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    return colors[Math.abs(hash) % colors.length];
+    // Consistent blue theme for avatar background
+    return '#3B82F6';
   };
 
   const formatTime = (dateString: string) => {
@@ -134,7 +128,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   ownBubble: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#1E40AF',
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -154,7 +148,7 @@ const styles = StyleSheet.create({
   imageWrapper: {
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#E5E5EA',
+    backgroundColor: '#DBEAFE',
     maxWidth: 220,
   },
   image: {
@@ -192,7 +186,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   otherBubble: {
-    backgroundColor: '#E5E5EA',
+    backgroundColor: '#E6F0FF',
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -205,7 +199,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 0,
   },
   otherMessageText: {
-    color: '#000000',
+    color: '#1E293B',
     fontSize: 16,
     lineHeight: 20,
   },
