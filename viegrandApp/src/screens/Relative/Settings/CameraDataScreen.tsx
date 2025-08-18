@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Linking,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useNavigation } from '@react-navigation/native';
@@ -22,6 +23,8 @@ const CameraDataScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isValidUrl, setIsValidUrl] = useState(false);
   const [showWebView, setShowWebView] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
   const webViewRef = useRef<WebView>(null);
 
   const validateUrl = (inputUrl: string) => {
@@ -37,6 +40,7 @@ const CameraDataScreen: React.FC = () => {
     setUrl(text);
     const isValid = validateUrl(text);
     setIsValidUrl(isValid);
+    setLoadError(false);
   };
 
   const handleLoadUrl = () => {
@@ -52,26 +56,82 @@ const CameraDataScreen: React.FC = () => {
 
     setShowWebView(true);
     setIsLoading(true);
+    setLoadError(false);
+    
+    // Set a timeout for loading (30 seconds)
+    const timeout = setTimeout(() => {
+      setIsLoading(false);
+      setLoadError(true);
+      Alert.alert(
+        'Lỗi kết nối',
+        'Không thể kết nối đến camera. Vui lòng kiểm tra lại URL và thử lại.',
+        [
+          { text: 'Thử lại', onPress: () => handleRetry() },
+          { text: 'Quay lại', onPress: () => setShowWebView(false) }
+        ]
+      );
+    }, 30000);
+    
+    setTimeoutId(timeout);
+  };
+
+  const handleRetry = () => {
+    setLoadError(false);
+    setIsLoading(true);
+    if (webViewRef.current) {
+      webViewRef.current.reload();
+    }
   };
 
   const handleWebViewLoadStart = () => {
     setIsLoading(true);
+    setLoadError(false);
   };
 
   const handleWebViewLoadEnd = () => {
     setIsLoading(false);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      setTimeoutId(null);
+    }
   };
 
   const handleWebViewError = (syntheticEvent: any) => {
     const { nativeEvent } = syntheticEvent;
     setIsLoading(false);
+    setLoadError(true);
+    
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      setTimeoutId(null);
+    }
+
+    console.log('WebView Error:', nativeEvent);
+    
     Alert.alert(
       'Lỗi kết nối',
       'Không thể kết nối đến camera. Vui lòng kiểm tra lại URL và thử lại.',
       [
-        { text: 'OK', onPress: () => setShowWebView(false) }
+        { text: 'Thử lại', onPress: () => handleRetry() },
+        { text: 'Quay lại', onPress: () => setShowWebView(false) }
       ]
     );
+  };
+
+  const handleWebViewHttpError = (syntheticEvent: any) => {
+    const { nativeEvent } = syntheticEvent;
+    console.log('WebView HTTP Error:', nativeEvent);
+    
+    if (nativeEvent.statusCode >= 400) {
+      Alert.alert(
+        'Lỗi kết nối',
+        `Không thể kết nối đến camera (Mã lỗi: ${nativeEvent.statusCode}). Vui lòng kiểm tra lại URL.`,
+        [
+          { text: 'Thử lại', onPress: () => handleRetry() },
+          { text: 'Quay lại', onPress: () => setShowWebView(false) }
+        ]
+      );
+    }
   };
 
   const handleGoBack = () => {
@@ -79,6 +139,11 @@ const CameraDataScreen: React.FC = () => {
       setShowWebView(false);
       setUrl('');
       setIsValidUrl(false);
+      setLoadError(false);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        setTimeoutId(null);
+      }
     } else {
       navigation.goBack();
     }
@@ -86,8 +151,95 @@ const CameraDataScreen: React.FC = () => {
 
   const handleRefresh = () => {
     if (webViewRef.current) {
+      setLoadError(false);
+      setIsLoading(true);
       webViewRef.current.reload();
     }
+  };
+
+  const handleOpenInBrowser = () => {
+    if (!url) return;
+    Linking.openURL(url).catch(() => {
+      Alert.alert('Lỗi', 'Không thể mở liên kết trong trình duyệt.');
+    });
+  };
+
+  // Custom HTML for video streaming optimization
+  const getVideoOptimizedHTML = (videoUrl: string) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+          <style>
+            body {
+              margin: 0;
+              padding: 0;
+              background: #000;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            }
+            .video-container {
+              width: 100%;
+              height: 100vh;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+            }
+            video {
+              max-width: 100%;
+              max-height: 100vh;
+              width: auto;
+              height: auto;
+            }
+            .loading {
+              color: white;
+              font-size: 16px;
+              text-align: center;
+            }
+            .error {
+              color: #ff6b6b;
+              font-size: 16px;
+              text-align: center;
+              padding: 20px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="video-container">
+            <video 
+              autoplay 
+              muted 
+              controls 
+              playsinline
+              preload="auto"
+              onloadstart="document.getElementById('loading').style.display='block'"
+              oncanplay="document.getElementById('loading').style.display='none'"
+              onerror="document.getElementById('error').style.display='block'"
+            >
+              <source src="${videoUrl}" type="video/mp4">
+              <source src="${videoUrl}" type="video/webm">
+              <source src="${videoUrl}" type="video/ogg">
+              <div id="error" class="error" style="display:none">
+                Không thể tải video. Vui lòng kiểm tra lại URL.
+              </div>
+            </video>
+            <div id="loading" class="loading">
+              Đang tải video...
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  // Check if URL is likely a video stream
+  const isVideoStream = (url: string) => {
+    // Only treat as direct video when it clearly has a video extension
+    return /\.(mp4|webm|ogg|m3u8|ts)(\?|$)/i.test(url)
   };
 
   return (
@@ -188,20 +340,57 @@ const CameraDataScreen: React.FC = () => {
               <Text style={styles.loadingText}>Đang kết nối...</Text>
             </View>
           )}
+          {loadError && (
+            <View style={styles.errorOverlay}>
+              <Feather name="wifi-off" size={48} color="#EF4444" />
+              <Text style={styles.errorText}>Không thể kết nối</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
+                <Text style={styles.retryButtonText}>Thử lại</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.retryButton, { backgroundColor: '#1E3A8A', marginTop: 10 }]} onPress={handleOpenInBrowser}>
+                <Text style={styles.retryButtonText}>Mở trong trình duyệt</Text>
+              </TouchableOpacity>
+            </View>
+          )}
           <WebView
             ref={webViewRef}
-            source={{ uri: url }}
+            source={isVideoStream(url) ? { html: getVideoOptimizedHTML(url) } : { uri: url }}
             style={styles.webView}
             onLoadStart={handleWebViewLoadStart}
             onLoadEnd={handleWebViewLoadEnd}
             onError={handleWebViewError}
+            onHttpError={handleWebViewHttpError}
             javaScriptEnabled={true}
             domStorageEnabled={true}
             startInLoadingState={true}
             allowsInlineMediaPlayback={true}
             mediaPlaybackRequiresUserAction={false}
-            mixedContentMode="compatibility"
-            userAgent="VieGrandApp/1.0"
+            allowsFullscreenVideo={true}
+            mixedContentMode={"always"}
+            thirdPartyCookiesEnabled={true}
+            sharedCookiesEnabled={true}
+            userAgent={"Mozilla/5.0 (Linux; Android 12; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.112 Mobile Safari/537.36"}
+            cacheEnabled={false}
+            allowsBackForwardNavigationGestures={false}
+            pullToRefreshEnabled={false}
+            bounces={false}
+            scrollEnabled={true}
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+            automaticallyAdjustContentInsets={false}
+            contentInsetAdjustmentBehavior="never"
+            setSupportMultipleWindows={true}
+            onShouldStartLoadWithRequest={(request) => {
+              // Allow main https navigations and internal blob/data/about navigations
+              const allowedSchemes = ['https:', 'http:', 'blob:', 'data:', 'about:'];
+              try {
+                const u = new URL(request.url);
+                return allowedSchemes.includes(u.protocol);
+              } catch {
+                // Fallback allow
+                return true;
+              }
+            }}
           />
         </View>
       )}
@@ -362,6 +551,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#64748B',
     marginTop: 12,
+  },
+  errorOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginTop: 20,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

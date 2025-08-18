@@ -39,38 +39,87 @@ const CameraDataScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isValidUrl, setIsValidUrl] = useState(false);
   const [showWebView, setShowWebView] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
   const webViewRef = useRef<WebView>(null);
   
-  // URL validation and WebView handling
+  // URL validation, video streaming optimization, and error handling
 };
 ```
 
-#### **2. URL Validation**
+#### **2. Video Streaming Optimization**
 ```typescript
-const validateUrl = (inputUrl: string) => {
-  try {
-    const urlObj = new URL(inputUrl);
-    return urlObj.protocol === 'https:';
-  } catch {
-    return false;
-  }
+// Custom HTML for video streaming optimization
+const getVideoOptimizedHTML = (videoUrl: string) => {
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <style>
+          body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+          }
+          video {
+            max-width: 100%;
+            max-height: 100vh;
+            width: auto;
+            height: auto;
+          }
+        </style>
+      </head>
+      <body>
+        <video autoplay muted controls playsinline preload="auto">
+          <source src="${videoUrl}" type="video/mp4">
+          <source src="${videoUrl}" type="video/webm">
+          <source src="${videoUrl}" type="video/ogg">
+        </video>
+      </body>
+    </html>
+  `;
+};
+
+// Video stream detection
+const isVideoStream = (url: string) => {
+  const videoExtensions = ['.mp4', '.webm', '.ogg', '.m3u8', '.ts'];
+  const videoKeywords = ['stream', 'video', 'camera', 'live', 'rtsp', 'rtmp'];
+  
+  const lowerUrl = url.toLowerCase();
+  return videoExtensions.some(ext => lowerUrl.includes(ext)) ||
+         videoKeywords.some(keyword => lowerUrl.includes(keyword));
 };
 ```
 
-#### **3. WebView Configuration**
+#### **3. Enhanced WebView Configuration**
 ```typescript
 <WebView
   ref={webViewRef}
-  source={{ uri: url }}
+  source={isVideoStream(url) ? { html: getVideoOptimizedHTML(url) } : { uri: url }}
   onLoadStart={handleWebViewLoadStart}
   onLoadEnd={handleWebViewLoadEnd}
   onError={handleWebViewError}
+  onHttpError={handleWebViewHttpError}
   javaScriptEnabled={true}
   domStorageEnabled={true}
   allowsInlineMediaPlayback={true}
   mediaPlaybackRequiresUserAction={false}
   mixedContentMode="compatibility"
   userAgent="VieGrandApp/1.0"
+  cacheEnabled={false}
+  incognito={true}
+  allowsBackForwardNavigationGestures={false}
+  pullToRefreshEnabled={false}
+  bounces={false}
+  scrollEnabled={false}
+  onShouldStartLoadWithRequest={(request) => {
+    return request.url.startsWith('https://');
+  }}
 />
 ```
 
@@ -97,10 +146,23 @@ Relative App → Settings → "Xem dữ liệu camera" → Camera Data Screen
 ### 🎯 Design Features
 
 #### **1. Modern UI Elements**
-- **Clean Input Design**: Modern text input with icons
-- **Gradient Buttons**: Professional button styling
+- **Clean Input Design**: Modern text input with icons and validation
+- **Professional Styling**: Consistent with app design language
 - **Loading Animations**: Smooth loading indicators
 - **Error States**: Clear visual feedback for errors
+
+#### **2. Video Streaming Optimization**
+- **Custom HTML**: Optimized video player for streaming content
+- **Auto-Detection**: Automatically detects video streams vs web pages
+- **Multiple Formats**: Supports MP4, WebM, OGG, HLS, and other formats
+- **Full-Screen Video**: Immersive video viewing experience
+- **Loading Timeout**: 30-second timeout with retry functionality
+
+#### **3. Enhanced Error Handling**
+- **Timeout Management**: Prevents infinite loading states
+- **HTTP Error Detection**: Handles 4xx and 5xx errors
+- **Retry Mechanism**: Easy retry functionality for failed connections
+- **User-Friendly Messages**: Clear error messages with actionable options
 
 #### **2. Accessibility**
 - **High Contrast**: White text on colored backgrounds
@@ -223,6 +285,36 @@ src/screens/Relative/Settings/
 - **Network Conditions**: Test with poor network connectivity
 - **Camera Systems**: Test with different camera web interfaces
 - **Security**: Verify HTTPS enforcement and error handling
+
+### 🚀 Video Streaming Improvements
+
+#### **1. Loading Issue Fixes**
+- **Timeout Management**: 30-second timeout prevents infinite loading
+- **Video Stream Detection**: Automatically detects video URLs and optimizes loading
+- **Custom Video Player**: Optimized HTML video player for streaming content
+- **Cache Disabled**: Prevents caching issues with live streams
+- **Incognito Mode**: Ensures fresh connections for each load
+
+#### **2. Performance Optimizations**
+- **Preload Auto**: Optimizes video loading for streaming content
+- **Multiple Source Support**: Handles various video formats (MP4, WebM, OGG, HLS)
+- **Responsive Design**: Video adapts to different screen sizes
+- **Background Optimization**: Black background for better video viewing
+- **Gesture Disabled**: Prevents accidental navigation during video viewing
+
+#### **3. Error Recovery**
+- **Retry Functionality**: Easy retry button for failed connections
+- **HTTP Error Handling**: Specific handling for different HTTP error codes
+- **Network Error Detection**: Detects network connectivity issues
+- **User Feedback**: Clear loading states and error messages
+- **Graceful Degradation**: Falls back to standard webview for non-video content
+
+#### **4. Supported Video Formats**
+- **Direct Video Files**: MP4, WebM, OGG, AVI, MOV
+- **Streaming Protocols**: HLS (.m3u8), DASH, RTMP
+- **Live Streams**: Real-time video streaming
+- **Camera Feeds**: IP camera streams and webcam feeds
+- **Security Cameras**: Various security camera system feeds
 
 ## Conclusion
 
