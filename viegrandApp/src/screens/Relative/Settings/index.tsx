@@ -201,7 +201,7 @@ const RelativeSettingsScreen = ({ navigation }: { navigation?: any }) => {
           <SettingsRow
             type="navigation"
             icon="user"
-            iconBackgroundColor="#1E90FF"
+            iconBackgroundColor="#3B82F6"
             title={userData?.userName || user?.fullName || 'Người dùng'}
             value={userData?.email || user?.email}
             onPress={() => nav.navigate('EditProfile')}
@@ -214,7 +214,7 @@ const RelativeSettingsScreen = ({ navigation }: { navigation?: any }) => {
           <SettingsRow
             type="toggle"
             icon="bell"
-            iconBackgroundColor="#FF4500"
+            iconBackgroundColor="#3B82F6"
             title="Thông báo ứng dụng"
             value={settings.relative_appNotificationsEnabled}
             onValueChange={(value) => updateSettings({ relative_appNotificationsEnabled: value })}
@@ -222,7 +222,7 @@ const RelativeSettingsScreen = ({ navigation }: { navigation?: any }) => {
           <SettingsRow
             type="toggle"
             icon="mail"
-            iconBackgroundColor="#007BFF"
+            iconBackgroundColor="#3B82F6"
             title="Cảnh báo qua Email"
             value={settings.relative_emailAlertsEnabled}
             onValueChange={(value) => updateSettings({ relative_emailAlertsEnabled: value })}
@@ -230,7 +230,7 @@ const RelativeSettingsScreen = ({ navigation }: { navigation?: any }) => {
           <SettingsRow
             type="toggle"
             icon="message-square"
-            iconBackgroundColor="#32CD32"
+            iconBackgroundColor="#3B82F6"
             title="Cảnh báo qua SMS"
             value={settings.relative_smsAlertsEnabled}
             onValueChange={(value) => updateSettings({ relative_smsAlertsEnabled: value })}
@@ -243,22 +243,29 @@ const RelativeSettingsScreen = ({ navigation }: { navigation?: any }) => {
           <SettingsRow
             type="navigation"
             icon="globe"
-            iconBackgroundColor="#4682B4"
+            iconBackgroundColor="#3B82F6"
             title="Ngôn ngữ"
             value={settings.language === 'vi' ? 'Tiếng Việt' : 'English'}
             onPress={() => Alert.alert('Tính năng đang phát triển')}
           />
           <SettingsRow
             type="navigation"
+            icon="camera"
+            iconBackgroundColor="#3B82F6"
+            title="Xem dữ liệu camera"
+            onPress={() => nav.navigate('CameraData')}
+          />
+          <SettingsRow
+            type="navigation"
             icon="lock"
-            iconBackgroundColor="#FF9500"
+            iconBackgroundColor="#3B82F6"
             title="Bảo mật"
             onPress={() => nav.navigate('ChangePassword')}
           />
           <SettingsRow
             type="navigation"
             icon="info"
-            iconBackgroundColor="#007AFF"
+            iconBackgroundColor="#3B82F6"
             title="Về ứng dụng"
             onPress={() => nav.navigate('AboutApp')}
             isLast
@@ -271,7 +278,7 @@ const RelativeSettingsScreen = ({ navigation }: { navigation?: any }) => {
             <SettingsRow
               type="navigation"
               icon="zap"
-              iconBackgroundColor="#FFD700"
+              iconBackgroundColor="#3B82F6"
               title="Premium"
               value="Đang tải..."
               onPress={() => {}}
@@ -280,7 +287,7 @@ const RelativeSettingsScreen = ({ navigation }: { navigation?: any }) => {
             <SettingsRow
               type="navigation"
               icon="check-circle"
-              iconBackgroundColor="#32CD32"
+              iconBackgroundColor="#3B82F6"
               title="Premium Active"
               value={daysRemaining ? `Còn ${daysRemaining} ngày` : 'Đang hoạt động'}
               onPress={handlePremiumNavigation}
@@ -289,7 +296,7 @@ const RelativeSettingsScreen = ({ navigation }: { navigation?: any }) => {
             <SettingsRow
               type="navigation"
               icon="zap"
-              iconBackgroundColor="#FFD700"
+              iconBackgroundColor="#3B82F6"
               title="Nâng cấp Premium"
               value="Xem chi tiết gói"
               onPress={handlePremiumNavigation}
@@ -302,28 +309,28 @@ const RelativeSettingsScreen = ({ navigation }: { navigation?: any }) => {
           <SettingsRow
             type="navigation"
             icon="mic"
-            iconBackgroundColor="#007AFF"
+            iconBackgroundColor="#3B82F6"
             title="Lệnh thoại"
             onPress={() => nav.navigate('VoiceHelp')}
           />
           <SettingsRow
             type="navigation"
             icon="info"
-            iconBackgroundColor="#34C759"
+            iconBackgroundColor="#3B82F6"
             title="Trung tâm hỗ trợ"
             onPress={() => nav.navigate('SupportCenter')}
           />
           <SettingsRow
             type="navigation"
             icon="file"
-            iconBackgroundColor="#FF9500"
+            iconBackgroundColor="#3B82F6"
             title="Điều khoản dịch vụ"
             onPress={() => nav.navigate('TermsOfService')}
           />
           <SettingsRow
             type="navigation"
             icon="lock"
-            iconBackgroundColor="#5856D6"
+            iconBackgroundColor="#3B82F6"
             title="Chính sách bảo mật"
             onPress={() => nav.navigate('PrivacyPolicy')}
             isLast

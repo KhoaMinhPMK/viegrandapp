@@ -23,10 +23,9 @@ export function SettingsContainer({ children, style }: SettingsContainerProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F0F0F0', // A light gray background like iOS settings
+    backgroundColor: '#F8FAFC', // Modern light gray background
   },
   contentContainer: {
     paddingVertical: 20,
-
   },
 });

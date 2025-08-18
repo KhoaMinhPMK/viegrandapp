@@ -9,6 +9,7 @@ import AddReminderScreen from '../screens/Relative/AddReminderScreen';
 import RelativeNotificationsScreen from '../screens/Relative/Notifications';
 import ChangePasswordScreen from '../screens/Relative/Settings/ChangePasswordScreen';
 import AboutAppScreen from '../screens/Relative/Settings/AboutAppScreen';
+import CameraDataScreen from '../screens/Relative/Settings/CameraDataScreen';
 import SupportCenterScreen from '../screens/Elderly/Settings/SupportCenterScreen';
 import TermsOfServiceScreen from '../screens/Elderly/Settings/TermsOfServiceScreen';
 import PrivacyPolicyScreen from '../screens/Elderly/Settings/PrivacyPolicyScreen';
@@ -52,6 +53,11 @@ const RelativeNavigator = () => {
       <Stack.Screen 
         name="AboutApp" 
         component={AboutAppScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="CameraData" 
+        component={CameraDataScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen 

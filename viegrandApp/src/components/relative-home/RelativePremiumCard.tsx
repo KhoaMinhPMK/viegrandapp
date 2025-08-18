@@ -61,7 +61,7 @@ const RelativePremiumCard = memo(({ isPremium, daysRemaining }: RelativePremiumC
 
 const styles = StyleSheet.create({
   cardContainer: { 
-    marginHorizontal: 20, 
+    // marginHorizontal: 20, 
     marginBottom: 20, 
     marginTop: 20, 
     borderRadius: 16, 

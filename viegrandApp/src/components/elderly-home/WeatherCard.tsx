@@ -119,7 +119,7 @@ const WeatherCard = memo(({ isPremium }: WeatherCardProps) => {
 });
 
 const styles = StyleSheet.create({
-    weatherContainer: { marginHorizontal: 20, marginTop: 20, marginBottom: 0 },
+    weatherContainer: { marginTop: 20, marginBottom: 0 },
     weatherContent: {},
     currentWeatherSection: {},
     weatherMainContainer: { position: 'relative', height: 180, marginBottom: 15 },

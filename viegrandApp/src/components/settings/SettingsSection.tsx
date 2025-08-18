@@ -20,19 +20,24 @@ export function SettingsSection({ children, title, style }: SettingsSectionProps
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
-    marginBottom: 20,
+    marginHorizontal: 20,
+    marginBottom: 24,
   },
   title: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#6D6D72', // iOS-like section header color
-    paddingHorizontal: 16,
-    marginBottom: 8,
+    fontWeight: '700',
+    color: '#64748B',
+    marginBottom: 12,
+    letterSpacing: 0.5,
   },
   sectionBody: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 10,
+    borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 4,
   },
 });

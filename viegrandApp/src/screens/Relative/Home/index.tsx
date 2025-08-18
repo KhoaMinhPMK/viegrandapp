@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Feather from 'react-native-vector-icons/Feather';
+import LinearGradient from 'react-native-linear-gradient';
 
 
 import { User, getUserData, getFriendsList } from '../../../services/api';
@@ -50,9 +51,10 @@ const RelativeHomeScreen = ({ navigation }: any) => {
       subtitle: 'Giám sát sức khỏe',
       icon: 'trending-up', 
       route: 'Monitoring',
-      primaryColor: '#007AFF',
-      secondaryColor: '#5AC8FA',
-      iconBg: 'rgba(0, 122, 255, 0.12)'
+      primaryColor: '#1E40AF',
+      secondaryColor: '#3B82F6',
+      iconBg: 'rgba(30, 64, 175, 0.12)',
+      gradientColors: ['#1E40AF', '#3B82F6']
     },
     { 
       id: 2, 
@@ -60,9 +62,11 @@ const RelativeHomeScreen = ({ navigation }: any) => {
       subtitle: 'Thống kê chi tiết',
       icon: 'bar-chart', 
       route: 'Reports',
-      primaryColor: '#0D4C92',
-      secondaryColor: '#007AFF',
-      iconBg: 'rgba(13, 76, 146, 0.12)'
+      primaryColor: '#1E3A8A',
+      secondaryColor: '#2563EB',
+      iconBg: 'rgba(30, 58, 138, 0.12)',
+      gradientColors: ['#1E40AF', '#3B82F6']
+
     },
     { 
       id: 3, 
@@ -70,9 +74,11 @@ const RelativeHomeScreen = ({ navigation }: any) => {
       subtitle: 'Quản lý thuốc',
       icon: 'package', 
       route: 'Medicine',
-      primaryColor: '#007AFF',
-      secondaryColor: '#34C759',
-      iconBg: 'rgba(0, 122, 255, 0.12)'
+      primaryColor: '#059669',
+      secondaryColor: '#10B981',
+      iconBg: 'rgba(5, 150, 105, 0.12)',
+      gradientColors: ['#1E40AF', '#3B82F6']
+
     },
     { 
       id: 4, 
@@ -80,9 +86,11 @@ const RelativeHomeScreen = ({ navigation }: any) => {
       subtitle: 'Thêm nhắc nhở cho người cao tuổi',
       icon: 'plus-circle', 
       route: 'AddReminder',
-      primaryColor: '#0D4C92',
-      secondaryColor: '#007AFF',
-      iconBg: 'rgba(13, 76, 146, 0.12)'
+      primaryColor: '#DC2626',
+      secondaryColor: '#EF4444',
+      iconBg: 'rgba(220, 38, 38, 0.12)',
+      gradientColors: ['#1E40AF', '#3B82F6']
+
     },
   ];
   
@@ -393,42 +401,47 @@ const RelativeHomeScreen = ({ navigation }: any) => {
             <Text style={styles.sectionTitle}>Thao tác nhanh</Text>
             <View style={styles.menuGrid}>
               {menuItems.map((item, index) => (
-                <View
+                <TouchableOpacity
                   key={item.id}
                   style={styles.menuItemContainer}
+                  onPress={() => handleMenuPress(item, index)}
+                  activeOpacity={0.8}
                 >
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={() => handleMenuPress(item, index)}
-                    activeOpacity={0.9}
+                  <LinearGradient
+                    colors={item.gradientColors}
+                    style={styles.menuItemGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
                   >
                     <View style={styles.menuItemContent}>
-                      <View style={[styles.iconContainer, { backgroundColor: item.iconBg }]}>
-                        <Feather 
-                          name={item.icon as any} 
-                          size={26} 
-                          color={item.primaryColor}
-                        />
+                      <View style={styles.iconContainer}>
+                        <View style={[styles.iconBackground, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+                          <Feather 
+                            name={item.icon as any} 
+                            size={24} 
+                            color="#FFFFFF"
+                          />
+                        </View>
                       </View>
                       <View style={styles.textContainer}>
-                        <Text style={[styles.menuItemTitle, { color: item.primaryColor }]}>
+                        <Text style={styles.menuItemTitle}>
                           {item.title}
                         </Text>
-                        <Text style={[styles.menuItemSubtitle, { color: item.secondaryColor }]}>
+                        <Text style={styles.menuItemSubtitle}>
                           {item.subtitle}
                         </Text>
                       </View>
                       <View style={styles.arrowContainer}>
                         <Feather 
                           name="chevron-right" 
-                          size={16} 
-                          color={item.primaryColor}
-                          style={{ opacity: 0.6 }}
+                          size={18} 
+                          color="#FFFFFF"
+                          style={{ opacity: 0.8 }}
                         />
                       </View>
                     </View>
-                  </TouchableOpacity>
-                </View>
+                  </LinearGradient>
+                </TouchableOpacity>
               ))}
             </View>
           </View>
@@ -446,12 +459,15 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    paddingBottom: 100,
+
   },
 
   content: {
     flex: 1,
     paddingHorizontal: 16,
     paddingVertical: 8,
+    // marginBottom: 100,
   },
   sectionTitle: {
     fontSize: 22,
@@ -472,57 +488,58 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   menuItemContainer: {
-    width: (width - 64) / 2,
+    width: (width - 48) / 2, // Ensure equal width for all buttons
+    height: 160 , // Fixed height for consistency
     marginBottom: 16,
   },
-  menuItem: {
-    borderRadius: 24,
+  menuItemGradient: {
+    flex: 1,
+    borderRadius: 20,
     overflow: 'hidden',
     elevation: 8,
-    shadowColor: '#007AFF',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 122, 255, 0.08)',
   },
   menuItemContent: {
     flex: 1,
-    padding: 20,
-    minHeight: 120,
+    padding: 16,
     justifyContent: 'space-between',
   },
   iconContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    marginBottom: 12,
+  },
+  iconBackground: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
     alignSelf: 'flex-start',
   },
   textContainer: {
     flex: 1,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   menuItemTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 6,
+    fontWeight: '700',
+    marginBottom: 4,
     letterSpacing: 0.3,
     lineHeight: 20,
+    color: '#FFFFFF',
   },
   menuItemSubtitle: {
     fontSize: 12,
-    fontWeight: '400',
+    fontWeight: '500',
     letterSpacing: 0.2,
     lineHeight: 16,
-    opacity: 0.8,
+    opacity: 0.9,
+    color: '#FFFFFF',
   },
   arrowContainer: {
     alignSelf: 'flex-end',
-    marginTop: 8,
   },
 });
 
