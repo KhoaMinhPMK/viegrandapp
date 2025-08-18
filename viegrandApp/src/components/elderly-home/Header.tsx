@@ -25,82 +25,82 @@ const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, 
   const [showQRModal, setShowQRModal] = useState(false);
   const notificationButtonRef = useRef<any>(null);
   const [notificationPosition, setNotificationPosition] = useState({ top: 0, right: 0 });
-  
+
   // Get auth context for refreshing user data
   const { refreshUserProfile } = useAuth();
-  
+
   // Get user phone from socket context for friend request handling
   const socketContext = useSocket();
-  
+
   // Multi-fallback để lấy userPhone một cách đáng tin cậy
   const [userPhone, setUserPhone] = React.useState<string>('');
-  
-     React.useEffect(() => {
-     const getUserPhone = async () => {
-       console.log('🔍 Header: Getting user phone with fallbacks...', {
-         userFromAuth: user,
-         userPhone: user?.phone,
-         userEmail: user?.email
-       });
-       
-       // Try 1: AuthContext user
-       if (user?.phone) {
-         console.log('✅ Header: Got phone from AuthContext:', user.phone);
-         setUserPhone(user.phone);
-         return;
-       }
-       
-       console.log('🔄 Header: AuthContext phone not found, trying AsyncStorage...');
-       
-       // Try 2: AsyncStorage
-       try {
-         const storedPhone = await AsyncStorage.getItem('user_phone');
-         console.log('🔍 Header: AsyncStorage result:', storedPhone);
-         if (storedPhone) {
-           console.log('✅ Header: Got phone from AsyncStorage:', storedPhone);
-           setUserPhone(storedPhone);
-           return;
-         }
-       } catch (error) {
-         console.log('❌ Header: AsyncStorage phone fetch failed:', error);
-       }
-       
-       console.log('🔄 Header: AsyncStorage failed, trying API call...');
-       
-       // Try 3: Get from API if we have email
-       if (user?.email) {
-         try {
-           console.log('🔄 Header: Calling getUserData API for email:', user.email);
-           const result = await getUserData(user.email);
-           console.log('🔍 Header: getUserData API result:', {
-             success: result.success,
-             userPhone: result.user?.phone,
-             fullUser: result.user
-           });
-           
-           if (result.success && result.user?.phone) {
-             console.log('✅ Header: Got phone from getUserData API:', result.user.phone);
-             setUserPhone(result.user.phone);
-             // Save to AsyncStorage for next time
-             await AsyncStorage.setItem('user_phone', result.user.phone);
-             return;
-           } else {
-             console.log('❌ Header: getUserData returned no phone - user.phone is:', result.user?.phone);
-           }
-         } catch (error) {
-           console.log('❌ Header: API phone fetch failed:', error);
-         }
-       } else {
-         console.log('❌ Header: No user email available for API call');
-       }
-       
-       console.log('❌ Header: No phone found from any source');
-       setUserPhone(''); // Explicitly set empty string
-     };
-     
-     getUserPhone();
-   }, [user?.phone, user?.email]);
-  
+
+  React.useEffect(() => {
+    const getUserPhone = async () => {
+      console.log('🔍 Header: Getting user phone with fallbacks...', {
+        userFromAuth: user,
+        userPhone: user?.phone,
+        userEmail: user?.email
+      });
+
+      // Try 1: AuthContext user
+      if (user?.phone) {
+        console.log('✅ Header: Got phone from AuthContext:', user.phone);
+        setUserPhone(user.phone);
+        return;
+      }
+
+      console.log('🔄 Header: AuthContext phone not found, trying AsyncStorage...');
+
+      // Try 2: AsyncStorage
+      try {
+        const storedPhone = await AsyncStorage.getItem('user_phone');
+        console.log('🔍 Header: AsyncStorage result:', storedPhone);
+        if (storedPhone) {
+          console.log('✅ Header: Got phone from AsyncStorage:', storedPhone);
+          setUserPhone(storedPhone);
+          return;
+        }
+      } catch (error) {
+        console.log('❌ Header: AsyncStorage phone fetch failed:', error);
+      }
+
+      console.log('🔄 Header: AsyncStorage failed, trying API call...');
+
+      // Try 3: Get from API if we have email
+      if (user?.email) {
+        try {
+          console.log('🔄 Header: Calling getUserData API for email:', user.email);
+          const result = await getUserData(user.email);
+          console.log('🔍 Header: getUserData API result:', {
+            success: result.success,
+            userPhone: result.user?.phone,
+            fullUser: result.user
+          });
+
+          if (result.success && result.user?.phone) {
+            console.log('✅ Header: Got phone from getUserData API:', result.user.phone);
+            setUserPhone(result.user.phone);
+            // Save to AsyncStorage for next time
+            await AsyncStorage.setItem('user_phone', result.user.phone);
+            return;
+          } else {
+            console.log('❌ Header: getUserData returned no phone - user.phone is:', result.user?.phone);
+          }
+        } catch (error) {
+          console.log('❌ Header: API phone fetch failed:', error);
+        }
+      } else {
+        console.log('❌ Header: No user email available for API call');
+      }
+
+      console.log('❌ Header: No phone found from any source');
+      setUserPhone(''); // Explicitly set empty string
+    };
+
+    getUserPhone();
+  }, [user?.phone, user?.email]);
+
   console.log('🔍 Header: Final userPhone value:', userPhone);
 
   const handleToggleNotifications = () => {
@@ -159,7 +159,7 @@ const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, 
   return (
     <>
       <View style={styles.container}>
-          <View style={styles.userInfo}>
+        <View style={styles.userInfo}>
           <Image
             source={{ uri: 'https://i.pravatar.cc/150?img=3' }}
             style={styles.avatar}
@@ -168,24 +168,19 @@ const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, 
             <Text style={styles.greeting}>Chào buổi sáng</Text>
             <Text style={styles.userName}>{user?.fullName}</Text>
           </View>
-            </View>
+        </View>
         <View style={styles.rightIcons}>
-          {!isPremium && (
-            <TouchableOpacity style={styles.premiumButton} onPress={handleNavigateToPremium}>
-              <Feather name="zap" size={16} color="#FFC700" />
-              <Text style={styles.premiumText}>Nâng cấp</Text>
-                  </TouchableOpacity>
-                )}
           
+
           {/* QR Code Button */}
-          <TouchableOpacity 
-            style={styles.qrButton} 
+          <TouchableOpacity
+            style={styles.qrButton}
             onPress={handleOpenQRModal}
             activeOpacity={0.7}
           >
             <Feather name="grid" size={24} color="#007AFF" />
           </TouchableOpacity>
-          
+
           <TouchableOpacity ref={notificationButtonRef} style={styles.notificationButton} onPress={handleToggleNotifications}>
             <Feather name="bell" size={24} color="#007AFF" />
             {unreadNotificationCount > 0 && (
@@ -197,21 +192,21 @@ const Header = memo(({ user, isPremium, notifications, unreadNotificationCount, 
         </View>
       </View>
       {showNotifications && (
-      <NotificationDropdown 
-        visible={showNotifications} 
-        notifications={notifications} 
-        onClose={handleCloseNotifications} 
-        onMarkAllAsRead={handleMarkAllAsRead} 
-        onPressNotification={handlePressNotification} 
-        onViewAll={handleViewAllNotifications} 
-        position={notificationPosition} 
+        <NotificationDropdown
+          visible={showNotifications}
+          notifications={notifications}
+          onClose={handleCloseNotifications}
+          onMarkAllAsRead={handleMarkAllAsRead}
+          onPressNotification={handlePressNotification}
+          onViewAll={handleViewAllNotifications}
+          position={notificationPosition}
           userPhone={userPhone}
-        onConversationsRefresh={onConversationsRefresh}
-      />
+          onConversationsRefresh={onConversationsRefresh}
+        />
       )}
-      
+
       {/* Private Key QR Modal */}
-      <PrivateKeyQRModal 
+      <PrivateKeyQRModal
         visible={showQRModal}
         onClose={() => setShowQRModal(false)}
         privateKey={user?.privateKey || ''}
@@ -230,10 +225,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  userInfo: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    flex: 1 
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1
   },
   avatar: {
     width: 50,
@@ -246,10 +241,10 @@ const styles = StyleSheet.create({
     color: '#8A8A8E',
     marginBottom: 2,
   },
-  userName: { 
-    fontSize: 18, 
-    fontWeight: '600', 
-    color: '#007AFF', 
+  userName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#007AFF',
   },
   rightIcons: {
     flexDirection: 'row',
@@ -275,11 +270,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 10,
   },
-  notificationButton: { 
-    backgroundColor: '#F2F2F7', 
-    borderRadius: 20, 
-    padding: 10, 
-    position: 'relative' 
+  notificationButton: {
+    backgroundColor: '#F2F2F7',
+    borderRadius: 20,
+    padding: 10,
+    position: 'relative'
   },
   notificationBadge: {
     position: 'absolute',

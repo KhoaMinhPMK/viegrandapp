@@ -16,7 +16,7 @@ const apiClient = axios.create({
 
 // Node server client for uploads
 const nodeClient = axios.create({
-  baseURL: config.API_BASE_URL,
+  baseURL: config.BACKEND_API_URL,
   timeout: 30000,
 });
 
@@ -2187,6 +2187,246 @@ export const verifyOTPAndChangePassword = async (
     return {
       success: false,
       message: error.response?.data?.message || 'Failed to change password'
+    };
+  }
+};
+
+// Face data upload function
+export const uploadFaceData = async (
+  email: string, 
+  videoPath: string
+): Promise<{ success: boolean; message?: string; data?: any }> => {
+  try {
+    console.log('🔄 uploadFaceData - Starting upload for email:', email);
+    console.log('🔄 uploadFaceData - Video path:', videoPath);
+    console.log('🔄 uploadFaceData - Using baseURL:', nodeClient.defaults.baseURL);
+    console.log('🔄 uploadFaceData - Full URL will be:', nodeClient.defaults.baseURL + 'upload_face_data.php');
+    
+    // Create form data for file upload
+    const formData = new FormData();
+    formData.append('email', email);
+    
+    // Try different approaches for the file
+    const fileData = {
+      uri: videoPath,
+      type: 'video/mp4',
+      name: 'face_video.mp4',
+    };
+    
+    console.log('🔄 uploadFaceData - File data:', fileData);
+    formData.append('face_video', fileData as any);
+
+    console.log('🔄 uploadFaceData - FormData created, sending request...');
+
+    // Try with different headers
+    const response = await nodeClient.post('/upload_face_data.php', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Accept': 'application/json',
+      },
+      timeout: 120000, // 2 minutes timeout
+      transformRequest: (data, headers) => {
+        // Don't transform FormData
+        return data;
+      },
+    });
+
+    console.log('✅ uploadFaceData - Upload successful:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        message: response.data.message || 'Face data uploaded successfully',
+        data: response.data.data
+      };
+    } else {
+      return {
+        success: false,
+        message: response.data.message || 'Failed to upload face data'
+      };
+    }
+  } catch (error: any) {
+    console.error('❌ uploadFaceData - Upload failed:', error);
+    console.error('❌ uploadFaceData - Error details:', {
+      message: error.message,
+      code: error.code,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        baseURL: error.config?.baseURL,
+        timeout: error.config?.timeout,
+        headers: error.config?.headers,
+      }
+    });
+    
+    // Try to get more specific error information
+    if (error.code === 'ERR_NETWORK') {
+      return {
+        success: false,
+        message: 'Network connection failed. Please check your internet connection and try again.'
+      };
+    }
+    
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Failed to upload face data'
+    };
+  }
+};
+
+// Test server connection for face upload
+export const testFaceUploadServer = async (): Promise<{ success: boolean; message?: string; data?: any }> => {
+  try {
+    console.log('🔄 testFaceUploadServer - Testing server connection...');
+    console.log('🔄 testFaceUploadServer - Using baseURL:', nodeClient.defaults.baseURL);
+    
+    const response = await nodeClient.get('/test_face_upload.php');
+    
+    console.log('✅ testFaceUploadServer - Server response:', response.data);
+    
+    return {
+      success: true,
+      message: 'Server connection successful',
+      data: response.data
+    };
+  } catch (error: any) {
+    console.error('❌ testFaceUploadServer - Connection failed:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Server connection failed'
+    };
+  }
+};
+
+// Simple test upload function
+export const testSimpleUpload = async (): Promise<{ success: boolean; message?: string }> => {
+  try {
+    console.log('🔄 testSimpleUpload - Testing simple upload...');
+    
+    const formData = new FormData();
+    formData.append('test', 'test data');
+    formData.append('timestamp', new Date().toISOString());
+    
+    const response = await nodeClient.post('/test_face_upload.php', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 30000,
+    });
+    
+    console.log('✅ testSimpleUpload - Success:', response.data);
+    return {
+      success: true,
+      message: 'Simple upload test successful'
+    };
+  } catch (error: any) {
+    console.error('❌ testSimpleUpload - Failed:', error);
+    return {
+      success: false,
+      message: error.message || 'Simple upload test failed'
+    };
+  }
+};
+
+// Alternative face data upload function with different file handling
+export const uploadFaceDataAlternative = async (
+  email: string, 
+  videoPath: string
+): Promise<{ success: boolean; message?: string; data?: any }> => {
+  try {
+    console.log('🔄 uploadFaceDataAlternative - Starting alternative upload...');
+    console.log('🔄 uploadFaceDataAlternative - Video path:', videoPath);
+    
+    // Try different file URI formats
+    let finalVideoPath = videoPath;
+    
+    // Remove file:// prefix if present
+    if (videoPath.startsWith('file://')) {
+      finalVideoPath = videoPath.replace('file://', '');
+    }
+    
+    // Add file:// prefix if not present (for Android)
+    if (!finalVideoPath.startsWith('file://') && !finalVideoPath.startsWith('content://')) {
+      finalVideoPath = 'file://' + finalVideoPath;
+    }
+    
+    console.log('🔄 uploadFaceDataAlternative - Final video path:', finalVideoPath);
+    
+    const formData = new FormData();
+    formData.append('email', email);
+    formData.append('face_video', {
+      uri: finalVideoPath,
+      type: 'video/mp4',
+      name: 'face_video.mp4',
+    } as any);
+
+    console.log('🔄 uploadFaceDataAlternative - Sending request...');
+
+    const response = await nodeClient.post('/upload_face_data.php', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 120000,
+    });
+
+    console.log('✅ uploadFaceDataAlternative - Upload successful:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        message: response.data.message || 'Face data uploaded successfully',
+        data: response.data.data
+      };
+    } else {
+      return {
+        success: false,
+        message: response.data.message || 'Failed to upload face data'
+      };
+    }
+  } catch (error: any) {
+    console.error('❌ uploadFaceDataAlternative - Upload failed:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Failed to upload face data'
+    };
+  }
+};
+
+// Test file upload with the new test endpoint
+export const testFileUpload = async (videoPath: string): Promise<{ success: boolean; message?: string; data?: any }> => {
+  try {
+    console.log('🔄 testFileUpload - Testing file upload with test endpoint...');
+    console.log('🔄 testFileUpload - Video path:', videoPath);
+    
+    const formData = new FormData();
+    formData.append('test', 'test data');
+    formData.append('face_video', {
+      uri: videoPath,
+      type: 'video/mp4',
+      name: 'test_video.mp4',
+    } as any);
+    
+    const response = await nodeClient.post('/test_file_upload.php', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 60000,
+    });
+    
+    console.log('✅ testFileUpload - Success:', response.data);
+    return {
+      success: true,
+      message: 'File upload test successful',
+      data: response.data
+    };
+  } catch (error: any) {
+    console.error('❌ testFileUpload - Failed:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'File upload test failed'
     };
   }
 };

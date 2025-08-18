@@ -24,6 +24,7 @@ import RestrictedContentSettingsScreen from '../screens/Elderly/Settings/Restric
 import ElderlyPremiumInfoScreen from '../screens/Elderly/Premium/ElderlyPremiumInfoScreen';
 import VoiceHelpScreen from '../screens/Elderly/Settings/VoiceHelpScreen';
 import ChangePasswordScreen from '../screens/Elderly/Settings/ChangePasswordScreen';
+import FaceDataCollectionScreen from '../screens/Elderly/Settings/FaceDataCollectionScreen';
 import FloatingVoiceButton from '../components/elderly-home/FloatingVoiceButton';
 import { VoiceButtonProvider } from '../contexts/VoiceButtonContext';
 
@@ -136,6 +137,13 @@ const ElderlyNavigator = () => {
         <Stack.Screen 
           name="ChangePassword" 
           component={ChangePasswordScreen} 
+          options={{ headerShown: false }}
+        />
+        
+        {/* Face Data Collection Screen */}
+        <Stack.Screen 
+          name="FaceDataCollection" 
+          component={FaceDataCollectionScreen} 
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

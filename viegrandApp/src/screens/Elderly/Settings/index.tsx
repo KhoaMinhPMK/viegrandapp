@@ -275,6 +275,14 @@ const ElderlySettingsScreen = () => {
                             type="navigation"
                             onPress={() => navigation.navigate('ChangePassword')}
                         />
+                        <SettingsRow
+                            title="Dữ liệu khuôn mặt"
+                            icon="camera"
+                            iconColor="#FFFFFF"
+                            iconBackgroundColor="#34C759"
+                            type="navigation"
+                            onPress={() => navigation.navigate('FaceDataCollection')}
+                        />
                     </SettingsSection>
 
                     <SettingsSection title="Thiết bị & Kết nối">
