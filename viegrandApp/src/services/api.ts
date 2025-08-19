@@ -559,6 +559,141 @@ export const getElderlyInPremium = async (relativeUserId: number): Promise<{
   }
 };
 
+// Get elderly users with cameras in premium subscription API
+export const getElderlyWithCameras = async (relativeUserId: number): Promise<{ 
+  success: boolean; 
+  data?: Array<{
+    userId: number;
+    userName: string;
+    email: string;
+    phone: string;
+    age: number;
+    gender: string;
+    private_key: string;
+    cameras: string[];
+  }>;
+  message?: string;
+}> => {
+  try {
+    const response = await apiClient.get(`/get_elderly_cameras.php?user_id=${relativeUserId}`);
+    
+    console.log('Get elderly with cameras API response:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } else {
+      console.log('Get elderly with cameras failed:', response.data);
+      return {
+        success: false,
+        message: response.data.message || 'Không thể lấy danh sách người thân'
+      };
+    }
+  } catch (error: any) {
+    console.error('Get elderly with cameras API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Add camera for elderly user API
+export const addElderlyCamera = async (
+  relativeUserId: number,
+  elderlyPrivateKey: string,
+  cameraUrl: string,
+  room: string
+): Promise<{ 
+  success: boolean; 
+  data?: {
+    elderly_name: string;
+    camera_url: string;
+    total_cameras: number;
+  };
+  message?: string;
+}> => {
+  try {
+    const response = await apiClient.post('/add_elderly_camera.php', {
+      relative_user_id: relativeUserId,
+      elderly_private_key: elderlyPrivateKey,
+      camera_url: cameraUrl,
+      room: room
+    });
+    
+    console.log('Add elderly camera API response:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } else {
+      console.log('Add elderly camera failed:', response.data);
+      return {
+        success: false,
+        message: response.data.message || 'Không thể thêm camera'
+      };
+    }
+  } catch (error: any) {
+    console.error('Add elderly camera API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
+// Remove camera for elderly user API
+export const removeElderlyCamera = async (
+  relativeUserId: number,
+  elderlyPrivateKey: string,
+  cameraUrl: string
+): Promise<{ 
+  success: boolean; 
+  data?: {
+    elderly_name: string;
+    camera_url: string;
+    total_cameras: number;
+    remaining_cameras: string[];
+  };
+  message?: string;
+}> => {
+  try {
+    const response = await apiClient.post('/remove_elderly_camera.php', {
+      relative_user_id: relativeUserId,
+      elderly_private_key: elderlyPrivateKey,
+      camera_url: cameraUrl
+    });
+    
+    console.log('Remove elderly camera API response:', response.data);
+
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } else {
+      console.log('Remove elderly camera failed:', response.data);
+      return {
+        success: false,
+        message: response.data.message || 'Không thể xóa camera'
+      };
+    }
+  } catch (error: any) {
+    console.error('Remove elderly camera API error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Lỗi kết nối'
+    };
+  }
+};
+
 // Remove elderly user from premium subscription API
 export const removeElderlyFromPremium = async (relativeUserId: number, elderlyPrivateKey: string): Promise<{ 
   success: boolean; 

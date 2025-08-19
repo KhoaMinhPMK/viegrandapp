@@ -178,146 +178,514 @@ function AddReminderScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Nút back nổi */}
-      <TouchableOpacity
-        style={styles.floatingBackButton}
-        onPress={() => navigation.goBack()}
-        activeOpacity={0.7}
-      >
-        <Feather name="arrow-left" size={28} color="#0D4C92" />
-      </TouchableOpacity>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Tạo nhắc nhở cho người cao tuổi</Text>
-        {/* Chọn người cao tuổi */}
-        <Text style={styles.label}>Chọn người cao tuổi</Text>
-        {loadingElderly ? (
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Đang tải danh sách...</Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+        >
+          <Feather name="arrow-left" size={24} color="#007AFF" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Tạo nhắc nhở</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Header Section */}
+        <View style={styles.headerSection}>
+          <View style={styles.headerIcon}>
+            <Feather name="bell" size={32} color="#FFFFFF" />
           </View>
-        ) : (
-          <View style={styles.selectBox}>
-            {elderlyList.map((elderly) => (
+          <Text style={styles.headerSectionTitle}>
+            Nhắc nhở cho người thân
+          </Text>
+          <Text style={styles.headerSectionSubtitle}>
+            Tạo lịch nhắc nhở để chăm sóc người thân tốt hơn
+          </Text>
+        </View>
+
+        {/* Elderly Selection */}
+        <View style={styles.formSection}>
+          <View style={styles.sectionHeader}>
+            <Feather name="users" size={20} color="#007AFF" />
+            <Text style={styles.sectionTitle}>Chọn người thân</Text>
+          </View>
+          
+          {loadingElderly ? (
+            <View style={styles.loadingContainer}>
+              <View style={styles.loadingSpinner} />
+              <Text style={styles.loadingText}>Đang tải danh sách...</Text>
+            </View>
+          ) : (
+            <View style={styles.elderlyGrid}>
+              {elderlyList.map((elderly) => (
+                <TouchableOpacity
+                  key={elderly.userId}
+                  style={[
+                    styles.elderlyCard,
+                    selectedElderly === elderly.userId.toString() && styles.selectedElderlyCard,
+                  ]}
+                  onPress={() => setSelectedElderly(elderly.userId.toString())}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.elderlyAvatar}>
+                    <Text style={styles.elderlyInitials}>
+                      {elderly.userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                    </Text>
+                  </View>
+                  <Text style={styles.elderlyName}>{elderly.userName}</Text>
+                  <Text style={styles.elderlyDetails}>
+                    {elderly.age} tuổi • {elderly.gender === 'male' ? 'Nam' : 'Nữ'}
+                  </Text>
+                  {selectedElderly === elderly.userId.toString() && (
+                    <View style={styles.selectedIndicator}>
+                      <Feather name="check-circle" size={20} color="#007AFF" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+
+        {/* Reminder Details */}
+        <View style={styles.formSection}>
+          <View style={styles.sectionHeader}>
+            <Feather name="edit-3" size={20} color="#007AFF" />
+            <Text style={styles.sectionTitle}>Chi tiết nhắc nhở</Text>
+          </View>
+
+          {/* Title Input */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Tiêu đề</Text>
+            <View style={styles.inputContainer}>
+              <Feather name="tag" size={20} color="#8E8E93" style={styles.inputIcon} />
+              <TextInput
+                style={styles.textInput}
+                placeholder="Nhập tiêu đề nhắc nhở"
+                placeholderTextColor="#8E8E93"
+                value={title}
+                onChangeText={setTitle}
+              />
+            </View>
+          </View>
+
+          {/* Content Input */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Nội dung</Text>
+            <View style={styles.inputContainer}>
+              <Feather name="message-circle" size={20} color="#8E8E93" style={styles.inputIcon} />
+              <TextInput
+                style={[styles.textInput, styles.textArea]}
+                placeholder="Nhập nội dung chi tiết"
+                placeholderTextColor="#8E8E93"
+                value={content}
+                onChangeText={setContent}
+                multiline
+                numberOfLines={4}
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* Date & Time */}
+        <View style={styles.formSection}>
+          <View style={styles.sectionHeader}>
+            <Feather name="clock" size={20} color="#007AFF" />
+            <Text style={styles.sectionTitle}>Thời gian</Text>
+          </View>
+
+          <View style={styles.dateTimeRow}>
+            {/* Date Input */}
+            <View style={styles.dateTimeGroup}>
+              <Text style={styles.inputLabel}>Ngày</Text>
+              <View style={styles.inputContainer}>
+                <Feather name="calendar" size={20} color="#8E8E93" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="dd/mm/yyyy"
+                  placeholderTextColor="#8E8E93"
+                  value={dateInput}
+                  onChangeText={(text) => setDateInput(formatDateInput(text))}
+                  keyboardType="numeric"
+                  maxLength={10}
+                  autoCorrect={false}
+                  autoCapitalize="none"
+                />
+              </View>
+            </View>
+
+            {/* Time Input */}
+            <View style={styles.dateTimeGroup}>
+              <Text style={styles.inputLabel}>Giờ</Text>
+              <View style={styles.inputContainer}>
+                <Feather name="clock" size={20} color="#8E8E93" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="HH:MM"
+                  placeholderTextColor="#8E8E93"
+                  value={timeInput}
+                  onChangeText={(text) => setTimeInput(formatTimeInput(text))}
+                  keyboardType="numeric"
+                  maxLength={5}
+                  autoCorrect={false}
+                  autoCapitalize="none"
+                />
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Reminder Type */}
+        <View style={styles.formSection}>
+          <View style={styles.sectionHeader}>
+            <Feather name="grid" size={20} color="#007AFF" />
+            <Text style={styles.sectionTitle}>Loại nhắc nhở</Text>
+          </View>
+
+          <View style={styles.reminderTypeGrid}>
+            {reminderTypes.map((t) => (
               <TouchableOpacity
-                key={elderly.userId}
+                key={t.key}
                 style={[
-                  styles.selectOption,
-                  selectedElderly === elderly.userId.toString() && styles.selectedOption,
+                  styles.reminderTypeCard,
+                  type === t.key && styles.selectedReminderType,
                 ]}
-                onPress={() => setSelectedElderly(elderly.userId.toString())}
+                onPress={() => setType(t.key)}
+                activeOpacity={0.8}
               >
-                <Text style={styles.selectOptionText}>{elderly.userName}</Text>
-                {selectedElderly === elderly.userId.toString() && (
-                  <Feather name="check" size={18} color="#0D4C92" />
+                <View style={[
+                  styles.reminderTypeIcon,
+                  type === t.key && styles.selectedReminderTypeIcon
+                ]}>
+                  <Feather name={t.icon} size={24} color={type === t.key ? "#FFFFFF" : "#007AFF"} />
+                </View>
+                <Text style={[
+                  styles.reminderTypeText,
+                  type === t.key && styles.selectedReminderTypeText
+                ]}>
+                  {t.label}
+                </Text>
+                {type === t.key && (
+                  <View style={styles.reminderTypeCheck}>
+                    <Feather name="check" size={16} color="#007AFF" />
+                  </View>
                 )}
               </TouchableOpacity>
             ))}
           </View>
-        )}
-        {/* Tiêu đề */}
-        <Text style={styles.label}>Tiêu đề</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nhập tiêu đề nhắc nhở"
-          value={title}
-          onChangeText={setTitle}
-        />
-        {/* Nội dung */}
-        <Text style={styles.label}>Nội dung</Text>
-        <TextInput
-          style={[styles.input, { height: 80 }]}
-          placeholder="Nhập nội dung chi tiết"
-          value={content}
-          onChangeText={setContent}
-          multiline
-        />
-        {/* Ngày & Giờ */}
-        <Text style={styles.label}>Ngày</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="dd/mm/yyyy"
-          value={dateInput}
-          onChangeText={(text) => setDateInput(formatDateInput(text))}
-          keyboardType="numeric"
-          maxLength={10}
-          autoCorrect={false}
-          autoCapitalize="none"
-        />
-
-        <Text style={styles.label}>Giờ</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="HH:MM"
-          value={timeInput}
-          onChangeText={(text) => setTimeInput(formatTimeInput(text))}
-          keyboardType="numeric"
-          maxLength={5}
-          autoCorrect={false}
-          autoCapitalize="none"
-        />
-
-        {/* Loại nhắc nhở */}
-        <Text style={styles.label}>Loại nhắc nhở</Text>
-        <View style={styles.selectBox}>
-          {reminderTypes.map((t) => (
-            <TouchableOpacity
-              key={t.key}
-              style={[
-                styles.selectOption,
-                type === t.key && styles.selectedOption,
-              ]}
-              onPress={() => setType(t.key)}
-            >
-              <Feather name={t.icon} size={18} color="#0D4C92" />
-              <Text style={[styles.selectOptionText, { marginLeft: 6 }]}>{t.label}</Text>
-              {type === t.key && (
-                <Feather name="check" size={18} color="#0D4C92" />
-              )}
-            </TouchableOpacity>
-          ))}
         </View>
-        {/* Nút lưu */}
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={handleSave}
-          disabled={loading}
-        >
-          <Text style={styles.saveButtonText}>{loading ? 'Đang lưu...' : 'Lưu nhắc nhở'}</Text>
-        </TouchableOpacity>
+
+        {/* Save Button */}
+        <View style={styles.saveSection}>
+          <TouchableOpacity
+            style={[
+              styles.saveButton,
+              (!selectedElderly || !title || !dateInput || !timeInput || loading) && styles.saveButtonDisabled
+            ]}
+            onPress={handleSave}
+            disabled={!selectedElderly || !title || !dateInput || !timeInput || loading}
+            activeOpacity={0.8}
+          >
+            {loading ? (
+              <View style={styles.loadingButton}>
+                <View style={styles.loadingSpinner} />
+                <Text style={styles.saveButtonText}>Đang tạo...</Text>
+              </View>
+            ) : (
+              <>
+                <Feather name="check" size={20} color="#FFFFFF" />
+                <Text style={styles.saveButtonText}>Tạo nhắc nhở</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: 20 },
-  header: { fontSize: 22, fontWeight: 'bold', color: '#0D4C92', marginBottom: 20 },
-  label: { fontSize: 16, fontWeight: '500', marginTop: 16, marginBottom: 6, color: '#0D4C92' },
-  input: { borderWidth: 1, borderColor: '#E3F2FD', borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: '#F8FAFF' },
-  selectBox: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  selectOption: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#E3F2FD', borderRadius: 8, padding: 10, marginRight: 8, marginBottom: 8, backgroundColor: '#F8FAFF' },
-  selectedOption: { borderColor: '#0D4C92', backgroundColor: '#E3F2FD' },
-  selectOptionText: { fontSize: 15, color: '#0D4C92' },
-  saveButton: { backgroundColor: '#0D4C92', borderRadius: 8, paddingVertical: 14, alignItems: 'center', marginTop: 28 },
-  saveButtonText: { color: '#fff', fontSize: 17, fontWeight: 'bold' },
-  loadingContainer: { padding: 20, alignItems: 'center' },
-  loadingText: { fontSize: 16, color: '#8E8E93' },
-  floatingBackButton: {
-    position: 'absolute',
-    top: 18,
-    left: 16,
-    zIndex: 10,
-    backgroundColor: '#fff',
-    borderRadius: 22,
-    width: 44,
-    height: 44,
+  container: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1E293B',
+    flex: 1,
+    textAlign: 'center',
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  headerSection: {
+    backgroundColor: '#007AFF',
+    borderRadius: 16,
+    marginBottom: 24,
+    padding: 24,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    alignItems: 'center',
+  },
+  headerIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 16,
+  },
+  headerSectionTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  headerSectionSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  formSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    marginBottom: 20,
+    padding: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginLeft: 8,
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  loadingSpinner: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#007AFF',
+    borderTopColor: 'transparent',
+    marginBottom: 8,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#64748B',
+  },
+  elderlyGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  elderlyCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+    minWidth: 120,
+    position: 'relative',
+  },
+  selectedElderlyCard: {
+    borderColor: '#007AFF',
+    backgroundColor: '#EFF6FF',
+  },
+  elderlyAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  elderlyInitials: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  elderlyName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  elderlyDetails: {
+    fontSize: 12,
+    color: '#64748B',
+    textAlign: 'center',
+  },
+  selectedIndicator: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 8,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#1E293B',
+    paddingVertical: 4,
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  dateTimeRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  dateTimeGroup: {
+    flex: 1,
+  },
+  reminderTypeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  reminderTypeCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+    minWidth: 100,
+    position: 'relative',
+  },
+  selectedReminderType: {
+    borderColor: '#007AFF',
+    backgroundColor: '#EFF6FF',
+  },
+  reminderTypeIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#EFF6FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  selectedReminderTypeIcon: {
+    backgroundColor: '#007AFF',
+  },
+  reminderTypeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748B',
+    textAlign: 'center',
+  },
+  selectedReminderTypeText: {
+    color: '#007AFF',
+  },
+  reminderTypeCheck: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#007AFF',
+  },
+  saveSection: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#007AFF',
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  saveButtonDisabled: {
+    backgroundColor: '#94A3B8',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  loadingButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginLeft: 8,
   },
 })
 

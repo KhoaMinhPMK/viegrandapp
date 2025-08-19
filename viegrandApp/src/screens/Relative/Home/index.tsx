@@ -404,7 +404,7 @@ const RelativeHomeScreen = ({ navigation }: any) => {
                 <TouchableOpacity
                   key={item.id}
                   style={styles.menuItemContainer}
-                  onPress={() => handleMenuPress(item, index)}
+                    onPress={() => handleMenuPress(item, index)}
                   activeOpacity={0.8}
                 >
                   <LinearGradient
@@ -416,11 +416,11 @@ const RelativeHomeScreen = ({ navigation }: any) => {
                     <View style={styles.menuItemContent}>
                       <View style={styles.iconContainer}>
                         <View style={[styles.iconBackground, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
-                          <Feather 
-                            name={item.icon as any} 
+                        <Feather 
+                          name={item.icon as any} 
                             size={24} 
                             color="#FFFFFF"
-                          />
+                        />
                         </View>
                       </View>
                       <View style={styles.textContainer}>
@@ -441,7 +441,7 @@ const RelativeHomeScreen = ({ navigation }: any) => {
                       </View>
                     </View>
                   </LinearGradient>
-                </TouchableOpacity>
+                  </TouchableOpacity>
               ))}
             </View>
           </View>
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
 
   content: {
     flex: 1,
-    paddingHorizontal: 16,
+    // paddingHorizontal: 16,
     paddingVertical: 8,
     // marginBottom: 100,
   },
@@ -485,7 +485,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 16,
+    // gap: 16,
+    paddingHorizontal: 16,
   },
   menuItemContainer: {
     width: (width - 48) / 2, // Ensure equal width for all buttons

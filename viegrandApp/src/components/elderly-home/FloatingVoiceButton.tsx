@@ -116,7 +116,7 @@ const FloatingVoiceButton: React.FC<FloatingVoiceButtonProps> = ({ visible = tru
         } else {
           Alert.alert(
             'Không hiểu lệnh',
-            'Bạn có thể thử các lệnh sau:\n\n• "Mở tin nhắn"\n• "Xem thời tiết"\n• "Kiểm tra sức khỏe"\n• "Xem nhắc nhở"\n• "Mở giải trí"\n• "Chơi game"\n• "Đọc sách"\n• "Cài đặt"\n• "Trợ giúp"',
+            'Bạn có thể thử các lệnh sau:\n\n• "Mở tin nhắn"\n• "Xem thời tiết"\n• "Kiểm tra sức khỏe"\n• "Xem nhắc nhở"\n• "Nghe nhạc"\n• "Xem phim"\n• "Nấu ăn"\n• "Tập thể dục"\n• "Chơi game"\n• "Đọc sách"\n• "Cài đặt"\n• "Trợ giúp"',
             [
               {
                 text: 'Hủy',

@@ -210,40 +210,40 @@ const ElderlySettingsScreen = () => {
                         >
                             <View style={styles.profileContent}>
                                 <View style={styles.avatarContainer}>
-                                    {isPremium ? (
+                            {isPremium ? (
                                         <LinearGradient 
                                             colors={['#F59E0B', '#D97706']} 
                                             style={styles.premiumAvatar}
                                             start={{ x: 0, y: 0 }}
                                             end={{ x: 1, y: 1 }}
                                         >
-                                            <Text style={styles.avatarText}>{getAvatarText(user?.fullName)}</Text>
+                                    <Text style={styles.avatarText}>{getAvatarText(user?.fullName)}</Text>
                                             <View style={styles.premiumBadge}>
                                                 <Feather name="star" size={12} color="#F59E0B" />
                                             </View>
-                                        </LinearGradient>
-                                    ) : (
+                                </LinearGradient>
+                            ) : (
                                         <View style={styles.normalAvatar}>
-                                            <Text style={styles.avatarTextNormal}>{getAvatarText(user?.fullName)}</Text>
+                                <Text style={styles.avatarTextNormal}>{getAvatarText(user?.fullName)}</Text>
                                         </View>
-                                    )}
-                                </View>
-                                <View style={styles.userInfo}>
-                                    <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
-                                        {userData?.userName || user?.fullName || 'Chưa có tên'}
-                                    </Text>
-                                    <Text style={styles.userEmail} numberOfLines={1} ellipsizeMode="tail">
-                                        {userData?.email || user?.email || 'Chưa có email'}
-                                    </Text>
-                                    {isPremium && daysRemaining && (
+                            )}
+                        </View>
+                        <View style={styles.userInfo}>
+                            <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
+                                {userData?.userName || user?.fullName || 'Chưa có tên'}
+                            </Text>
+                            <Text style={styles.userEmail} numberOfLines={1} ellipsizeMode="tail">
+                                {userData?.email || user?.email || 'Chưa có email'}
+                            </Text>
+                            {isPremium && daysRemaining && (
                                         <View style={styles.premiumStatusContainer}>
                                             <Feather name="check-circle" size={14} color="#4ADE80" />
-                                            <Text style={styles.premiumStatusText}>
-                                                Premium • Còn {daysRemaining} ngày
-                                            </Text>
+                                <Text style={styles.premiumStatusText}>
+                                    Premium • Còn {daysRemaining} ngày
+                                </Text>
                                         </View>
-                                    )}
-                                </View>
+                            )}
+                        </View>
                                 <View style={styles.profileArrow}>
                                     <Feather name="chevron-right" size={24} color="#FFFFFF" />
                                 </View>
@@ -265,10 +265,10 @@ const ElderlySettingsScreen = () => {
                                         <View style={styles.premiumIconContainer}>
                                             <ActivityIndicator size="small" color="#F59E0B" />
                                         </View>
-                                        <View style={styles.premiumInfo}>
-                                            <Text style={styles.premiumTitle}>Premium</Text>
-                                            <Text style={styles.premiumSubtitle}>Đang tải...</Text>
-                                        </View>
+                                <View style={styles.premiumInfo}>
+                                    <Text style={styles.premiumTitle}>Premium</Text>
+                                    <Text style={styles.premiumSubtitle}>Đang tải...</Text>
+                                </View>
                                     </View>
                                 </LinearGradient>
                             </View>
@@ -288,12 +288,12 @@ const ElderlySettingsScreen = () => {
                                         <View style={styles.premiumIconContainer}>
                                             <Feather name="check" size={24} color="#FFFFFF" />
                                         </View>
-                                        <View style={styles.premiumInfo}>
-                                            <Text style={styles.premiumTitle}>Premium Active</Text>
-                                            <Text style={styles.premiumSubtitle}>
-                                                {daysRemaining ? `Còn ${daysRemaining} ngày` : 'Đang hoạt động'}
-                                            </Text>
-                                        </View>
+                                <View style={styles.premiumInfo}>
+                                    <Text style={styles.premiumTitle}>Premium Active</Text>
+                                    <Text style={styles.premiumSubtitle}>
+                                        {daysRemaining ? `Còn ${daysRemaining} ngày` : 'Đang hoạt động'}
+                                    </Text>
+                                </View>
                                         <Feather name="chevron-right" size={24} color="#FFFFFF" />
                                     </View>
                                 </LinearGradient>
@@ -314,10 +314,10 @@ const ElderlySettingsScreen = () => {
                                         <View style={styles.premiumIconContainer}>
                                             <Feather name="zap" size={24} color="#F59E0B" />
                                         </View>
-                                        <View style={styles.premiumInfo}>
-                                            <Text style={styles.premiumTitle}>Nâng cấp lên Premium</Text>
-                                            <Text style={styles.premiumSubtitle}>Mở khóa tất cả tính năng cao cấp</Text>
-                                        </View>
+                                <View style={styles.premiumInfo}>
+                                    <Text style={styles.premiumTitle}>Nâng cấp lên Premium</Text>
+                                    <Text style={styles.premiumSubtitle}>Mở khóa tất cả tính năng cao cấp</Text>
+                                </View>
                                         <Feather name="chevron-right" size={24} color="#FFFFFF" />
                                     </View>
                                 </LinearGradient>
@@ -329,22 +329,22 @@ const ElderlySettingsScreen = () => {
                     <View style={styles.sectionContainer}>
                         <Text style={styles.sectionTitle}>TÀI KHOẢN</Text>
                         <View style={styles.settingsCard}>
-                            <SettingsRow
-                                title="Thông tin cá nhân"
-                                icon="user"
-                                iconColor="#FFFFFF"
+                        <SettingsRow
+                            title="Thông tin cá nhân"
+                            icon="user"
+                            iconColor="#FFFFFF"
                                 iconBackgroundColor="#3B82F6"
-                                type="navigation"
-                                onPress={() => navigation.navigate('ElderlyProfile')}
-                            />
-                            <SettingsRow
-                                title="Bảo mật"
-                                icon="lock"
-                                iconColor="#FFFFFF"
+                            type="navigation"
+                            onPress={() => navigation.navigate('ElderlyProfile')}
+                        />
+                        <SettingsRow
+                            title="Bảo mật"
+                            icon="lock"
+                            iconColor="#FFFFFF"
                                 iconBackgroundColor="#3B82F6"
-                                type="navigation"
-                                onPress={() => navigation.navigate('ChangePassword')}
-                            />
+                            type="navigation"
+                            onPress={() => navigation.navigate('ChangePassword')}
+                        />
                             <SettingsRow
                                 title="Dữ liệu khuôn mặt"
                                 icon="camera"
@@ -359,65 +359,65 @@ const ElderlySettingsScreen = () => {
                     <View style={styles.sectionContainer}>
                         <Text style={styles.sectionTitle}>THIẾT BỊ & KẾT NỐI</Text>
                         <View style={styles.settingsCard}>
-                            <SettingsRow
-                                title="Thiết bị đã kết nối"
-                                icon="monitor"
-                                iconColor="#FFFFFF"
+                        <SettingsRow
+                            title="Thiết bị đã kết nối"
+                            icon="monitor"
+                            iconColor="#FFFFFF"
                                 iconBackgroundColor="#3B82F6"
-                                type="navigation"
-                                onPress={() => { /* Navigate to Connected Devices */ }}
-                            />
-                            <SettingsRow
-                                title="Quản lý thông báo"
-                                icon="bell"
-                                iconColor="#FFFFFF"
+                            type="navigation"
+                            onPress={() => { /* Navigate to Connected Devices */ }}
+                        />
+                        <SettingsRow
+                            title="Quản lý thông báo"
+                            icon="bell"
+                            iconColor="#FFFFFF"
                                 iconBackgroundColor="#3B82F6"
-                                type="navigation"
-                                onPress={() => { /* Navigate to Notification Settings */ }}
-                            />
+                            type="navigation"
+                            onPress={() => { /* Navigate to Notification Settings */ }}
+                        />
                         </View>
                     </View>
 
                     <View style={styles.sectionContainer}>
                         <Text style={styles.sectionTitle}>KHẨN CẤP</Text>
                         <View style={styles.settingsCard}>
-                            <SettingsRow
-                                title="Cài đặt số khẩn cấp"
-                                icon="phone"
-                                iconColor="#FFFFFF"
+                        <SettingsRow
+                            title="Cài đặt số khẩn cấp"
+                            icon="phone"
+                            iconColor="#FFFFFF"
                                 iconBackgroundColor="#3B82F6"
-                                type="navigation"
-                                value={emergencyCallService.getEmergencyInfo().number}
-                                onPress={() => navigation.navigate('EmergencyCallSettings')}
-                            />
+                            type="navigation"
+                            value={emergencyCallService.getEmergencyInfo().number}
+                            onPress={() => navigation.navigate('EmergencyCallSettings')}
+                        />
                         </View>
                     </View>
 
                     <View style={styles.sectionContainer}>
                         <Text style={styles.sectionTitle}>PREMIUM</Text>
                         <View style={styles.settingsCard}>
-                            <SettingsRow
-                                title="Thông tin Premium"
-                                icon="star"
-                                iconColor="#FFFFFF"
+                        <SettingsRow
+                            title="Thông tin Premium"
+                            icon="star"
+                            iconColor="#FFFFFF"
                                 iconBackgroundColor="#3B82F6"
-                                type="navigation"
-                                onPress={() => navigation.navigate('ElderlyPremiumInfo')}
-                            />
+                            type="navigation"
+                            onPress={() => navigation.navigate('ElderlyPremiumInfo')}
+                        />
                         </View>
                     </View>
 
                     <View style={styles.sectionContainer}>
                         <Text style={styles.sectionTitle}>NỘI DUNG</Text>
                         <View style={styles.settingsCard}>
-                            <SettingsRow
-                                title="Nội dung hạn chế"
-                                icon="shield"
-                                iconColor="#FFFFFF"
+                        <SettingsRow
+                            title="Nội dung hạn chế"
+                            icon="shield"
+                            iconColor="#FFFFFF"
                                 iconBackgroundColor="#3B82F6"
-                                type="navigation"
-                                onPress={() => navigation.navigate('RestrictedContentSettings')}
-                            />
+                            type="navigation"
+                            onPress={() => navigation.navigate('RestrictedContentSettings')}
+                        />
                         </View>
                     </View>
                     
@@ -431,38 +431,38 @@ const ElderlySettingsScreen = () => {
                     <View style={styles.sectionContainer}>
                         <Text style={styles.sectionTitle}>HỖ TRỢ</Text>
                         <View style={styles.settingsCard}>
-                            <SettingsRow
-                                title="Lệnh thoại"
-                                icon="mic"
-                                iconColor="#FFFFFF"
+                        <SettingsRow
+                            title="Lệnh thoại"
+                            icon="mic"
+                            iconColor="#FFFFFF"
                                 iconBackgroundColor="#3B82F6"
-                                type="navigation"
-                                onPress={() => navigation.navigate('VoiceHelp')}
-                            />
-                            <SettingsRow
-                                title="Trung tâm hỗ trợ"
-                                icon="info"
-                                iconColor="#FFFFFF"
+                            type="navigation"
+                            onPress={() => navigation.navigate('VoiceHelp')}
+                        />
+                        <SettingsRow
+                            title="Trung tâm hỗ trợ"
+                            icon="info"
+                            iconColor="#FFFFFF"
                                 iconBackgroundColor="#3B82F6"
-                                type="navigation"
-                                onPress={() => navigation.navigate('SupportCenter')}
-                            />
-                            <SettingsRow
-                                title="Điều khoản dịch vụ"
-                                icon="file"
-                                iconColor="#FFFFFF"
+                            type="navigation"
+                            onPress={() => navigation.navigate('SupportCenter')}
+                        />
+                        <SettingsRow
+                            title="Điều khoản dịch vụ"
+                            icon="file"
+                            iconColor="#FFFFFF"
                                 iconBackgroundColor="#3B82F6"
-                                type="navigation"
-                                onPress={() => navigation.navigate('TermsOfService')}
-                            />
-                            <SettingsRow
-                                title="Chính sách bảo mật"
-                                icon="lock"
-                                iconColor="#FFFFFF"
+                            type="navigation"
+                            onPress={() => navigation.navigate('TermsOfService')}
+                        />
+                        <SettingsRow
+                            title="Chính sách bảo mật"
+                            icon="lock"
+                            iconColor="#FFFFFF"
                                 iconBackgroundColor="#3B82F6"
-                                type="navigation"
-                                onPress={() => navigation.navigate('PrivacyPolicy')}
-                            />
+                            type="navigation"
+                            onPress={() => navigation.navigate('PrivacyPolicy')}
+                        />
                         </View>
                     </View>
 
@@ -480,7 +480,7 @@ const ElderlySettingsScreen = () => {
                                 end={{ x: 1, y: 1 }}
                             >
                                 <Feather name="log-out" size={20} color="#FFFFFF" />
-                                <Text style={styles.logoutText}>Đăng xuất</Text>
+                            <Text style={styles.logoutText}>Đăng xuất</Text>
                             </LinearGradient>
                         </TouchableOpacity>
                     </View>

@@ -23,10 +23,13 @@ const ReminderStatus: React.FC<ReminderStatusProps> = ({
 
   return (
     <View style={styles.container}>
+      {/* Header Section */}
       <View style={styles.header}>
         <View style={styles.titleContainer}>
-          <Feather name="bar-chart-2" size={20} color="#0D4C92" />
-          <Text style={styles.title}>Tổng quan</Text>
+          <View style={styles.titleIconContainer}>
+            <Feather name="bar-chart-2" size={20} color="#FFFFFF" />
+          </View>
+          <Text style={styles.title}>Tổng quan nhắc nhở</Text>
         </View>
         <View style={styles.totalBadge}>
           <Text style={styles.totalCount}>{totalCount}</Text>
@@ -34,49 +37,58 @@ const ReminderStatus: React.FC<ReminderStatusProps> = ({
         </View>
       </View>
       
+      {/* Stats Grid */}
       <View style={styles.statsContainer}>
-        <View style={styles.statRow}>
-          <View style={[styles.statItem, { backgroundColor: '#E3F2FD' }]}>
-            <View style={styles.statIconContainer}>
-              <Feather name="clock" size={16} color="#0D4C92" />
+        <View style={styles.statsRow}>
+          {/* Today */}
+          <View style={[styles.statCard, { backgroundColor: '#E3F2FD' }]}>
+            <View style={styles.statHeader}>
+              <View style={[styles.statIconContainer, { backgroundColor: '#0D4C92' }]}>
+                <Feather name="clock" size={16} color="#FFFFFF" />
+              </View>
+              <Text style={[styles.statNumber, { color: '#0D4C92' }]}>{todayCount}</Text>
             </View>
-            <Text style={[styles.statNumber, { color: '#0D4C92' }]}>{todayCount}</Text>
             <Text style={[styles.statLabel, { color: '#1976D2' }]}>Hôm nay</Text>
           </View>
           
-          <View style={styles.statDivider} />
-          
-          <View style={[styles.statItem, { backgroundColor: '#E8F4FD' }]}>
-            <View style={styles.statIconContainer}>
-              <Feather name="calendar" size={16} color="#1E88E5" />
+          {/* Tomorrow */}
+          <View style={[styles.statCard, { backgroundColor: '#E8F4FD' }]}>
+            <View style={styles.statHeader}>
+              <View style={[styles.statIconContainer, { backgroundColor: '#1E88E5' }]}>
+                <Feather name="calendar" size={16} color="#FFFFFF" />
+              </View>
+              <Text style={[styles.statNumber, { color: '#1E88E5' }]}>{tomorrowCount}</Text>
             </View>
-            <Text style={[styles.statNumber, { color: '#1E88E5' }]}>{tomorrowCount}</Text>
             <Text style={[styles.statLabel, { color: '#2196F3' }]}>Ngày mai</Text>
           </View>
-          
-          <View style={styles.statDivider} />
-          
-          <View style={[styles.statItem, { backgroundColor: '#FFF3E0' }]}>
-            <View style={styles.statIconContainer}>
-              <Feather name="calendar" size={16} color="#FF9800" />
+        </View>
+        
+        <View style={styles.statsRow}>
+          {/* Upcoming */}
+          <View style={[styles.statCard, { backgroundColor: '#FFF3E0' }]}>
+            <View style={styles.statHeader}>
+              <View style={[styles.statIconContainer, { backgroundColor: '#FF9800' }]}>
+                <Feather name="calendar" size={16} color="#FFFFFF" />
+              </View>
+              <Text style={[styles.statNumber, { color: '#FF9800' }]}>{upcomingCount}</Text>
             </View>
-            <Text style={[styles.statNumber, { color: '#FF9800' }]}>{upcomingCount}</Text>
             <Text style={[styles.statLabel, { color: '#FFB74D' }]}>Sắp tới</Text>
           </View>
           
-          <View style={styles.statDivider} />
-          
-          <View style={[styles.statItem, { backgroundColor: '#F3F9FF' }]}>
-            <View style={styles.statIconContainer}>
-              <Feather name="check-circle" size={16} color="#42A5F5" />
+          {/* Completed */}
+          <View style={[styles.statCard, { backgroundColor: '#F3F9FF' }]}>
+            <View style={styles.statHeader}>
+              <View style={[styles.statIconContainer, { backgroundColor: '#42A5F5' }]}>
+                <Feather name="check-circle" size={16} color="#FFFFFF" />
+              </View>
+              <Text style={[styles.statNumber, { color: '#42A5F5' }]}>{completedCount}</Text>
             </View>
-            <Text style={[styles.statNumber, { color: '#42A5F5' }]}>{completedCount}</Text>
             <Text style={[styles.statLabel, { color: '#64B5F6' }]}>Đã hoàn thành</Text>
           </View>
         </View>
       </View>
 
-      {/* Thông báo nếu không có nhắc nhở nào */}
+      {/* Empty State */}
       {totalCount === 0 && (
         <View style={styles.emptyState}>
           <View style={styles.emptyIconContainer}>
@@ -98,88 +110,94 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 16,
     borderRadius: 20,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    padding: 20,
+    shadowColor: '#0D4C92',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
     shadowRadius: 12,
-    elevation: 4,
+    elevation: 6,
+    marginBottom: 50,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  titleIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#0D4C92',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: '#1A1A1A',
-    marginLeft: 8,
   },
   totalBadge: {
     backgroundColor: '#F8FAFF',
-    borderRadius: 16,
+    borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 12,
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#E3F2FD',
   },
   totalCount: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '700',
     color: '#0D4C92',
   },
   totalLabel: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#8E8E93',
-    fontWeight: '500',
+    fontWeight: '600',
     marginTop: 2,
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 12,
   },
-  statRow: {
+  statsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
+    gap: 12,
   },
-  statItem: {
+  statCard: {
     flex: 1,
+    padding: 16,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  statHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    marginHorizontal: 2,
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
   statIconContainer: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  statDivider: {
-    width: 1,
-    height: 50,
-    backgroundColor: '#F0F0F0',
-    marginHorizontal: 4,
   },
   statNumber: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '700',
-    color: '#000000',
-    marginBottom: 4,
   },
   statLabel: {
-    fontSize: 11,
-    color: '#8E8E93',
+    fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
   },

@@ -19,6 +19,8 @@ import Feather from 'react-native-vector-icons/Feather';
 import VoiceRecognitionModal from '../../../components/VoiceRecognitionModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getUserRestrictedContent } from '../../../services/api';
+import { useVoiceButton } from '../../../contexts/VoiceButtonContext';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
@@ -35,6 +37,7 @@ interface VideoItem {
 }
 
 const VideoPlayerScreen = ({ navigation }: any) => {
+  const { setIsVisible } = useVoiceButton();
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,6 +87,21 @@ const VideoPlayerScreen = ({ navigation }: any) => {
   useEffect(() => {
     loadUserRestrictedContent();
   }, []);
+
+  // Hide voice button when entering VideoPlayerScreen, show when leaving
+  useFocusEffect(
+    React.useCallback(() => {
+      // Hide voice button when entering video player
+      console.log('📱 VideoPlayerScreen: Hiding voice button');
+      setIsVisible(false);
+      
+      // Show voice button when leaving video player
+      return () => {
+        console.log('📱 VideoPlayerScreen: Showing voice button on cleanup');
+        setIsVisible(true);
+      };
+    }, [setIsVisible])
+  );
 
   // Personalized filtering function - ONLY uses user's restricted content
   const shouldFilterVideo = (video: VideoItem): boolean => {
@@ -463,7 +481,9 @@ const VideoPlayerScreen = ({ navigation }: any) => {
         onClose={() => setShowVoiceModal(false)}
         onResult={handleVoiceSearch}
       />
-    </SafeAreaView>
+      {/* <FloatingVoiceButton variant="centerDocked" visible={false} /> */}
+          
+    </SafeAreaView> 
   );
 };
 

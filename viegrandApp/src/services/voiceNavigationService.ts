@@ -170,10 +170,74 @@ export const ELDERLY_VOICE_COMMANDS: ElderlyNavigationCommands = {
     category: 'entertainment'
   },
   
+  // === VIDEO & ENTERTAINMENT CONTENT ===
   'videos': {
     screen: 'VideoPlayer',
     aliases: ['xem video', 'youtube', 'phim ảnh', 'clip', 'video giải trí', 'xem phim', 'video'],
     description: 'Xem video trên YouTube',
+    category: 'entertainment'
+  },
+  
+  'music': {
+    screen: 'VideoPlayer',
+    aliases: ['nghe nhạc', 'âm nhạc', 'bài hát', 'ca nhạc', 'nhạc việt nam', 'nhạc trữ tình', 'nhạc vàng', 'nhạc bolero', 'nghe bài hát', 'phát nhạc'],
+    description: 'Nghe nhạc trên YouTube',
+    category: 'entertainment'
+  },
+  
+  'films': {
+    screen: 'VideoPlayer',
+    aliases: ['xem phim', 'phim', 'phim truyện', 'phim việt nam', 'phim hàn quốc', 'phim trung quốc', 'phim thái lan', 'phim ảnh', 'xem phim truyện'],
+    description: 'Xem phim trên YouTube',
+    category: 'entertainment'
+  },
+  
+  'movies': {
+    screen: 'VideoPlayer',
+    aliases: ['xem phim', 'phim điện ảnh', 'phim bom tấn', 'phim hành động', 'phim tình cảm', 'phim hài', 'phim kinh dị', 'phim viễn tưởng'],
+    description: 'Xem phim điện ảnh',
+    category: 'entertainment'
+  },
+  
+  'cooking': {
+    screen: 'VideoPlayer',
+    aliases: ['nấu ăn', 'công thức nấu ăn', 'món ăn', 'nấu cơm', 'nấu bếp', 'học nấu ăn', 'cách nấu', 'món ngon', 'ẩm thực'],
+    description: 'Xem video nấu ăn',
+    category: 'entertainment'
+  },
+  
+  'exercise': {
+    screen: 'VideoPlayer',
+    aliases: ['tập thể dục', 'thể dục', 'yoga', 'thể thao', 'vận động', 'tập luyện', 'sức khỏe', 'thể hình', 'aerobic', 'dance'],
+    description: 'Xem video tập thể dục',
+    category: 'entertainment'
+  },
+  
+  'travel': {
+    screen: 'VideoPlayer',
+    aliases: ['du lịch', 'khám phá', 'đi du lịch', 'thăm quan', 'địa điểm du lịch', 'cảnh đẹp', 'văn hóa', 'ẩm thực địa phương'],
+    description: 'Xem video du lịch',
+    category: 'entertainment'
+  },
+  
+  'news': {
+    screen: 'VideoPlayer',
+    aliases: ['tin tức', 'thời sự', 'báo cáo', 'tin mới', 'thông tin', 'cập nhật tin tức', 'bản tin'],
+    description: 'Xem tin tức',
+    category: 'entertainment'
+  },
+  
+  'comedy': {
+    screen: 'VideoPlayer',
+    aliases: ['hài kịch', 'phim hài', 'tiếu lâm', 'hài', 'vui nhộn', 'giải trí hài', 'stand up comedy'],
+    description: 'Xem video hài kịch',
+    category: 'entertainment'
+  },
+  
+  'drama': {
+    screen: 'VideoPlayer',
+    aliases: ['phim truyền hình', 'drama', 'phim bộ', 'truyền hình', 'phim tình cảm', 'phim gia đình'],
+    description: 'Xem phim truyền hình',
     category: 'entertainment'
   },
   

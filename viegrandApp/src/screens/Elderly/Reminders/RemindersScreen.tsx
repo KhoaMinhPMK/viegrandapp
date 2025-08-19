@@ -315,14 +315,6 @@ const RemindersScreen = () => {
         </TouchableOpacity>
       </Animated.View>
 
-      {/* Status Summary */}
-      <ReminderStatus
-        todayCount={today.length}
-        tomorrowCount={tomorrow.length}
-        upcomingCount={upcoming.length}
-        completedCount={completed.length}
-      />
-
       {/* Content */}
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -356,6 +348,14 @@ const RemindersScreen = () => {
           scrollEventThrottle={16}
           ListHeaderComponent={() => (
             <View style={styles.sectionsContainer}>
+              {/* Status Summary */}
+              <ReminderStatus
+                todayCount={today.length}
+                tomorrowCount={tomorrow.length}
+                upcomingCount={upcoming.length}
+                completedCount={completed.length}
+              />
+              
               {renderSection('Hôm nay', today, '#0D4C92', 'clock')}
               {renderSection('Ngày mai', tomorrow, '#1E88E5', 'calendar')}
               {renderSection('Sắp tới', upcoming, '#FF9800', 'calendar')}
@@ -424,11 +424,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    paddingBottom: 32,
+    paddingBottom: 100,
+    // backgroundColor: 'red',
+    // paddingTop: 16,
   },
   sectionsContainer: {
     paddingTop: 8,
-  },
+  },  
   section: {
     marginBottom: 24,
   },

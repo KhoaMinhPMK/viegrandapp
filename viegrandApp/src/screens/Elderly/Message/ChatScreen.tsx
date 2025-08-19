@@ -15,6 +15,7 @@ import {
   SafeAreaView,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Keyboard,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSocket } from '../../../contexts/SocketContext';
@@ -496,26 +497,24 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
 
   // Auto scroll once when messages first load
   useEffect(() => {
-    if (messages.length > 0 && !hasAutoScrolledRef.current) {
-      // Multiple attempts to ensure scroll to bottom
-      const scrollAttempts = [100, 200, 400, 600, 800];
-      scrollAttempts.forEach(delay => {
-        setTimeout(() => {
-          scrollToBottom(false); // Use non-animated scroll for initial load
-        }, delay);
-      });
+    if (messages.length > 0 && !hasAutoScrolledRef.current && !isLoadingMessages) {
+      const delays = [0, 50, 120, 250, 400];
+      delays.forEach(delay => setTimeout(() => scrollToBottom(false), delay));
       hasAutoScrolledRef.current = true;
     }
-  }, [messages.length, scrollToBottom]);
+  }, [messages.length, isLoadingMessages, scrollToBottom]);
 
   // Also scroll to bottom when screen gains focus
   useFocusEffect(
     React.useCallback(() => {
       if (messages.length > 0) {
-        setTimeout(() => {
-          scrollToBottom(false); // Use non-animated scroll for focus
-        }, 100);
+        const delays = [0, 60, 160];
+        delays.forEach(d => setTimeout(() => scrollToBottom(false), d));
       }
+      const showSub = Keyboard.addListener('keyboardDidShow', () => setTimeout(scrollToBottom, 50));
+      return () => {
+        showSub.remove();
+      };
     }, [messages.length, scrollToBottom])
   );
 
@@ -649,15 +648,14 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
           onScroll={handleScroll}
           scrollEventThrottle={16}
           onLayout={() => {
-            // Scroll to bottom when layout is complete
-            if (messages.length > 0 && !hasAutoScrolledRef.current) {
-              setTimeout(() => scrollToBottom(false), 100);
+            if (messages.length > 0) {
+              const delays = [0, 80];
+              delays.forEach(d => setTimeout(() => scrollToBottom(false), d));
             }
           }}
           onContentSizeChange={() => {
-            // Scroll to bottom when content size changes
-            if (messages.length > 0 && !hasAutoScrolledRef.current) {
-              setTimeout(() => scrollToBottom(false), 50);
+            if (messages.length > 0 && (isNearBottomRef.current || !hasAutoScrolledRef.current)) {
+              setTimeout(() => scrollToBottom(false), 40);
             }
           }}
           ListEmptyComponent={

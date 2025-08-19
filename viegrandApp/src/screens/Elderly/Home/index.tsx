@@ -241,6 +241,7 @@ const ElderlyHomeScreen = () => {
         onClose={() => setShowPermissionGuide(false)}
         onOpenSettings={handleOpenSettings}
       />
+      
     </SafeAreaView>
   );
 };
