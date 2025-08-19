@@ -445,8 +445,7 @@ const RelativeHomeScreen = ({ navigation }: any) => {
               ))}
             </View>
           </View>
-
-
+          <View style={{height: 50}} />
         </ScrollView>
       </SafeAreaView>
     </ImageBackground>
@@ -459,7 +458,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingBottom: 100,
+    // paddingBottom: 100,
 
   },
 

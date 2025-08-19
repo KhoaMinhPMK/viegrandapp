@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { TouchableOpacity, View, StyleSheet } from 'react-native';
+import { TouchableOpacity, View, StyleSheet, Platform } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { BlurView } from '@react-native-community/blur';
 import { PremiumStackParamList } from '../types/navigation';
@@ -34,12 +34,13 @@ const PremiumNavigator: React.FC = () => {
       initialRouteName="PremiumHome"
       screenOptions={({ navigation }) => ({
         headerShown: true,
-        headerTransparent: true,
+        headerTransparent: Platform.OS === 'ios',
         headerTitle: '',
         headerLeft: () => <CustomBackButton onPress={() => navigation.goBack()} />,
         cardStyle: { backgroundColor: '#f8f9fa' },
         gestureEnabled: true,
         gestureDirection: 'horizontal',
+        headerStyle: Platform.OS === 'android' ? { backgroundColor: '#FFFFFF', elevation: 0, shadowOpacity: 0 } : undefined,
       })}
     >
       <Stack.Screen

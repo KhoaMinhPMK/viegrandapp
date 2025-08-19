@@ -27,6 +27,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { lastMessageStorage, LastMessage } from '../../../utils/lastMessageStorage';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useVoiceButton } from '../../../contexts/VoiceButtonContext';
+import emergencyCallService from '../../../services/emergencyCall';
 
 // Import new components
 import ChatHeader from './ChatHeader';
@@ -633,7 +634,10 @@ const ChatScreen = ({ route, navigation }: ChatScreenProps) => {
           avatar={avatar}
           isOnline={isConnected}
           onBack={() => navigation.goBack()}
-          onCall={() => Alert.alert('Gọi điện', 'Tính năng gọi điện sẽ được thêm sau')}
+          onCall={() => {
+            const target = receiverPhone || (messages.find(m => !m.isOwnMessage)?.senderPhone) || '';
+            emergencyCallService.callNumber(target, name);
+          }}
           onVideoCall={() => Alert.alert('Video call', 'Tính năng video call sẽ được thêm sau')}
         />
 

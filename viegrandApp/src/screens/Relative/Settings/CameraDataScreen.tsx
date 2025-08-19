@@ -242,9 +242,14 @@ const CameraDataScreen: React.FC = () => {
         setTimeoutId(null);
       }
     } else if (showAddCamera) {
+      // If elderly has no cameras, go straight back to elderly list
+      const isEmptyForSelected = !selectedElderly?.cameras || selectedElderly.cameras.length === 0;
       setShowAddCamera(false);
       setNewCameraUrl('');
       setIsValidUrl(false);
+      if (isEmptyForSelected) {
+        setSelectedElderly(null);
+      }
     } else if (selectedElderly) {
       setSelectedElderly(null);
       setSelectedCamera('');
@@ -982,7 +987,7 @@ const CameraDataScreen: React.FC = () => {
           </View>
 
           {/* Add More Camera Section */}
-          <View style={styles.addMoreSection}>
+          <View style={[styles.addMoreSection, {paddingHorizontal: 0}]}>
             <TouchableOpacity
               style={styles.addMoreButton}
               onPress={handleAddCamera}
@@ -1026,7 +1031,7 @@ const CameraDataScreen: React.FC = () => {
             </Text>
           </View>
         ) : (
-          <>
+          <View style={{paddingHorizontal: 0}}>
             {/* Header Section */}
             <View style={styles.elderlyHeaderSection}>
               <View style={styles.elderlyHeaderContent}>
@@ -1150,7 +1155,7 @@ const CameraDataScreen: React.FC = () => {
                 </Text>
               </View>
             )}
-          </>
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -1550,7 +1555,7 @@ const styles = StyleSheet.create({
   cameraHeaderSection: {
     backgroundColor: '#007AFF',
     borderRadius: 16,
-    marginHorizontal: 20,
+    // marginHorizontal: 20,
     marginBottom: 24,
     padding: 20,
     shadowColor: '#007AFF',
@@ -1757,7 +1762,7 @@ const styles = StyleSheet.create({
   elderlyHeaderSection: {
     backgroundColor: '#007AFF',
     borderRadius: 16,
-    marginHorizontal: 20,
+    // marginHorizontal: 20,
     marginBottom: 24,
     padding: 20,
     shadowColor: '#007AFF',
@@ -1816,7 +1821,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   elderlyGridContainer: {
-    paddingHorizontal: 20,
+    // paddingHorizontal: 20,
     marginBottom: 24,
   },
   elderlyCardContainer: {

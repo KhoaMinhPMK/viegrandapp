@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { TouchableOpacity, StyleSheet } from 'react-native';
+import { TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import Feather from 'react-native-vector-icons/Feather';
 
@@ -44,9 +44,10 @@ const HomeNavigator = () => {
     <Stack.Navigator
         screenOptions={({ navigation }) => ({
             headerShown: true,
-            headerTransparent: true,
+            headerTransparent: Platform.OS === 'ios',
             headerTitle: '',
             headerLeft: () => <CustomBackButton onPress={() => navigation.goBack()} />,
+            headerStyle: Platform.OS === 'android' ? { backgroundColor: '#FFFFFF', elevation: 0, shadowOpacity: 0 } : undefined,
         })}
     >
       <Stack.Screen 

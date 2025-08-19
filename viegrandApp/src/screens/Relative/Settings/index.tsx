@@ -338,13 +338,15 @@ const RelativeSettingsScreen = ({ navigation }: { navigation?: any }) => {
         </SettingsSection>
 
         {/* Logout Section */}
-        <SettingsSection>
+        <SettingsSection style={{marginBottom: 100}}>
           <SettingsRow
             type="button"
             title="Đăng xuất"
             titleColor="#FF3B30"
             onPress={handleLogout}
             isLast
+            icon="log-out"
+            iconBackgroundColor="#FF3B30"
           />
         </SettingsSection>
       </SettingsContainer>

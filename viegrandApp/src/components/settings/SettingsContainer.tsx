@@ -10,7 +10,7 @@ export function SettingsContainer({ children, style }: SettingsContainerProps) {
   return (
     <ScrollView
       style={[styles.container, style, {
-        marginBottom: 100,
+        marginBottom: 0,
       }]}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.contentContainer}

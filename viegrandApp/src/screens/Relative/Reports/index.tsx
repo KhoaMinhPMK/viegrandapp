@@ -11,6 +11,7 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  Share,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
@@ -300,6 +301,51 @@ const ReportsScreen = ({ navigation }: any) => {
       case 'medication': return 'Thuốc men';
       case 'overview': return 'Tổng quan';
       default: return 'Tổng quan';
+    }
+  };
+
+  // Build and share a concise report summary
+  const handleShare = async () => {
+    try {
+      if (!selectedUser) {
+        Alert.alert('Thông báo', 'Chưa có người dùng để chia sẻ báo cáo');
+        return;
+      }
+
+      const avg = (values: number[]) => values.length ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : null;
+
+      const avgSys = vitalSignsData && vitalSignsData.length
+        ? avg(vitalSignsData.map(d => d.blood_pressure_systolic))
+        : (selectedUser.bloodPressure?.systolic || null);
+
+      const avgDia = vitalSignsData && vitalSignsData.length
+        ? avg(vitalSignsData.map(d => d.blood_pressure_diastolic))
+        : (selectedUser.bloodPressure?.diastolic || null);
+
+      const avgHr = vitalSignsData && vitalSignsData.length
+        ? avg(vitalSignsData.map(d => d.heart_rate))
+        : (selectedUser.heartRate || null);
+
+      const userName = selectedUser.userName || 'Người dùng';
+      const period = getPeriodText(selectedPeriod);
+
+      const summaryLines = [
+        `Báo cáo sức khỏe - ${userName}`,
+        `Thời gian: ${period}`,
+        `Huyết áp TB: ${avgSys ?? '-'} / ${avgDia ?? '-'} mmHg`,
+        `Nhịp tim TB: ${avgHr ?? '-'} bpm`,
+        selectedUser.lastHealthCheck ? `Lần kiểm tra cuối: ${formatDate(selectedUser.lastHealthCheck)}` : null,
+      ].filter(Boolean) as string[];
+
+      const message = summaryLines.join('\n');
+
+      await Share.share({
+        title: `Báo cáo sức khỏe - ${userName}`,
+        message,
+      });
+    } catch (error) {
+      console.error('Share report error:', error);
+      Alert.alert('Lỗi', 'Không thể chia sẻ báo cáo. Vui lòng thử lại.');
     }
   };
 
@@ -738,7 +784,7 @@ const ReportsScreen = ({ navigation }: any) => {
           <Text style={styles.headerTitle}>Báo cáo</Text>
           <TouchableOpacity
             style={styles.shareButton}
-            onPress={() => Alert.alert('Chia sẻ', 'Tính năng chia sẻ báo cáo')}
+            onPress={handleShare}
           >
             <Feather name="share-2" size={20} color="#1C1C1E" />
           </TouchableOpacity>
@@ -770,7 +816,7 @@ const ReportsScreen = ({ navigation }: any) => {
         <Text style={styles.headerTitle}>Báo cáo</Text>
         <TouchableOpacity
           style={styles.shareButton}
-          onPress={() => Alert.alert('Chia sẻ', 'Tính năng chia sẻ báo cáo')}
+          onPress={handleShare}
         >
           <Feather name="share-2" size={20} color="#1C1C1E" />
         </TouchableOpacity>
